@@ -246,8 +246,7 @@ class MemberAuthController extends Controller
                     }
                 },
             ],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'password_confirmation' => ['required', 'string', 'min:8', 'same:password'],
+            'password' => ['required', 'string', 'min:8'],
         ], [
             'user_id.required' => 'A valid 10-character User ID is required.',
             'user_id.size' => 'User ID must be exactly 10 characters.',
