@@ -1,0 +1,203 @@
+/**
+ * MLM Book Admin - Sidebar Navigation Stylesheet
+ */
+.sidebar-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--admin-sidebar-width, 275px);
+    height: 100vh;
+    background: var(--admin-sidebar-bg, #ffffff);
+    border-right: 1px solid var(--admin-border-color, #e2e8f0);
+    z-index: 1045;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease, width 0.25s ease;
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.02);
+}
+
+.sidebar-brand-wrapper {
+    height: var(--admin-header-height, 70px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--admin-border-color, #e2e8f0);
+    flex-shrink: 0;
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+}
+.sidebar-brand:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+.sidebar-logo {
+    height: 38px;
+    width: auto;
+    object-fit: contain;
+}
+
+.sidebar-brand-text {
+    display: flex;
+    flex-direction: column;
+}
+.brand-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--admin-primary, #176bff);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+}
+.brand-subtitle {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--admin-text-muted, #64748b);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sidebar-close-btn {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    color: var(--admin-text-muted, #64748b);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sidebar-close-btn:hover {
+    color: var(--admin-danger, #ef4444);
+}
+.sidebar-close-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Sidebar Navigation Main */
+.sidebar-main {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 14px 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--admin-border-color, #e2e8f0) transparent;
+}
+.sidebar-main::-webkit-scrollbar {
+    width: 5px;
+}
+.sidebar-main::-webkit-scrollbar-thumb {
+    background: var(--admin-border-color, #e2e8f0);
+    border-radius: 4px;
+}
+
+.sidebar-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-list {
+    margin-bottom: 3px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    color: var(--admin-text-secondary, #334155);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: var(--admin-radius-sm, 8px);
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.sidebar-link:hover {
+    background-color: #f1f5f9;
+    color: var(--admin-primary, #176bff);
+    text-decoration: none;
+}
+
+.sidebar-link.active {
+    background-color: var(--admin-primary-light, rgba(23, 107, 255, 0.08));
+    color: var(--admin-primary, #176bff);
+    font-weight: 600;
+}
+
+.sidebar-link .stroke-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    color: var(--admin-text-muted, #64748b);
+    transition: color 0.15s ease;
+}
+.sidebar-link:hover .stroke-icon,
+.sidebar-link.active .stroke-icon {
+    color: var(--admin-primary, #176bff);
+}
+
+.sidebar-link span:not(.submenu-arrow) {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.25;
+}
+
+.sidebar-title .submenu-arrow {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+.sidebar-title.active .submenu-arrow {
+    transform: rotate(90deg);
+}
+.sidebar-title .submenu-arrow svg,
+.sidebar-title .submenu-arrow [data-feather] {
+    width: 14px;
+    height: 14px;
+}
+
+/* Sidebar Submenu */
+.sidebar-submenu {
+    list-style: none;
+    margin: 4px 0 6px 0;
+    padding: 4px 0 4px 34px;
+    display: none;
+}
+.sidebar-submenu.show {
+    display: block;
+}
+.sidebar-submenu li a {
+    display: block;
+    padding: 6px 12px;
+    font-size: 0.8125rem;
+    color: var(--admin-text-muted, #64748b);
+    text-decoration: none;
+    border-radius: var(--admin-radius-sm, 6px);
+    transition: all 0.15s ease;
+}
+.sidebar-submenu li a:hover {
+    color: var(--admin-primary, #176bff);
+    background-color: #f1f5f9;
+    text-decoration: none;
+}
+.sidebar-submenu li a.active {
+    color: var(--admin-primary, #176bff);
+    font-weight: 600;
+    background-color: var(--admin-primary-light, rgba(23, 107, 255, 0.08));
+}

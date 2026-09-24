@@ -1,0 +1,432 @@
+/* Watch Module Styles - Reusing MLM Book Premium Theme Architecture */
+
+.watch-page-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Watch Hero / Header Bar */
+.watch-header-card {
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border-soft, #e2e8f0);
+    border-radius: var(--radius-lg, 16px);
+    box-shadow: var(--shadow-card, 0 4px 20px rgba(0, 0, 0, 0.05));
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.watch-header-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.watch-header-card__title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.watch-header-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(32, 200, 117, 0.12);
+    color: var(--color-primary, #20c875);
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+}
+
+.watch-header-card__title h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--color-text-main, #0f172a);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.watch-header-card__title p {
+    font-size: 0.875rem;
+    color: var(--color-text-muted, #64748b);
+    margin: 4px 0 0 0;
+}
+
+/* Watch Filter Tabs */
+.watch-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--color-border-soft, #e2e8f0);
+}
+
+.watch-tab-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--color-text-muted, #64748b);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.watch-tab-item:hover {
+    color: var(--color-primary, #20c875);
+    background: rgba(32, 200, 117, 0.08);
+}
+
+.watch-tab-item.is-active {
+    color: #ffffff;
+    background: var(--color-primary, #20c875);
+    box-shadow: 0 4px 12px rgba(32, 200, 117, 0.3);
+}
+
+.watch-tab-item .badge-count {
+    background: rgba(0, 0, 0, 0.15);
+    color: inherit;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+}
+
+/* Watch Feed Video Cards */
+.watch-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.watch-video-card {
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border-soft, #e2e8f0);
+    border-radius: var(--radius-lg, 16px);
+    box-shadow: var(--shadow-card, 0 4px 20px rgba(0, 0, 0, 0.05));
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Custom Responsive Video Player */
+.watch-player {
+    position: relative;
+    width: 100%;
+    background: #090d16;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    max-height: 540px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.watch-player video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+/* Custom Overlay Controls */
+.watch-player__overlay-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 5;
+    opacity: 0.9;
+}
+
+.watch-player__overlay-play:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    background: var(--color-primary, #20c875);
+    border-color: #ffffff;
+    opacity: 1;
+}
+
+.watch-player.is-playing .watch-player__overlay-play {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.watch-player:hover .watch-player__overlay-play {
+    opacity: 0.95;
+}
+
+/* Bottom Control Bar */
+.watch-player__controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(9, 13, 22, 0.9) 0%, rgba(9, 13, 22, 0.4) 70%, transparent 100%);
+    padding: 12px 16px 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 6;
+}
+
+.watch-player:hover .watch-player__controls,
+.watch-player.is-paused .watch-player__controls {
+    opacity: 1;
+}
+
+.watch-player__progress-bar {
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.watch-player__progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--color-primary, #20c875);
+    border-radius: 4px;
+    transition: width 0.1s linear;
+}
+
+.watch-player__controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #ffffff;
+}
+
+.watch-player__btn {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.watch-player__btn:hover {
+    color: var(--color-primary, #20c875);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.watch-player__time {
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.watch-player__volume-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.watch-player__volume-slider {
+    width: 60px;
+    accent-color: var(--color-primary, #20c875);
+    cursor: pointer;
+}
+
+/* Sidebar Widgets for Watch Page */
+.watch-sidebar-card {
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border-soft, #e2e8f0);
+    border-radius: var(--radius-lg, 16px);
+    box-shadow: var(--shadow-card, 0 4px 20px rgba(0, 0, 0, 0.05));
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+
+.watch-sidebar-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.watch-sidebar-card__header h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text-main, #0f172a);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.watch-sidebar-creator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--color-border-soft, #f1f5f9);
+}
+
+.watch-sidebar-creator:last-child {
+    border-bottom: none;
+}
+
+.watch-sidebar-creator__info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+}
+
+.watch-sidebar-creator__name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-main, #0f172a);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.watch-sidebar-video-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px dashed var(--color-border-soft, #f1f5f9);
+}
+
+.watch-sidebar-video-item:last-child {
+    border-bottom: none;
+}
+
+.watch-sidebar-video-thumb {
+    width: 68px;
+    height: 48px;
+    border-radius: 8px;
+    background: #0f172a;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+}
+
+.watch-sidebar-video-thumb video,
+.watch-sidebar-video-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.watch-sidebar-video-thumb i {
+    position: absolute;
+    font-size: 16px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.watch-sidebar-video-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.watch-sidebar-video-copy strong {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--color-text-main, #0f172a);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.watch-sidebar-video-copy span {
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #64748b);
+}
+
+/* Empty Feed State */
+.watch-empty-state {
+    background: var(--color-surface, #ffffff);
+    border: 1px dashed var(--color-border-soft, #cbd5e1);
+    border-radius: var(--radius-lg, 16px);
+    padding: 48px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.watch-empty-state__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(32, 200, 117, 0.1);
+    color: var(--color-primary, #20c875);
+    display: grid;
+    place-items: center;
+    font-size: 28px;
+}
+
+.watch-empty-state h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text-main, #0f172a);
+}
+
+.watch-empty-state p {
+    font-size: 0.9rem;
+    color: var(--color-text-muted, #64748b);
+    max-width: 420px;
+    margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .watch-header-card {
+        padding: 16px;
+    }
+    .watch-player {
+        max-height: 320px;
+    }
+    .watch-player__volume-group {
+        display: none;
+    }
+}

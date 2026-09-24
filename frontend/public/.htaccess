@@ -1,0 +1,25 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Direct backend/public requests pass through
+    RewriteRule ^backend/(.*)$ - [L]
+
+    # Direct uploads, storage pass through to backend/public
+    RewriteRule ^uploads/(.*)$ backend/public/uploads/$1 [L]
+    RewriteRule ^storage/(.*)$ backend/public/storage/$1 [L]
+    RewriteRule ^auth/(.*)$ backend/public/index.php [L,QSA]
+    RewriteRule ^api/(.*)$ backend/public/index.php [L,QSA]
+
+    # Direct admin requests rewrite to /admin/index.html if file doesn't exist
+    RewriteCond %{REQUEST_URI} ^/admin
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^admin.* /admin/index.html [L]
+
+    # Member SPA fallback
+    RewriteRule ^index\.html$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
+</IfModule>

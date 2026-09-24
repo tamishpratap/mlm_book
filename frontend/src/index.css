@@ -1,0 +1,333 @@
+/* Global Base Reset for MLM_Book Member Platform */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-page, #f0f2f5);
+  color: var(--color-text-main, #1e293b);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.spin-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================================
+   Global Modal & ModalPortal Standard Responsive Classes
+   Preserves 100% of desktop baseline defaults; scales padding down on mobile
+   ========================================================================== */
+.global-modal-overlay {
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.global-modal-header {
+  padding: 18px 24px;
+  box-sizing: border-box;
+}
+
+.global-modal-body {
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+
+.global-modal-footer {
+  padding: 16px 24px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .global-modal-overlay {
+    padding: 8px;
+  }
+
+  .global-modal-header {
+    padding: 14px 16px;
+  }
+
+  .global-modal-body {
+    padding: 14px 16px;
+  }
+
+  .global-modal-footer {
+    padding: 12px 16px;
+  }
+}
+
+/* ==========================================================================
+   Reward Wallet Modal Responsive Data Presentation & History Cards
+   Desktop (>= 768px): Semantic table layout preserved 100%
+   Mobile (< 768px): Responsive stacked transaction cards with all fields readable
+   ========================================================================== */
+.reward-wallet-modal {
+  width: 100%;
+  max-width: 680px;
+  box-sizing: border-box;
+}
+
+.reward-history-desktop-table {
+  display: block;
+  width: 100%;
+}
+
+.reward-history-mobile-cards {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  .reward-wallet-modal .global-modal-header {
+    padding: 14px 16px !important;
+  }
+
+  .reward-wallet-modal .global-modal-body {
+    padding: 16px 14px !important;
+  }
+
+  .reward-wallet-modal .global-modal-footer {
+    padding: 12px 16px !important;
+  }
+
+  .reward-history-desktop-table {
+    display: none !important;
+  }
+
+  .reward-history-mobile-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .reward-history-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+}
+
+@media (max-width: 360px) {
+  .reward-wallet-modal .global-modal-header {
+    padding: 12px 12px !important;
+  }
+
+  .reward-wallet-modal .global-modal-body {
+    padding: 14px 10px !important;
+  }
+
+  .reward-wallet-modal .global-modal-footer {
+    padding: 10px 12px !important;
+  }
+
+  .reward-history-card {
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* ==========================================================================
+   Image Adjustment Modal (Pre-Publish Media Editor) Responsive Architecture
+   Desktop (>= 1024px): 100% untouched baseline layout and dimensions
+   Mobile (<= 767.98px): Viewport-contained 3-part layout (Header + Scroll Body + Pinned Footer)
+   ========================================================================== */
+.image-adjustment-modal {
+  width: 100%;
+  max-width: 680px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.image-adjustment-modal__header {
+  flex-shrink: 0;
+}
+
+.image-adjustment-modal__tabs {
+  flex-shrink: 0;
+}
+
+.image-adjustment-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.image-adjustment-modal__footer {
+  flex-shrink: 0;
+}
+
+@media (max-width: 767.98px) {
+  .image-adjustment-modal-overlay {
+    padding: 12px !important;
+    align-items: center !important;
+  }
+
+  .image-adjustment-modal {
+    max-height: calc(100vh - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    border-radius: 16px !important;
+  }
+
+  .image-adjustment-modal__header {
+    padding: 12px 16px !important;
+  }
+
+  .image-adjustment-modal__header-title {
+    font-size: 1.05rem !important;
+  }
+
+  .image-adjustment-modal__tabs {
+    padding: 8px 14px !important;
+    gap: 6px !important;
+  }
+
+  .image-adjustment-modal__tab-btn {
+    padding: 7px 10px !important;
+    font-size: 0.78rem !important;
+  }
+
+  .image-adjustment-modal__body {
+    padding: 14px 16px !important;
+    gap: 14px !important;
+  }
+
+  .image-adjustment-modal__footer {
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom, 12px)) !important;
+  }
+
+  .image-adjustment-modal__footer-btn {
+    font-size: 0.825rem !important;
+    padding: 8px 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .image-adjustment-modal-overlay {
+    padding: 8px !important;
+  }
+
+  .image-adjustment-modal {
+    max-height: calc(100vh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    border-radius: 14px !important;
+  }
+
+  .image-adjustment-modal__header {
+    padding: 10px 14px !important;
+  }
+
+  .image-adjustment-modal__header-icon {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .image-adjustment-modal__header-title {
+    font-size: 0.98rem !important;
+  }
+
+  .image-adjustment-modal__tabs {
+    padding: 6px 10px !important;
+    gap: 6px !important;
+  }
+
+  .image-adjustment-modal__tab-btn {
+    padding: 6px 8px !important;
+    font-size: 0.75rem !important;
+    text-align: center !important;
+    line-height: 1.25 !important;
+  }
+
+  .image-adjustment-modal__body {
+    padding: 12px 12px !important;
+    gap: 12px !important;
+  }
+
+  .image-adjustment-modal__footer {
+    padding: 10px 12px max(10px, env(safe-area-inset-bottom, 10px)) !important;
+    gap: 8px !important;
+  }
+
+  .image-adjustment-modal__footer-actions {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+  }
+
+  .image-adjustment-modal__footer-btn {
+    padding: 7px 14px !important;
+    font-size: 0.8rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .image-adjustment-modal__header {
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+
+  .image-adjustment-modal__header-title {
+    font-size: 0.92rem !important;
+  }
+
+  .image-adjustment-modal__tabs {
+    padding: 6px 8px !important;
+    gap: 4px !important;
+  }
+
+  .image-adjustment-modal__tab-btn {
+    padding: 6px 4px !important;
+    font-size: 0.7rem !important;
+    gap: 4px !important;
+  }
+
+  .image-adjustment-modal__tab-btn svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .image-adjustment-modal__body {
+    padding: 10px 8px !important;
+    gap: 10px !important;
+  }
+
+  .image-adjustment-modal__footer {
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom, 8px)) !important;
+    gap: 6px !important;
+  }
+
+  .image-adjustment-modal__footer-btn {
+    padding: 6px 10px !important;
+    font-size: 0.76rem !important;
+  }
+}
+

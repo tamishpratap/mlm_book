@@ -1,0 +1,299 @@
+/* ==========================================================================
+   MLM Book — Member Email OTP Verification Styles
+   ========================================================================== */
+
+.member-verify-page {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.member-verify-form-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 48px;
+    padding-bottom: 48px;
+}
+
+.member-verify-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 16px;
+    border-radius: 14px;
+    background: #eef3ff;
+    color: #176bff;
+    box-shadow: 0 4px 12px rgba(23, 107, 255, 0.12);
+}
+
+.member-verify-icon-badge svg {
+    width: 26px;
+    height: 26px;
+}
+
+.member-verify-destination {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    border-radius: 12px;
+    background: #f4f7ff;
+    border: 1px solid #e2e8f8;
+}
+
+.member-verify-destination-label {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.member-verify-destination-email {
+    font-size: 15px;
+    color: #0f172a;
+    font-weight: 700;
+    word-break: break-all;
+}
+
+.member-verify-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.member-verify-alert--success {
+    background: #eafaf1;
+    border: 1px solid #c3f0d4;
+    color: #0f7642;
+}
+
+.member-verify-alert--success svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.5;
+    flex-shrink: 0;
+}
+
+.member-verify-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.member-verify-code-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.member-verify-otp-container {
+    position: relative;
+    border: 1.5px solid #d8e0ee;
+    border-radius: 14px;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.member-verify-otp-container:focus-within {
+    border-color: #176bff;
+    box-shadow: 0 0 0 4px rgba(23, 107, 255, 0.12);
+}
+
+.member-verify-otp-input {
+    width: 100%;
+    height: 64px;
+    padding: 0 18px;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace, sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 12px;
+    text-align: center;
+    color: #111c35;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.member-verify-otp-input::placeholder {
+    color: #b3bfd2;
+    letter-spacing: 10px;
+    font-weight: 400;
+}
+
+.member-verify-error {
+    margin-top: 8px;
+}
+
+.member-verify-help {
+    margin-top: 8px;
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.member-verify-submit {
+    min-height: 58px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+.member-verify-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #edf2f9;
+}
+
+.member-verify-resend-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: #475467;
+}
+
+.member-verify-inline-form {
+    display: inline;
+    margin: 0;
+}
+
+.member-verify-resend-btn {
+    display: inline-flex;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 4px 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #176bff;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.member-verify-resend-btn:hover:not(:disabled) {
+    color: #0e4ec8;
+    text-decoration: underline;
+}
+
+.member-verify-resend-btn:disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+.member-verify-cancel-form {
+    margin: 0;
+}
+
+.member-verify-cancel-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.member-verify-cancel-btn:hover {
+    color: #1e293b;
+    background: #f1f5f9;
+}
+
+.member-verify-cancel-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .member-verify-otp-input {
+        height: 60px;
+        font-size: 24px;
+        letter-spacing: 10px;
+    }
+}
+
+@media (max-width: 800px) {
+    .member-verify-form-panel {
+        padding: 36px 32px;
+    }
+}
+
+@media (max-width: 576px) {
+    .member-verify-form-panel {
+        padding: 28px 20px;
+    }
+
+    .member-verify-otp-input {
+        height: 56px;
+        font-size: 22px;
+        letter-spacing: 8px;
+        padding: 0 10px;
+    }
+
+    .member-verify-destination {
+        padding: 12px 14px;
+        margin-bottom: 18px;
+    }
+
+    .member-verify-destination-email {
+        font-size: 14px;
+    }
+
+    .member-verify-actions {
+        gap: 12px;
+        margin-top: 20px;
+        padding-top: 16px;
+    }
+}
+
+@media (max-width: 390px) {
+    .member-verify-otp-input {
+        height: 52px;
+        font-size: 20px;
+        letter-spacing: 6px;
+    }
+
+    .member-verify-icon-badge {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 12px;
+    }
+
+    .member-verify-icon-badge svg {
+        width: 22px;
+        height: 22px;
+    }
+}

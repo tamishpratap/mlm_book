@@ -1,0 +1,36 @@
+/**
+ * Admin Sidebar Styling
+ */
+.sidebar-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 255px;
+    background: #ffffff;
+    box-shadow: 0 0 21px 0 rgba(89, 102, 122, 0.1);
+    z-index: 9;
+    transition: all 0.3s ease;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #2b2b2b;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 5px;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link:hover,
+.sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link.active {
+    background-color: rgba(115, 102, 255, 0.08);
+    color: var(--admin-primary);
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-link svg {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+}

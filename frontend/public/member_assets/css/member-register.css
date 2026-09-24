@@ -1,0 +1,252 @@
+.member-register-page {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.member-register-page .member-auth-shell {
+    min-height: 1010px;
+}
+
+.member-register-page .member-auth-message {
+    margin-top: 62px;
+}
+
+.member-register-page .member-auth-heading {
+    font-size: clamp(43px, 3.35vw, 54px);
+}
+
+.member-register-form-panel {
+    padding-top: 45px;
+    padding-bottom: 45px;
+}
+
+.member-register-form-panel .member-auth-form-heading {
+    margin-bottom: 28px;
+}
+
+.member-register-form {
+    gap: 19px;
+}
+
+.member-register-form .member-auth-field {
+    gap: 8px;
+}
+
+.member-register-form .member-auth-input-wrap {
+    min-height: 61px;
+}
+
+.member-register-form .member-auth-input {
+    height: 59px;
+}
+
+.member-register-form .member-auth-submit,
+.member-register-form .member-auth-google {
+    min-height: 64px;
+}
+
+.member-register-form .member-auth-submit {
+    margin-top: 4px;
+}
+
+.member-register-confirm-help {
+    margin: -1px 2px 0;
+    color: var(--member-text-muted);
+    font-size: 12px;
+}
+
+.member-user-id-feedback {
+    display: flex;
+    align-items: flex-start;
+    min-height: 18px;
+    margin: -1px 2px 0;
+    gap: 6px;
+    color: var(--member-text-muted);
+    font-size: 12px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.member-user-id-feedback::before {
+    flex: 0 0 auto;
+    font-weight: 800;
+}
+
+.member-user-id-feedback.is-checking {
+    color: #61708c;
+}
+
+.member-user-id-feedback.is-checking::before {
+    content: "…";
+}
+
+.member-user-id-feedback.is-available {
+    color: #16834b;
+}
+
+.member-user-id-feedback.is-available::before {
+    content: "✓";
+}
+
+.member-user-id-feedback.is-invalid,
+.member-user-id-feedback.is-network-error {
+    color: var(--member-danger);
+}
+
+.member-user-id-feedback.is-invalid::before,
+.member-user-id-feedback.is-network-error::before {
+    content: "!";
+}
+
+.member-user-id-feedback.is-reserved {
+    color: #a15c06;
+}
+
+.member-user-id-feedback.is-reserved::before {
+    content: "!";
+}
+
+.member-auth-input-wrap.is-available {
+    border-color: #55b985;
+    box-shadow: 0 0 0 4px rgba(22, 131, 75, .09);
+}
+
+.member-auth-input-wrap.is-invalid,
+.member-auth-input-wrap.is-reserved {
+    border-color: var(--member-danger);
+    box-shadow: 0 0 0 4px rgba(220, 53, 69, .08);
+}
+
+.member-register-form .member-auth-submit:disabled {
+    cursor: not-allowed;
+    opacity: .58;
+    box-shadow: none;
+}
+
+.member-register-login-link {
+    margin-top: 22px;
+}
+
+.member-register-security {
+    margin-top: 22px;
+}
+
+@media (max-width: 1250px) {
+    .member-register-page .member-auth-shell {
+        min-height: 930px;
+    }
+
+    .member-register-page .member-auth-message {
+        margin-top: 46px;
+    }
+
+    .member-register-form-panel {
+        padding-top: 34px;
+        padding-bottom: 34px;
+    }
+
+    .member-register-form-panel .member-auth-form-heading {
+        margin-bottom: 23px;
+    }
+
+    .member-register-form {
+        gap: 15px;
+    }
+
+    .member-register-form .member-auth-input-wrap {
+        min-height: 57px;
+    }
+
+    .member-register-form .member-auth-input {
+        height: 55px;
+    }
+
+    .member-register-form .member-auth-submit,
+    .member-register-form .member-auth-google {
+        min-height: 58px;
+    }
+
+    .member-register-login-link,
+    .member-register-security {
+        margin-top: 17px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .member-register-page .member-auth-shell {
+        min-height: 900px;
+    }
+
+    .member-register-page .member-auth-heading {
+        font-size: 35px;
+    }
+
+    .member-register-form-panel {
+        padding: 30px 34px;
+    }
+
+    .member-register-form-panel .member-auth-title {
+        font-size: 33px;
+    }
+
+    .member-register-form-panel .member-auth-subtitle {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 800px) {
+    .member-register-page .member-auth-shell {
+        min-height: 0;
+    }
+
+    .member-register-page .member-auth-message {
+        margin-top: 25px;
+    }
+
+    .member-register-form-panel {
+        padding: 40px 48px 36px;
+    }
+
+    .member-register-form {
+        gap: 19px;
+    }
+
+    .member-register-form .member-auth-input-wrap,
+    .member-register-form .member-auth-submit,
+    .member-register-form .member-auth-google {
+        min-height: 60px;
+    }
+
+    .member-register-form .member-auth-input {
+        height: 58px;
+    }
+}
+
+@media (max-width: 576px) {
+    .member-register-form-panel {
+        padding: 30px 23px 27px;
+    }
+
+    .member-register-form-panel .member-auth-title {
+        font-size: 30px;
+    }
+
+    .member-register-form {
+        gap: 17px;
+    }
+
+    .member-register-form .member-auth-input-wrap,
+    .member-register-form .member-auth-submit,
+    .member-register-form .member-auth-google {
+        min-height: 56px;
+    }
+
+    .member-register-form .member-auth-input {
+        height: 54px;
+    }
+
+    .member-register-login-link,
+    .member-register-security {
+        margin-top: 18px;
+    }
+}

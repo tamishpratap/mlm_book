@@ -1,0 +1,238 @@
+/**
+ * MLM Book Admin - Comprehensive Responsive Stylesheet
+ */
+
+/* ==========================================================================
+   1. DESKTOP & LARGE MONITORS (min-width: 992px)
+   ========================================================================== */
+@media (min-width: 992px) {
+    .page-header {
+        left: var(--admin-sidebar-width, 275px);
+        width: calc(100% - var(--admin-sidebar-width, 275px));
+        transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .sidebar-wrapper {
+        transform: translateX(0);
+        left: 0;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .page-body {
+        margin-left: var(--admin-sidebar-width, 275px);
+        width: calc(100% - var(--admin-sidebar-width, 275px));
+        transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .footer {
+        margin-left: var(--admin-sidebar-width, 275px);
+        width: calc(100% - var(--admin-sidebar-width, 275px));
+        transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Desktop Collapsed Sidebar State */
+    body.sidebar-collapsed .sidebar-wrapper,
+    .page-wrapper.sidebar-collapsed .sidebar-wrapper {
+        transform: translateX(-100%);
+    }
+    
+    body.sidebar-collapsed .page-header,
+    .page-wrapper.sidebar-collapsed .page-header {
+        left: 0;
+        width: 100%;
+    }
+    
+    body.sidebar-collapsed .page-body,
+    .page-wrapper.sidebar-collapsed .page-body {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    body.sidebar-collapsed .footer,
+    .page-wrapper.sidebar-collapsed .footer {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .sidebar-backdrop {
+        display: none !important;
+    }
+    
+    .sidebar-close-btn {
+        display: none !important;
+    }
+}
+
+/* ==========================================================================
+   2. TABLET & MOBILE (< 992px)
+   ========================================================================== */
+@media (max-width: 991.98px) {
+    .page-header {
+        left: 0;
+        width: 100%;
+        padding: 0 16px;
+    }
+    
+    .sidebar-wrapper {
+        left: 0;
+        transform: translateX(-100%);
+        box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
+        z-index: 1050;
+    }
+    
+    .sidebar-wrapper.open {
+        transform: translateX(0);
+    }
+    
+    .page-body {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px 16px;
+    }
+    
+    .footer {
+        margin-left: 0;
+        width: 100%;
+        padding: 16px;
+        text-align: center;
+    }
+    
+    .page-title {
+        margin-bottom: 20px;
+    }
+    
+    .page-title h3 {
+        font-size: 1.35rem;
+    }
+}
+
+/* ==========================================================================
+   3. PHABLET & SMALL TABLET (< 768px)
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    .header-search-container {
+        display: none !important;
+    }
+    
+    .page-header {
+        padding: 0 14px;
+    }
+    
+    .page-body {
+        padding: 16px 12px;
+    }
+    
+    .stat-card {
+        padding: 16px;
+    }
+    
+    .stat-card-value {
+        font-size: 1.45rem;
+    }
+    
+    .stat-card-icon {
+        width: 42px;
+        height: 42px;
+    }
+    .stat-card-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .card-header {
+        padding: 14px 16px;
+    }
+    
+    .card-body {
+        padding: 16px;
+    }
+}
+
+/* ==========================================================================
+   4. MOBILE DEVICES (< 576px)
+   ========================================================================== */
+@media (max-width: 575.98px) {
+    .page-header {
+        padding: 0 10px;
+        height: 64px;
+    }
+    
+    .page-body {
+        margin-top: 64px;
+        min-height: calc(100vh - 64px);
+        padding: 14px 8px;
+    }
+    
+    .sidebar-brand-wrapper {
+        height: 64px;
+    }
+    
+    .profile-info {
+        display: none !important;
+    }
+    
+    .notification-dropdown {
+        width: calc(100vw - 24px);
+        max-width: 320px;
+        right: -50px;
+    }
+    
+    .profile-dropdown {
+        right: 0;
+        min-width: 180px;
+    }
+    
+    .page-title h3 {
+        font-size: 1.2rem;
+    }
+    
+    .breadcrumb {
+        font-size: 0.75rem;
+    }
+    
+    .stat-card-value {
+        font-size: 1.35rem;
+    }
+
+    .admin-pagination-wrapper {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+
+    .pagination .page-link {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 8px;
+        font-size: 0.8125rem;
+    }
+}
+
+/* ==========================================================================
+   5. ULTRA-SMALL PHONES (< 380px)
+   ========================================================================== */
+@media (max-width: 379.98px) {
+    .sidebar-wrapper {
+        width: 250px;
+    }
+    
+    .notification-dropdown {
+        right: -80px;
+    }
+    
+    .brand-title {
+        font-size: 0.95rem;
+    }
+
+    .pagination {
+        gap: 2px;
+    }
+
+    .pagination .page-link {
+        min-width: 28px;
+        height: 28px;
+        padding: 0 6px;
+        font-size: 0.75rem;
+    }
+}

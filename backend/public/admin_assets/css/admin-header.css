@@ -1,0 +1,36 @@
+/**
+ * Admin Header Styling
+ */
+.page-header {
+    position: fixed;
+    top: 0;
+    left: 255px;
+    width: calc(100% - 255px);
+    height: 80px;
+    background-color: #ffffff;
+    z-index: 8;
+    box-shadow: 0 0 20px rgba(8, 21, 66, 0.05);
+    display: flex;
+    align-items: center;
+    padding: 0 30px;
+    transition: all 0.3s ease;
+}
+
+.page-header .header-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.page-header .profile-nav .profile-media {
+    align-items: center;
+    gap: 10px;
+}
+
+.page-header .profile-nav .profile-media img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}

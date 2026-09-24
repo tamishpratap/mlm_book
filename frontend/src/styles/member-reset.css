@@ -1,0 +1,157 @@
+/* ==========================================================================
+   MLM Book — Member Reset Password Styles (Light Theme Authentication System)
+   ========================================================================== */
+
+.member-reset-page {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.member-reset-page .member-auth-shell {
+    min-height: min(840px, calc(100vh - 80px));
+}
+
+.member-reset-form-panel {
+    padding-top: 48px;
+    padding-bottom: 48px;
+}
+
+.member-reset-form-panel .member-auth-form-heading {
+    margin-bottom: 26px;
+}
+
+.member-reset-form-panel .member-auth-subtitle {
+    margin-top: 8px;
+    font-size: 15px;
+}
+
+.member-reset-form {
+    display: grid;
+    gap: 20px;
+}
+
+.member-reset-form .member-auth-field {
+    display: grid;
+    gap: 8px;
+}
+
+.member-reset-form .member-auth-input-wrap {
+    min-height: 62px;
+}
+
+.member-reset-form .member-auth-input {
+    height: 60px;
+}
+
+.member-reset-form .member-auth-submit {
+    min-height: 64px;
+    margin-top: 4px;
+}
+
+.member-reset-page .member-auth-security {
+    margin-top: 26px;
+}
+
+.member-reset-page .member-auth-switch {
+    margin-top: 16px;
+}
+
+/* ==========================================================================
+   Responsive Breakpoints
+   ========================================================================== */
+
+@media (max-width: 1250px) {
+    .member-reset-page .member-auth-shell {
+        min-height: min(780px, calc(100vh - 60px));
+    }
+
+    .member-reset-form-panel {
+        padding: 38px 46px;
+    }
+
+    .member-reset-form-panel .member-auth-form-heading {
+        margin-bottom: 22px;
+    }
+
+    .member-reset-form {
+        gap: 17px;
+    }
+
+    .member-reset-form .member-auth-input-wrap {
+        min-height: 58px;
+    }
+
+    .member-reset-form .member-auth-input {
+        height: 56px;
+    }
+
+    .member-reset-form .member-auth-submit {
+        min-height: 60px;
+    }
+
+    .member-reset-page .member-auth-security {
+        margin-top: 22px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .member-reset-page .member-auth-shell {
+        min-height: 720px;
+    }
+
+    .member-reset-form-panel {
+        padding: 36px 36px;
+    }
+
+    .member-reset-form-panel .member-auth-title {
+        font-size: 34px;
+    }
+}
+
+@media (max-width: 800px) {
+    .member-reset-page .member-auth-shell {
+        min-height: 0;
+    }
+
+    .member-reset-form-panel {
+        padding: 36px 32px 30px;
+    }
+
+    .member-reset-form {
+        gap: 18px;
+    }
+}
+
+@media (max-width: 576px) {
+    .member-reset-form-panel {
+        padding: 28px 20px 24px;
+    }
+
+    .member-reset-form {
+        gap: 16px;
+    }
+
+    .member-reset-form .member-auth-input-wrap {
+        min-height: 54px;
+    }
+
+    .member-reset-form .member-auth-input {
+        height: 52px;
+        font-size: 14px;
+    }
+
+    .member-reset-form .member-auth-submit {
+        min-height: 54px;
+        font-size: 16px;
+    }
+
+    .member-reset-page .member-auth-security {
+        margin-top: 20px;
+        font-size: 12px;
+    }
+
+    .member-reset-page .member-auth-switch {
+        margin-top: 14px;
+        font-size: 13px;
+    }
+}

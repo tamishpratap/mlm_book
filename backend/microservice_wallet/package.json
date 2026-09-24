@@ -1,0 +1,9 @@
+{
+  "name": "redcoin-wallet-microservice",
+  "version": "1.0.0",
+  "description": "Zero-upgrade serverless microservice for executing Web3/Ethers transfers",
+  "main": "api/process-wallet.js",
+  "dependencies": {
+    "ethers": "^5.7.2"
+  }
+}

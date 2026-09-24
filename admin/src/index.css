@@ -1,0 +1,407 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@import "primereact/resources/themes/lara-light-blue/theme.css";
+@import "primereact/resources/primereact.min.css";
+@import "primeicons/primeicons.css";
+
+:root {
+  color-scheme: light;
+  --admin-primary: #176bff;
+  --admin-primary-hover: #0e56db;
+  --admin-dark: #0f172a;
+  --admin-sidebar-bg: #0f172a;
+  --admin-body-bg: #f8fafc;
+  --admin-card-bg: #ffffff;
+  --admin-border-color: #e2e8f0;
+  --admin-text-main: #1e293b;
+  --admin-text-muted: #64748b;
+}
+
+body {
+  margin: 0;
+  color-scheme: light;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--admin-body-bg);
+  color: var(--admin-text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Sidebar scrollbar for dark background */
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Scrollbar for dark container */
+.dark-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 transparent;
+}
+.dark-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 9999px;
+}
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Custom PrimeReact Overrides */
+.p-component {
+  font-family: inherit;
+  font-size: 0.8125rem;
+}
+
+.p-button {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+}
+
+.p-inputtext,
+.p-inputtextarea {
+  font-size: 0.8125rem;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  color-scheme: light;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.p-inputtext::placeholder,
+.p-inputtextarea::placeholder {
+  color: #94a3b8;
+}
+
+.p-inputtext:enabled:focus,
+.p-inputtextarea:enabled:focus {
+  border-color: #176bff;
+  box-shadow: 0 0 0 2px rgba(23, 107, 255, 0.15);
+}
+
+.p-inputtext:disabled,
+.p-inputtextarea:disabled {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+
+/* ==========================================================================
+   Admin Input Prefix/Suffix Spacing Safeguards (Phase 2A)
+   Decisively prevents PrimeReact and theme styles from overriding icon padding.
+   ========================================================================== */
+.has-start-icon,
+.p-inputtext.has-start-icon,
+input.has-start-icon,
+select.has-start-icon {
+  padding-left: 2.5rem !important; /* 40px safe clearance */
+}
+
+.has-start-addon,
+.p-inputtext.has-start-addon,
+input.has-start-addon,
+select.has-start-addon {
+  padding-left: 2.5rem !important; /* 40px safe clearance */
+}
+
+.has-end-icon,
+.p-inputtext.has-end-icon,
+input.has-end-icon,
+select.has-end-icon {
+  padding-right: 2.5rem !important; /* 40px safe clearance */
+}
+
+.has-end-addon,
+.p-inputtext.has-end-addon,
+input.has-end-addon,
+select.has-end-addon {
+  padding-right: 2.5rem !important; /* 40px safe clearance */
+}
+
+.has-both-icons,
+.p-inputtext.has-both-icons {
+  padding-left: 2.5rem !important;
+  padding-right: 2.5rem !important;
+}
+
+.p-dropdown {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  border-color: #cbd5e1;
+  font-size: 0.8125rem;
+  color-scheme: light;
+}
+
+.p-dropdown .p-dropdown-label {
+  color: #0f172a;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+}
+
+.p-dropdown .p-dropdown-label.p-placeholder {
+  color: #94a3b8;
+}
+
+.p-dropdown:not(.p-disabled).p-focus {
+  border-color: #176bff;
+  box-shadow: 0 0 0 2px rgba(23, 107, 255, 0.15);
+}
+
+.p-dropdown-panel {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  color-scheme: light;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+  color: #1e293b;
+  font-size: 0.8125rem;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
+  background-color: #eff6ff;
+  color: #176bff;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* ==========================================================================
+   Global Native Form Baseline Safeguards (Light Theme Consistency)
+   ========================================================================== */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+textarea,
+select {
+  color-scheme: light;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* DataTable typography & contrast */
+.p-datatable .p-datatable-thead > tr > th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.875rem 1rem;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  color: #334155;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 0.875rem 1rem;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Tag / StatusBadge contrast */
+.p-tag {
+  font-weight: 600;
+  border-radius: 0.375rem;
+  font-size: 0.6875rem;
+}
+
+/* Paginator contrast */
+.p-paginator {
+  background-color: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.p-paginator .p-paginator-page,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-last {
+  color: #475569;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  min-width: 2rem;
+  height: 2rem;
+}
+
+.p-paginator .p-paginator-page.p-highlight {
+  background-color: #176bff;
+  color: #ffffff;
+}
+
+/* Dialog Header & Footer */
+.p-dialog .p-dialog-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1.125rem 1.5rem;
+  background-color: #ffffff;
+}
+
+.p-dialog .p-dialog-header .p-dialog-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.p-dialog .p-dialog-content {
+  padding: 1.25rem 1.5rem;
+  background-color: #ffffff;
+  color: #334155;
+}
+
+.p-dialog .p-dialog-footer {
+  border-top: 1px solid #e2e8f0;
+  padding: 1rem 1.5rem;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.p-dialog .p-dialog-footer > .p-button {
+  margin: 0 !important;
+}
+
+/* Global button group spacing safeguard */
+.admin-action-group,
+.p-toolbar-group-start,
+.p-toolbar-group-end,
+.p-toolbar-group-center {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+/* Moderation Actions button stack vertical separation safeguard */
+.moderation-action-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+}
+
+.moderation-action-stack > .p-button {
+  width: 100% !important;
+  min-height: 2.75rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+/* PrimeReact button internal icon spacing */
+.p-button .p-button-icon-left {
+  margin-right: 0.5rem;
+}
+.p-button .p-button-icon-right {
+  margin-left: 0.5rem;
+}
+.p-button.p-button-icon-only .p-button-icon-left,
+.p-button.p-button-icon-only .p-button-icon-right {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+/* Safeguard against orphaned or unattached PrimeReact overlay masks */
+.p-dialog-mask:empty,
+.p-component-overlay:empty {
+  display: none !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+/* Responsive TabView navigation container (Phase 2E) */
+.p-tabview .p-tabview-nav-container {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
+.p-tabview .p-tabview-nav {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  border-bottom: 1px solid #e2e8f0;
+}
+.p-tabview .p-tabview-nav li .p-tabview-nav-link {
+  white-space: nowrap;
+}
+
+/* Responsive Table Container Safeguards (Phase 2E) */
+.admin-table-scroll,
+.p-datatable-wrapper {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Post Inspection Dialog Custom Styling */
+.post-view-dialog.p-dialog {
+  border-radius: 1rem !important;
+  overflow: hidden !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25) !important;
+}
+
+.post-view-dialog .p-dialog-header {
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 1.125rem 1.5rem !important;
+  background-color: #ffffff !important;
+}
+
+.post-view-dialog .p-dialog-content {
+  padding: 1.25rem 1.5rem !important;
+  background-color: #ffffff !important;
+}
+
+.post-view-dialog .p-dialog-footer {
+  border-top: 1px solid #f1f5f9 !important;
+  padding: 1rem 1.5rem !important;
+  background-color: #f8fafc !important;
+}

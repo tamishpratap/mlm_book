@@ -1,0 +1,40 @@
+/**
+ * Admin Cards, Buttons, Forms & Responsive Utilities
+ */
+.card {
+    border-radius: var(--admin-radius);
+    border: 1px solid var(--admin-border-color);
+    box-shadow: var(--admin-shadow);
+    background-color: var(--admin-card-bg);
+}
+
+.btn-primary {
+    background-color: var(--admin-primary) !important;
+    border-color: var(--admin-primary) !important;
+}
+
+.btn-primary:hover {
+    background-color: #5c50e6 !important;
+    border-color: #5c50e6 !important;
+}
+
+.form-control:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 0.25rem rgba(115, 102, 255, 0.25);
+}
+
+@media (max-width: 991.98px) {
+    .page-header {
+        left: 0;
+        width: 100%;
+    }
+    .sidebar-wrapper {
+        left: -255px;
+    }
+    .sidebar-wrapper.open {
+        left: 0;
+    }
+    .page-wrapper.compact-wrapper .page-body-wrapper .page-body {
+        margin-left: 0;
+    }
+}

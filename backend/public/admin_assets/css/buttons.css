@@ -1,0 +1,105 @@
+/**
+ * MLM Book Admin - Button System Stylesheet
+ */
+.btn {
+    border-radius: var(--admin-radius-sm, 8px);
+    padding: 8px 18px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    line-height: 1.4;
+}
+
+.btn-primary {
+    background-color: var(--admin-primary, #176bff);
+    border-color: var(--admin-primary, #176bff);
+    color: #ffffff;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--admin-primary-hover, #0c56db);
+    border-color: var(--admin-primary-hover, #0c56db);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(23, 107, 255, 0.25);
+}
+
+.btn-secondary {
+    background-color: var(--admin-secondary, #7146ed);
+    border-color: var(--admin-secondary, #7146ed);
+    color: #ffffff;
+}
+.btn-secondary:hover, .btn-secondary:focus {
+    background-color: var(--admin-secondary-hover, #5d33d9);
+    border-color: var(--admin-secondary-hover, #5d33d9);
+    color: #ffffff;
+}
+
+.btn-success {
+    background-color: var(--admin-success, #10b981);
+    border-color: var(--admin-success, #10b981);
+    color: #ffffff;
+}
+.btn-success:hover, .btn-success:focus {
+    background-color: var(--admin-success-hover, #059669);
+    border-color: var(--admin-success-hover, #059669);
+    color: #ffffff;
+}
+
+.btn-warning {
+    background-color: var(--admin-warning, #f59e0b);
+    border-color: var(--admin-warning, #f59e0b);
+    color: #ffffff;
+}
+
+.btn-danger {
+    background-color: var(--admin-danger, #ef4444);
+    border-color: var(--admin-danger, #ef4444);
+    color: #ffffff;
+}
+
+.btn-outline-primary {
+    color: var(--admin-primary, #176bff);
+    border-color: var(--admin-primary, #176bff);
+    background: transparent;
+}
+.btn-outline-primary:hover {
+    background-color: var(--admin-primary, #176bff);
+    color: #ffffff;
+}
+
+.btn-outline-secondary {
+    color: var(--admin-text-muted, #64748b);
+    border-color: var(--admin-border-color, #e2e8f0);
+    background: transparent;
+}
+.btn-outline-secondary:hover {
+    background-color: #f1f5f9;
+    color: var(--admin-text-main, #0f172a);
+    border-color: #cbd5e1;
+}
+
+.btn-sm {
+    padding: 5px 12px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: var(--admin-radius-sm, 8px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}

@@ -1,0 +1,36 @@
+/**
+ * MLM Book Admin - Forms Stylesheet
+ */
+.form-label {
+    font-weight: 500;
+    color: var(--admin-text-main, #0f172a);
+    margin-bottom: 6px;
+    font-size: 0.875rem;
+}
+
+.form-control, .form-select {
+    border-radius: var(--admin-radius-sm, 8px);
+    border: 1px solid var(--admin-border-color, #e2e8f0);
+    padding: 9px 14px;
+    font-size: 0.875rem;
+    color: var(--admin-text-main, #0f172a);
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--admin-primary, #176bff);
+    box-shadow: 0 0 0 3px var(--admin-primary-light, rgba(23, 107, 255, 0.08));
+    outline: none;
+}
+
+.form-check-input:checked {
+    background-color: var(--admin-primary, #176bff);
+    border-color: var(--admin-primary, #176bff);
+}
+
+.form-switch .form-check-input {
+    width: 2.2em;
+    height: 1.2em;
+    cursor: pointer;
+}

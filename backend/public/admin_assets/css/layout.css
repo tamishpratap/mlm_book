@@ -1,0 +1,119 @@
+/**
+ * MLM Book Admin - Master Layout Stylesheet
+ */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body.admin-theme {
+    font-family: var(--admin-font-family, 'Inter', sans-serif);
+    background-color: var(--admin-body-bg, #f8fafc);
+    color: var(--admin-text-main, #0f172a);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: relative;
+    width: 100%;
+}
+
+.page-body-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: relative;
+    width: 100%;
+}
+
+.page-body {
+    min-height: calc(100vh - var(--admin-header-height, 70px));
+    margin-top: var(--admin-header-height, 70px);
+    margin-left: var(--admin-sidebar-width, 275px);
+    padding: 28px;
+    background-color: var(--admin-body-bg, #f8fafc);
+    width: calc(100% - var(--admin-sidebar-width, 275px));
+    min-width: 0;
+    flex: 1 0 auto;
+    transition: margin-left 0.25s ease, width 0.25s ease;
+}
+
+.footer {
+    margin-left: var(--admin-sidebar-width, 275px);
+    width: calc(100% - var(--admin-sidebar-width, 275px));
+    padding: 18px 28px;
+    background-color: var(--admin-footer-bg, #ffffff);
+    border-top: 1px solid var(--admin-border-color, #e2e8f0);
+    color: var(--admin-text-muted, #64748b);
+    font-size: 0.875rem;
+    transition: margin-left 0.25s ease, width 0.25s ease;
+}
+
+/* Page Title & Breadcrumb */
+.page-title {
+    margin-bottom: 24px;
+}
+.page-title h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--admin-text-main, #0f172a);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+.page-title p {
+    color: var(--admin-text-muted, #64748b);
+    font-size: 0.875rem;
+    margin-bottom: 0;
+}
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    font-size: 0.8125rem;
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+}
+.breadcrumb-item a {
+    color: var(--admin-text-muted, #64748b);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.breadcrumb-item a:hover {
+    color: var(--admin-primary, #176bff);
+}
+.breadcrumb-item.active {
+    color: var(--admin-primary, #176bff);
+    font-weight: 600;
+}
+
+/* Mobile Sidebar Backdrop */
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 1040;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.sidebar-backdrop.show {
+    display: block;
+    opacity: 1;
+}

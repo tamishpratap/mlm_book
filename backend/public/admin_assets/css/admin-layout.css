@@ -1,0 +1,24 @@
+/**
+ * Admin Layout Styling
+ */
+body.admin-theme {
+    font-family: var(--admin-font-family);
+    background-color: var(--admin-body-bg);
+    color: var(--admin-text-main);
+    margin: 0;
+    padding: 0;
+}
+
+.page-wrapper.compact-wrapper .page-body-wrapper .page-body {
+    min-height: calc(100vh - 80px);
+    margin-top: 80px;
+    padding: 30px;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.footer {
+    padding: 20px;
+    background-color: #ffffff;
+    border-top: 1px solid var(--admin-border-color);
+}

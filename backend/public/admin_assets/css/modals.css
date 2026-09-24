@@ -1,0 +1,113 @@
+/**
+ * MLM Book Admin - Modals & Badges Stylesheet
+ */
+.modal-content {
+    border-radius: var(--admin-radius, 12px);
+    border: 1px solid var(--admin-border-color, #e2e8f0);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--admin-border-subtle, #f1f5f9);
+    padding: 16px 20px;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--admin-border-subtle, #f1f5f9);
+    padding: 14px 20px;
+}
+
+/* Light Badge Variants */
+.badge-light-primary {
+    background-color: var(--admin-primary-light, rgba(23, 107, 255, 0.08));
+    color: var(--admin-primary, #176bff);
+}
+
+.badge-light-secondary {
+    background-color: var(--admin-secondary-light, rgba(113, 70, 237, 0.08));
+    color: var(--admin-secondary, #7146ed);
+}
+
+.badge-light-success {
+    background-color: var(--admin-success-light, rgba(16, 185, 129, 0.1));
+    color: var(--admin-success, #10b981);
+}
+
+.badge-light-warning {
+    background-color: var(--admin-warning-light, rgba(245, 158, 11, 0.12));
+    color: var(--admin-warning, #f59e0b);
+}
+
+.badge-light-danger {
+    background-color: var(--admin-danger-light, rgba(239, 68, 68, 0.1));
+    color: var(--admin-danger, #ef4444);
+}
+
+.badge-light-info {
+    background-color: var(--admin-info-light, rgba(6, 182, 212, 0.1));
+    color: var(--admin-info, #06b6d4);
+}
+
+/* ========================================================
+   MODAL VIEWPORT CONSTRAINT & INTERNAL SCROLLING
+   ======================================================== */
+.modal-dialog-scrollable {
+    max-height: calc(100dvh - 2rem);
+    height: calc(100% - 2rem);
+}
+
+.modal-dialog-scrollable .modal-content {
+    max-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-dialog-scrollable .modal-content > form {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.modal-dialog-scrollable .modal-header {
+    flex-shrink: 0;
+}
+
+.modal-dialog-scrollable .modal-body {
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: calc(100dvh - 180px);
+}
+
+.modal-dialog-scrollable .modal-footer {
+    flex-shrink: 0;
+    background-color: #fff;
+    position: relative;
+    z-index: 2;
+}
+
+/* Smooth custom scrollbar for modal body */
+.modal-dialog-scrollable .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-dialog-scrollable .modal-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+

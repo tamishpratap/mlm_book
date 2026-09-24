@@ -1,0 +1,439 @@
+/* ==========================================================================
+   MLM BOOK - MEMBER PEOPLE STYLESHEET
+   Theme: Blue-Purple Glassmorphism Premium Design System
+   ========================================================================== */
+
+.people-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ========================================================
+   MLM Book - New Connections Filter Bar Premium Styles
+   ======================================================== */
+.connection-filter-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    background: #ffffff;
+    border: 1px solid var(--color-border-soft, #edf1f7);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-sm, 0 2px 10px rgba(34, 49, 78, 0.035));
+    box-sizing: border-box;
+}
+
+.connection-filter-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+/* Search Box Container */
+.connection-search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    height: 46px;
+    padding: 0;
+    border: 1px solid var(--color-border-soft, #edf1f7);
+    border-radius: var(--radius-md, 14px);
+    background: var(--color-surface-alt, #f8faff);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.connection-search-box:focus-within {
+    background: #ffffff;
+    border-color: var(--color-primary, #4f7df3);
+    box-shadow: 0 0 0 4px rgba(79, 125, 243, 0.12);
+}
+
+.connection-search-box > svg,
+.connection-search-box > i {
+    position: absolute;
+    left: 14px;
+    width: 18px;
+    height: 18px;
+    color: var(--color-text-muted, #94a3b8);
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+.connection-search-box input[type="search"],
+.connection-search-box input {
+    width: 100%;
+    height: 100%;
+    padding: 0 38px 0 42px !important;
+    margin: 0 !important;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    font-size: 13.5px;
+    font-weight: 450;
+    color: var(--color-text-main, #101828);
+    box-shadow: none !important;
+    border-radius: var(--radius-md, 14px) !important;
+    box-sizing: border-box;
+}
+
+.connection-search-box input::placeholder {
+    color: var(--color-text-muted, #94a3b8);
+    opacity: 1;
+}
+
+.connection-search-clear {
+    position: absolute;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    color: var(--color-text-muted, #94a3b8);
+    text-decoration: none;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.connection-search-clear:hover {
+    color: var(--color-danger, #ff4168);
+    background: rgba(255, 65, 104, 0.1);
+}
+
+.connection-search-clear svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Country Selector Container */
+.connection-country-select-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 200px;
+    flex-shrink: 0;
+    height: 46px;
+    padding: 0;
+    border: 1px solid var(--color-border-soft, #edf1f7);
+    border-radius: var(--radius-md, 14px);
+    background: var(--color-surface-alt, #f8faff);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.connection-country-select-wrap:focus-within {
+    background: #ffffff;
+    border-color: var(--color-primary, #4f7df3);
+    box-shadow: 0 0 0 4px rgba(79, 125, 243, 0.12);
+}
+
+.connection-country-select-wrap > svg,
+.connection-country-select-wrap > i {
+    position: absolute;
+    left: 14px;
+    width: 17px;
+    height: 17px;
+    color: var(--color-text-muted, #94a3b8);
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+.connection-country-select-wrap select {
+    width: 100%;
+    height: 100%;
+    padding: 0 32px 0 40px !important;
+    margin: 0 !important;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-main, #101828);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    box-shadow: none !important;
+    box-sizing: border-box;
+}
+
+.connection-select-arrow {
+    position: absolute;
+    right: 12px;
+    pointer-events: none;
+    width: 15px !important;
+    height: 15px !important;
+    color: var(--color-text-muted, #94a3b8) !important;
+}
+
+/* Search Submit Button */
+.connection-search-btn {
+    height: 46px;
+    padding: 0 20px;
+    border-radius: var(--radius-md, 14px);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.connection-search-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Quick Filters Container */
+.connection-quick-filters {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border-soft, #edf1f7);
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.connection-quick-filter-pills {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Quick Filter Buttons (Pills) */
+.connection-quick-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--color-border-soft, #e2e8f0);
+    background: var(--color-surface-alt, #f8faff);
+    color: var(--color-text-secondary, #64748b);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.connection-quick-btn:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+.connection-quick-btn svg {
+    width: 15px;
+    height: 15px;
+    color: currentColor;
+}
+
+.connection-quick-btn.is-active {
+    background: var(--color-primary-soft, #edf3ff);
+    color: var(--color-primary, #4f7df3);
+    border-color: rgba(79, 125, 243, 0.35);
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(79, 125, 243, 0.12);
+}
+
+.connection-quick-btn.is-active svg {
+    color: var(--color-primary, #4f7df3);
+}
+
+/* Reset Filters Control */
+.connection-clear-filters-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--color-text-muted, #64748b);
+    text-decoration: none;
+    background: transparent;
+    border: 1px dashed var(--color-border, #cbd5e1);
+    transition: all 0.2s ease;
+}
+
+.connection-clear-filters-link:hover {
+    color: var(--color-danger, #ff4168);
+    border-color: var(--color-danger, #ff4168);
+    background: rgba(255, 65, 104, 0.05);
+}
+
+.connection-clear-filters-link svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 992px) {
+    .connection-country-select-wrap {
+        width: 180px;
+    }
+}
+
+@media (max-width: 767px) {
+    .connection-filter-card {
+        padding: 16px;
+        gap: 14px;
+    }
+
+    .connection-filter-main {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .connection-search-box {
+        width: 100%;
+        height: 46px;
+    }
+
+    .connection-country-select-wrap {
+        width: 100%;
+        height: 46px;
+    }
+
+    .connection-search-btn {
+        width: 100%;
+        justify-content: center;
+        height: 46px;
+    }
+
+    .connection-quick-filters {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .connection-quick-filter-pills {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        flex-wrap: nowrap;
+    }
+
+    .connection-quick-btn {
+        flex-shrink: 0;
+    }
+
+    .connection-clear-filters-link {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Mutual Tag */
+.mutual-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--color-primary-soft, #edf3ff);
+    color: var(--color-primary, #4f7df3);
+    font-size: 11.5px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.mutual-tag svg {
+    width: 13px;
+    height: 13px;
+    color: var(--color-primary, #4f7df3);
+}
+
+/* Public Profile Banner & Hero Metrics Bar */
+.public-member-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.profile-metrics-bar {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 8px;
+    padding: 16px;
+    border-radius: var(--radius-lg, 18px);
+    background: #ffffff;
+    border: 1px solid var(--color-border-soft, #edf1f7);
+    box-shadow: var(--shadow-sm, 0 2px 8px rgba(34, 49, 78, 0.035));
+    margin-top: 16px;
+}
+
+.profile-stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px;
+    border-radius: var(--radius-sm, 10px);
+    background: var(--color-surface-alt, #f4f6fa);
+    transition: all 0.2s ease;
+}
+
+.profile-stat-box:hover {
+    background: var(--color-primary-soft, #edf3ff);
+    transform: translateY(-2px);
+}
+
+.profile-stat-box strong {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--color-text, #1d2738);
+    line-height: 1.2;
+}
+
+.profile-stat-box span {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary, #687386);
+    margin-top: 2px;
+}
+
+@media (max-width: 992px) {
+    .profile-metrics-bar {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .profile-metrics-bar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Action Buttons & Badges */
+.member-button--danger {
+    background: linear-gradient(135deg, var(--color-danger, #ff4168), #dc2626);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(255, 65, 104, 0.25);
+}
+
+.member-button--danger:hover {
+    background: linear-gradient(135deg, #e03055, #b91c1c);
+    color: #ffffff;
+    transform: translateY(-1px);
+}

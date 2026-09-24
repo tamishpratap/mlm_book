@@ -1,0 +1,62 @@
+/**
+ * MLM Book Admin - Design Tokens & Variables
+ */
+:root {
+    /* Typography */
+    --admin-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    
+    /* Brand & Accent Colors */
+    --admin-primary: #176bff;
+    --admin-primary-hover: #0c56db;
+    --admin-primary-light: rgba(23, 107, 255, 0.08);
+    --admin-primary-border: rgba(23, 107, 255, 0.2);
+    
+    --admin-secondary: #7146ed;
+    --admin-secondary-hover: #5d33d9;
+    --admin-secondary-light: rgba(113, 70, 237, 0.08);
+    
+    --admin-success: #10b981;
+    --admin-success-hover: #059669;
+    --admin-success-light: rgba(16, 185, 129, 0.1);
+    
+    --admin-info: #06b6d4;
+    --admin-info-hover: #0891b2;
+    --admin-info-light: rgba(6, 182, 212, 0.1);
+    
+    --admin-warning: #f59e0b;
+    --admin-warning-hover: #d97706;
+    --admin-warning-light: rgba(245, 158, 11, 0.12);
+    
+    --admin-danger: #ef4444;
+    --admin-danger-hover: #dc2626;
+    --admin-danger-light: rgba(239, 68, 68, 0.1);
+
+    /* Backgrounds & Surfaces */
+    --admin-body-bg: #f8fafc;
+    --admin-card-bg: #ffffff;
+    --admin-sidebar-bg: #ffffff;
+    --admin-header-bg: #ffffff;
+    --admin-footer-bg: #ffffff;
+
+    /* Text & Content */
+    --admin-text-main: #0f172a;
+    --admin-text-secondary: #334155;
+    --admin-text-muted: #64748b;
+    --admin-text-light: #94a3b8;
+
+    /* Borders & Dividers */
+    --admin-border-color: #e2e8f0;
+    --admin-border-subtle: #f1f5f9;
+
+    /* Shadows */
+    --admin-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+    --admin-card-shadow-hover: 0 8px 20px -4px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.03);
+    --admin-dropdown-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+
+    /* Dimensions */
+    --admin-sidebar-width: 275px;
+    --admin-header-height: 70px;
+    --admin-radius: 12px;
+    --admin-radius-sm: 8px;
+    --admin-radius-lg: 16px;
+}
