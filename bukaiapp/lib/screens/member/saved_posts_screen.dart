@@ -354,7 +354,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                             : ListView.separated(
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 itemCount: reactorsList.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                                separatorBuilder: (_, _) => const SizedBox(height: 10),
                                 itemBuilder: (_, i) {
                                   final r = reactorsList[i];
                                   final name = r['name']?.toString() ?? 'Member';
@@ -690,7 +690,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                         width: 44,
                         height: 44,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildFallbackAvatar(initials),
+                        errorBuilder: (_, _, _) => _buildFallbackAvatar(initials),
                       )
                     : _buildFallbackAvatar(initials),
               ),
@@ -1023,7 +1023,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                         width: 36,
                         height: 36,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildFallbackUserAvatar(userInitials),
+                        errorBuilder: (_, _, _) => _buildFallbackUserAvatar(userInitials),
                       )
                     : _buildFallbackUserAvatar(userInitials),
               ),

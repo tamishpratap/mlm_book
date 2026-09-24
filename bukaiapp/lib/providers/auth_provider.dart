@@ -109,8 +109,11 @@ class AuthProvider extends ChangeNotifier {
     required String name,
     required String userId,
     String? introducerId,
+    String? phone,
+    String? countryCode,
     required String email,
     required String password,
+    String? passwordConfirmation,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -119,10 +122,12 @@ class AuthProvider extends ChangeNotifier {
     final res = await ApiClient.post('/auth/member/register', {
       'name': name.trim(),
       'user_id': userId.trim(),
-      'introducer_id': introducerId?.trim(),
+      if (introducerId != null && introducerId.trim().isNotEmpty) 'introducer_id': introducerId.trim(),
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+      if (countryCode != null && countryCode.trim().isNotEmpty) 'country_code': countryCode.trim(),
       'email': email.trim(),
       'password': password,
-      'password_confirmation': password,
+      'password_confirmation': passwordConfirmation ?? password,
     });
 
     _isLoading = false;
@@ -170,6 +175,27 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } else {
       _errorMessage = res.message ?? 'Verification failed.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Send Forgot Password Reset Link
+  Future<bool> sendPasswordReset(String email) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final res = await ApiClient.post('/auth/member/forgot-password', {
+      'email': email.trim(),
+    });
+
+    _isLoading = false;
+    if (res.success) {
+      notifyListeners();
+      return true;
+    } else {
+      _errorMessage = res.message ?? 'Failed to send password reset link.';
       notifyListeners();
       return false;
     }
