@@ -25,7 +25,6 @@ class VideoPublishingAndVisibilityRuleTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['content_moderation.enabled' => false]);
     }
 
     protected function tearDown(): void

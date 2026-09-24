@@ -2,10 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Image, Video, FileImage, FileVideo, Send } from 'lucide-react';
 import storyApi from '../../api/storyApi';
 import { ModalPortal } from '../common/ModalPortal';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { useVideoModeration } from '../../hooks/useVideoModeration';
-import { MODERATION_CONTEXTS, POLICY_ACTIONS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../moderation/ImageModerationScanModal';
 
 export function CreateStoryModal({ isOpen, onClose, onStoryCreated }) {
   const [caption, setCaption] = useState('');
@@ -14,24 +10,6 @@ export function CreateStoryModal({ isOpen, onClose, onStoryCreated }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
-
-  const {
-    scanImage,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: MODERATION_CONTEXTS.STORY_IMAGE });
-
-  const {
-    scanVideo,
-    cancel: cancelVideoModeration,
-  } = useVideoModeration({ context: MODERATION_CONTEXTS.STORY_IMAGE });
-
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
-
   // Object URL cleanup on unmount
   useEffect(() => {
     return () => {
@@ -84,7 +62,6 @@ export function CreateStoryModal({ isOpen, onClose, onStoryCreated }) {
 
   const handleRemoveMedia = () => {
     setMediaFile(null);
-    resetModeration();
     if (mediaPreviewUrl) {
       URL.revokeObjectURL(mediaPreviewUrl);
       setMediaPreviewUrl(null);
@@ -109,63 +86,6 @@ export function CreateStoryModal({ isOpen, onClose, onStoryCreated }) {
 
     setIsSubmitting(true);
     setError(null);
-
-    // Pre-flight Client-Side Moderation (Images)
-    const isImage = mediaFile && mediaFile.type && mediaFile.type.startsWith('image/');
-
-    if (isImage) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-
-      try {
-        const decision = await scanImage(mediaFile);
-
-        if (decision.action === POLICY_ACTIONS.BLOCK) {
-          setScanStatus('BLOCKED');
-          setError(decision.userMessage);
-          setIsSubmitting(false);
-          return;
-        }
-
-        if (decision.isSystemError) {
-          setScanStatus('ERROR');
-          setError(decision.userMessage);
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Image passed moderation successfully
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setError('Unable to verify image safety. Please try again.');
-        setIsSubmitting(false);
-        return;
-      }
-    } else if (isVideo) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-
-      try {
-        const decision = await scanVideo(mediaFile);
-
-        if (decision.action === POLICY_ACTIONS.BLOCK) {
-          setScanStatus('BLOCKED');
-          setError(decision.userMessage);
-          setIsSubmitting(false);
-          return;
-        }
-
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setError('Unable to verify video safety. Please try again.');
-        setIsSubmitting(false);
-        return;
-      }
-    }
 
     const formData = new FormData();
     formData.append('media', mediaFile);
@@ -330,29 +250,6 @@ export function CreateStoryModal({ isOpen, onClose, onStoryCreated }) {
         </form>
       </section>
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSubmitting(false);
-        }}
-        onRetry={() => {
-          handleSubmit(new Event('submit'));
-        }}
-        onAcknowledge={() => {
-          handleRemoveMedia();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSubmitting(false);
-        }}
-      />
     </ModalPortal>
   );
 }

@@ -16,7 +16,6 @@ class BusinessPageMediaTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['content_moderation.enabled' => false]);
     }
 
     public function test_business_page_owner_can_upload_and_replace_profile_photo(): void

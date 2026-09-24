@@ -16,7 +16,6 @@ class WatchVideoShareFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['content_moderation.enabled' => false]);
     }
 
     private function createMember(): Member

@@ -226,15 +226,13 @@ class BusinessInboxController extends Controller
             $filename = sprintf('attach_%d_%d_%s.%s', $member->id, time(), Str::random(6), $ext);
 
             $attachmentType = str_starts_with($mime, 'image/') ? 'image' : 'document';
-            $moderationContext = $attachmentType === 'image' ? 'MESSAGE_IMAGE' : null;
 
             $attachmentPath = app(\App\Http\Controllers\ImageCompressionController::class)->compressAndStore(
                 $file,
                 $directory,
                 'general',
                 $filename,
-                'public_uploads',
-                $moderationContext
+                'public_uploads'
             );
         }
 

@@ -43,9 +43,7 @@ import MemberAvatar from '../../components/common/MemberAvatar';
 import AccountVerificationModal from '../../components/verification/AccountVerificationModal';
 import AddFundsToEventCampaignModal from '../../components/events/AddFundsToEventCampaignModal';
 import PaidEventQualificationModal from '../../components/events/PaidEventQualificationModal';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { MODERATION_CONTEXTS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../../components/moderation/ImageModerationScanModal';
+
 import { AddFundModal } from '../../components/business/ads/AddFundModal';
 import { ModalPortal } from '../../components/common/ModalPortal';
 
@@ -204,18 +202,7 @@ export function EventDetailPage() {
   const [postError, setPostError] = useState(null);
   const fileInputRef = useRef(null);
 
-  const {
-    scanImages,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: MODERATION_CONTEXTS.POST_IMAGE });
 
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
-  const [blockedItems, setBlockedItems] = useState([]);
 
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [verifyMessage, setVerifyMessage] = useState('Please verify your phone number first before proceeding.');
@@ -506,15 +493,6 @@ export function EventDetailPage() {
     }
   };
 
-  const handleRemoveBlockedPostMedia = () => {
-    setPostMedia(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    setBlockedItems([]);
-    setIsScanModalOpen(false);
-    setScanStatus('IDLE');
-    resetModeration();
-  };
-
   const handlePostSubmit = async (e) => {
     e.preventDefault();
     if (isPosting || (!postBody.trim() && !postMedia)) return;
@@ -522,36 +500,6 @@ export function EventDetailPage() {
     if (postMedia && postMedia.type && postMedia.type.startsWith('video/')) {
       setPostError('Videos can only be posted from a Business Page.');
       return;
-    }
-    if (postMedia && postMedia.type && postMedia.type.startsWith('image/')) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-      setBlockedItems([]);
-
-      try {
-        const batchSummary = await scanImages([postMedia]);
-
-        if (!batchSummary.allAllowed) {
-          setScanStatus('BLOCKED');
-          setBlockedItems(batchSummary.blockedItems);
-          const blockedNames = batchSummary.blockedItems.map((b) => b.fileName).join(', ');
-          setPostError(`Restricted content detected in photo: ${blockedNames}. Please replace the flagged photo.`);
-          return;
-        }
-
-        if (batchSummary.error) {
-          setScanStatus('ERROR');
-          setPostError('Failed to verify photo against safety standards. Please try again.');
-          return;
-        }
-
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setPostError('Verification encountered an unexpected error. Please try again.');
-        return;
-      }
     }
 
     setIsPosting(true);
@@ -1743,24 +1691,6 @@ export function EventDetailPage() {
         />
       )}
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        blockedItems={blockedItems}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-        }}
-        onRetry={() => {
-          handlePostSubmit(new Event('submit'));
-        }}
-        onAcknowledge={handleRemoveBlockedPostMedia}
-      />
     </div>
   );
 }

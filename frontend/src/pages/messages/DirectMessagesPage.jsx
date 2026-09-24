@@ -14,9 +14,7 @@ import directMessageApi from '../../api/directMessageApi';
 import VerifiedBadge from '../../components/common/VerifiedBadge';
 import MemberAvatar from '../../components/common/MemberAvatar';
 import '../../styles/member-chat.css';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { MODERATION_CONTEXTS, POLICY_ACTIONS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../../components/moderation/ImageModerationScanModal';
+
 
 function formatRelativeTime(dateString) {
   if (!dateString) return '';
@@ -53,17 +51,7 @@ export function DirectMessagesPage() {
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  const {
-    scanImage,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: MODERATION_CONTEXTS.MESSAGE_IMAGE });
 
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
 
   // Fetch initial conversations and active partner
   const fetchMessagesData = useCallback(() => {
@@ -139,39 +127,7 @@ export function DirectMessagesPage() {
     setIsSending(true);
     setSendError(null);
 
-    // Pre-flight Client-Side Moderation: Images only; PDFs, DOCs, and other files bypass moderation
-    const isImageAttachment = attachmentFile && attachmentFile.type && attachmentFile.type.startsWith('image/');
-    if (isImageAttachment) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
 
-      try {
-        const decision = await scanImage(attachmentFile);
-
-        if (decision.action === POLICY_ACTIONS.BLOCK) {
-          setScanStatus('BLOCKED');
-          setSendError(decision.userMessage);
-          setIsSending(false);
-          return;
-        }
-
-        if (decision.isSystemError) {
-          setScanStatus('ERROR');
-          setSendError(decision.userMessage);
-          setIsSending(false);
-          return;
-        }
-
-        // Passed moderation successfully
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setSendError('Unable to verify image safety. Please try again.');
-        setIsSending(false);
-        return;
-      }
-    }
 
     const formData = new FormData();
     if (messageText.trim()) formData.append('message', messageText.trim());
@@ -644,7 +600,6 @@ export function DirectMessagesPage() {
                     type="button"
                     onClick={() => {
                       setAttachmentFile(null);
-                      resetModeration();
                       if (fileInputRef.current) fileInputRef.current.value = '';
                     }}
                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -715,31 +670,6 @@ export function DirectMessagesPage() {
         )}
       </main>
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSending(false);
-        }}
-        onRetry={() => {
-          handleSendMessage(new Event('submit'));
-        }}
-        onAcknowledge={() => {
-          setAttachmentFile(null);
-          resetModeration();
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSending(false);
-        }}
-      />
     </div>
   );
 }

@@ -406,15 +406,13 @@ class ProfileController extends Controller
             } while (File::exists($fullDirectory.DIRECTORY_SEPARATOR.$filename));
 
             $type = $prefix === 'cover' ? 'cover' : 'avatar';
-            $context = $prefix === 'cover' ? 'PROFILE_COVER' : 'PROFILE_PHOTO';
 
             return app(\App\Http\Controllers\ImageCompressionController::class)->compressAndStore(
                 $photo,
                 $directory,
                 $type,
                 $filename,
-                'public_uploads',
-                $context
+                'public_uploads'
             );
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;

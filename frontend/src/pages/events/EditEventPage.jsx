@@ -4,9 +4,7 @@ import { DollarSign, Crop, X } from 'lucide-react';
 import eventApi from '../../api/eventApi';
 import useAuth from '../../hooks/useAuth';
 import { ImageAdjustmentModal } from '../../components/posts/modals/ImageAdjustmentModal';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { MODERATION_CONTEXTS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../../components/moderation/ImageModerationScanModal';
+
 
 function getTodayDateString() {
   const d = new Date();
@@ -62,18 +60,7 @@ export function EditEventPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const {
-    scanImages,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: MODERATION_CONTEXTS.POST_IMAGE });
 
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
-  const [blockedItems, setBlockedItems] = useState([]);
   const [minDate, setMinDate] = useState(() => getTodayDateString());
   const [currentMinTime, setCurrentMinTime] = useState(() => getNextMinuteTimeString());
   const [campaign, setCampaign] = useState(null);
@@ -200,14 +187,6 @@ export function EditEventPage() {
     }
   };
 
-  const handleRemoveBlockedFiles = () => {
-    handleRemoveCover();
-    setBlockedItems([]);
-    setIsScanModalOpen(false);
-    setScanStatus('IDLE');
-    resetModeration();
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -226,41 +205,6 @@ export function EditEventPage() {
       const currentHHMM = `${String(currentNow.getHours()).padStart(2, '0')}:${String(currentNow.getMinutes()).padStart(2, '0')}`;
       if (!formData.start_time || formData.start_time <= currentHHMM) {
         setError('Start time must be later than the current time when the event starts today.');
-        return;
-      }
-    }
-
-    // Pre-flight Client-Side Image Moderation
-    if (coverPhoto) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-      setBlockedItems([]);
-
-      try {
-        const batchSummary = await scanImages([coverPhoto]);
-
-        if (!batchSummary.allAllowed) {
-          setScanStatus('BLOCKED');
-          setBlockedItems(batchSummary.blockedItems);
-          const blockedNames = batchSummary.blockedItems.map((b) => b.fileName).join(', ');
-          setError(`Restricted content detected in event cover: ${blockedNames}. Please replace the flagged photo.`);
-          setIsSubmitting(false);
-          return;
-        }
-
-        if (batchSummary.error) {
-          setScanStatus('ERROR');
-          setError('Failed to verify cover image against safety standards. Please try again.');
-          setIsSubmitting(false);
-          return;
-        }
-
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setError('Verification encountered an unexpected error. Please try again.');
-        setIsSubmitting(false);
         return;
       }
     }
@@ -678,25 +622,6 @@ export function EditEventPage() {
         />
       )}
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        blockedItems={blockedItems}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSubmitting(false);
-        }}
-        onRetry={() => {
-          handleSubmit(new Event('submit'));
-        }}
-        onAcknowledge={handleRemoveBlockedFiles}
-      />
     </div>
   );
 }

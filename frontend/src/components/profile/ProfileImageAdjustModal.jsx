@@ -11,9 +11,7 @@ import {
   Trash2,
   AlertCircle,
 } from 'lucide-react';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { MODERATION_CONTEXTS, POLICY_ACTIONS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../moderation/ImageModerationScanModal';
+
 
 export function ProfileImageAdjustModal({
   isOpen,
@@ -47,20 +45,7 @@ export function ProfileImageAdjustModal({
   // Target aspect ratio: 1:1 for Avatar, ~3.2:1 for Cover (matching Profile Header banner)
   const targetRatio = isAvatar ? 1 : 16 / 5; // 3.2:1
 
-  const moderationContext = isAvatar ? MODERATION_CONTEXTS.PROFILE_PHOTO : MODERATION_CONTEXTS.PROFILE_COVER;
 
-  const {
-    scanImage,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: moderationContext });
-
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
-  const [localErrorMessage, setLocalErrorMessage] = useState(null);
 
   // Load image safely using FileReader
   useEffect(() => {
@@ -246,8 +231,6 @@ export function ProfileImageAdjustModal({
     if (isUploading) return;
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    resetModeration();
-    setLocalErrorMessage(null);
   };
 
   // Generate cropped image Blob and trigger save
@@ -311,34 +294,7 @@ export function ProfileImageAdjustModal({
             lastModified: Date.now(),
           });
 
-          // Pre-flight Client-Side Image Moderation on final cropped export
-          setIsScanModalOpen(true);
-          setScanStatus('SCANNING');
-          setLocalErrorMessage(null);
-
-          try {
-            const decision = await scanImage(croppedFile);
-
-            if (decision.action === POLICY_ACTIONS.BLOCK) {
-              setScanStatus('BLOCKED');
-              setLocalErrorMessage(decision.userMessage);
-              return;
-            }
-
-            if (decision.isSystemError) {
-              setScanStatus('ERROR');
-              setLocalErrorMessage(decision.userMessage);
-              return;
-            }
-
-            // Image passed moderation successfully
-            setIsScanModalOpen(false);
-            setScanStatus('IDLE');
-            onSave?.(croppedFile);
-          } catch {
-            setScanStatus('ERROR');
-            setLocalErrorMessage('Unable to verify image safety. Please try again.');
-          }
+          onSave?.(croppedFile);
         },
         mimeType,
         quality
@@ -359,7 +315,6 @@ export function ProfileImageAdjustModal({
     type,
     isUploading,
     onSave,
-    scanImage,
   ]);
 
   if (!isOpen || !file) return null;
@@ -486,7 +441,7 @@ export function ProfileImageAdjustModal({
           </p>
 
           {/* Error Banner if any */}
-          {(errorMessage || localErrorMessage) && (
+          {errorMessage && (
             <div
               style={{
                 padding: '12px 16px',
@@ -502,7 +457,7 @@ export function ProfileImageAdjustModal({
               role="alert"
             >
               <AlertCircle size={16} style={{ flexShrink: 0 }} />
-              <span>{errorMessage || localErrorMessage}</span>
+              <span>{errorMessage}</span>
             </div>
           )}
 
@@ -788,26 +743,6 @@ export function ProfileImageAdjustModal({
         </footer>
       </div>
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-        }}
-        onRetry={() => {
-          handleSave();
-        }}
-        onAcknowledge={() => {
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-        }}
-      />
     </ModalPortal>
   );
 }

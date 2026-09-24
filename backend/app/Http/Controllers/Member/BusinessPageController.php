@@ -580,15 +580,13 @@ class BusinessPageController extends Controller
                     $directory,
                     'post',
                     $filename,
-                    'public_uploads',
-                    'BUSINESS_IMAGE'
+                    'public_uploads'
                 );
             } else {
                 $mediaPath = app(\App\Http\Controllers\VideoCompressionController::class)->stageAndStore(
                     $media,
                     $directory,
-                    $filename,
-                    \App\Services\ContentModeration\ContentModerationService::CONTEXT_BUSINESS_VIDEO
+                    $filename
                 );
             }
         }
@@ -1096,8 +1094,7 @@ class BusinessPageController extends Controller
             $directory,
             $type,
             $fileName,
-            'public_uploads',
-            'BUSINESS_IMAGE'
+            'public_uploads'
         );
 
         return $storedPath ?: ($directory.'/'.$fileName);

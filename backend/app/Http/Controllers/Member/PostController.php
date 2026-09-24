@@ -98,8 +98,7 @@ class PostController extends Controller
                     $directory,
                     'post',
                     $filename,
-                    'public_uploads',
-                    'POST_IMAGE'
+                    'public_uploads'
                 );
             }
 

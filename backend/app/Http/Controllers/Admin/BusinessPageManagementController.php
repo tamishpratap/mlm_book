@@ -286,8 +286,7 @@ class BusinessPageManagementController extends Controller
                 $directory,
                 $type,
                 $fileName,
-                'public_uploads',
-                \App\Services\ContentModeration\ContentModerationService::CONTEXT_BUSINESS_IMAGE
+                'public_uploads'
             );
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;

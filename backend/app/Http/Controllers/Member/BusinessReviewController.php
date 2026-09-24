@@ -60,8 +60,7 @@ class BusinessReviewController extends Controller
                         $directory,
                         'review',
                         $filename,
-                        'public_uploads',
-                        'REVIEW_IMAGE'
+                        'public_uploads'
                     );
                     if ($savedPath) {
                         $photoPaths[] = $savedPath;

@@ -6,10 +6,7 @@ import businessApi from '../../api/businessApi';
 import { getAvatarUrl } from '../../utils/assetHelper';
 import { ImageAdjustmentModal } from './modals/ImageAdjustmentModal';
 import { ModalPortal } from '../common/ModalPortal';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { useVideoModeration } from '../../hooks/useVideoModeration';
-import { MODERATION_CONTEXTS, POLICY_ACTIONS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../moderation/ImageModerationScanModal';
+
 
 function getInitials(name) {
   if (!name) return 'M';
@@ -40,26 +37,7 @@ export function PostComposer({
   const [composerAvatarError, setComposerAvatarError] = useState(false);
   const canUploadVideo = allowVideo !== undefined ? Boolean(allowVideo) : Boolean(businessPage);
 
-  const moderationContext = businessPage
-    ? MODERATION_CONTEXTS.BUSINESS_IMAGE
-    : (communitySlug ? MODERATION_CONTEXTS.COMMUNITY_IMAGE : MODERATION_CONTEXTS.POST_IMAGE);
 
-  const {
-    scanImage,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: moderationContext });
-
-  const {
-    scanVideo,
-    cancel: cancelVideoModeration,
-  } = useVideoModeration({ context: moderationContext });
-
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
 
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
@@ -145,7 +123,6 @@ export function PostComposer({
     setRawImageFile(null);
     setMediaFile(null);
     setAdjustmentState(null);
-    resetModeration();
     if (mediaPreviewUrl) {
       URL.revokeObjectURL(mediaPreviewUrl);
       setMediaPreviewUrl(null);
@@ -168,8 +145,6 @@ export function PostComposer({
     setIsSubmitting(true);
     setFeedback({ type: '', message: '' });
 
-    // Pre-flight Client-Side Moderation (Images & Videos)
-    const isImageMedia = mediaFile && mediaFile.type && mediaFile.type.startsWith('image/');
     const isVideoMedia = mediaFile && mediaFile.type && mediaFile.type.startsWith('video/');
 
     if (!canUploadVideo && isVideoMedia) {
@@ -179,75 +154,6 @@ export function PostComposer({
       });
       setIsSubmitting(false);
       return;
-    }
-
-    if (isImageMedia) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-
-      try {
-        const decision = await scanImage(mediaFile);
-
-        if (decision.action === POLICY_ACTIONS.BLOCK) {
-          setScanStatus('BLOCKED');
-          setFeedback({
-            type: 'error',
-            message: decision.userMessage,
-          });
-          setIsSubmitting(false);
-          return;
-        }
-
-        if (decision.isSystemError) {
-          setScanStatus('ERROR');
-          setFeedback({
-            type: 'error',
-            message: decision.userMessage,
-          });
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Image passed moderation successfully
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setFeedback({
-          type: 'error',
-          message: 'Unable to verify image safety. Please try again.',
-        });
-        setIsSubmitting(false);
-        return;
-      }
-    } else if (isVideoMedia) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-
-      try {
-        const decision = await scanVideo(mediaFile);
-
-        if (decision.action === POLICY_ACTIONS.BLOCK) {
-          setScanStatus('BLOCKED');
-          setFeedback({
-            type: 'error',
-            message: decision.userMessage,
-          });
-          setIsSubmitting(false);
-          return;
-        }
-
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setFeedback({
-          type: 'error',
-          message: 'Unable to verify video safety. Please try again.',
-        });
-        setIsSubmitting(false);
-        return;
-      }
     }
 
     const formData = new FormData();
@@ -792,29 +698,6 @@ export function PostComposer({
         />
       )}
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSubmitting(false);
-        }}
-        onRetry={() => {
-          handleSubmit();
-        }}
-        onAcknowledge={() => {
-          handleRemoveMedia();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSubmitting(false);
-        }}
-      />
     </>
   );
 }
