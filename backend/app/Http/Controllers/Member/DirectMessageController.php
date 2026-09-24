@@ -182,8 +182,7 @@ class DirectMessageController extends Controller
                 'uploads/messages',
                 'general',
                 $filename,
-                'public_uploads',
-                'MESSAGE_IMAGE'
+                'public_uploads'
             );
         }
 

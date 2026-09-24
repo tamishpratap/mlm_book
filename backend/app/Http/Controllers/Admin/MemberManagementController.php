@@ -652,15 +652,13 @@ class MemberManagementController extends Controller
             );
 
             $type = $prefix === 'cover' ? 'cover' : 'avatar';
-            $context = $prefix === 'cover' ? 'PROFILE_COVER' : 'PROFILE_PHOTO';
 
             return app(\App\Http\Controllers\ImageCompressionController::class)->compressAndStore(
                 $file,
                 $directory,
                 $type,
                 $filename,
-                'public_uploads',
-                $context
+                'public_uploads'
             );
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;

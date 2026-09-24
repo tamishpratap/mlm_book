@@ -356,8 +356,7 @@ class EventManagementController extends Controller
                 $directory,
                 'cover',
                 $fileName,
-                'public_uploads',
-                \App\Services\ContentModeration\ContentModerationService::CONTEXT_POST_IMAGE
+                'public_uploads'
             );
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;

@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, X } from 'lucide-react';
 import marketplaceApi from '../../api/marketplaceApi';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { MODERATION_CONTEXTS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../../components/moderation/ImageModerationScanModal';
+
 
 export function CreateProductPage() {
   const navigate = useNavigate();
@@ -22,18 +20,7 @@ export function CreateProductPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const {
-    scanImages,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: MODERATION_CONTEXTS.MARKETPLACE_IMAGE });
 
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
-  const [blockedItems, setBlockedItems] = useState([]);
 
   // Object URL cleanup on unmount
   useEffect(() => {
@@ -84,68 +71,11 @@ export function CreateProductPage() {
     });
   };
 
-  const handleRemoveBlockedFiles = () => {
-    if (blockedItems.length > 0) {
-      const blockedFilesSet = new Set(blockedItems.map((b) => b.file));
-      setSelectedImages((prev) => {
-        const remaining = [];
-        prev.forEach((item) => {
-          if (blockedFilesSet.has(item.file)) {
-            if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-          } else {
-            remaining.push(item);
-          }
-        });
-        return remaining;
-      });
-    }
-    setBlockedItems([]);
-    setIsScanModalOpen(false);
-    setScanStatus('IDLE');
-    resetModeration();
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
-
-    // Pre-flight Client-Side Image Moderation for all selected photos
-    if (selectedImages.length > 0) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-      setBlockedItems([]);
-
-      try {
-        const batchSummary = await scanImages(selectedImages.map((img) => img.file));
-
-        if (!batchSummary.allAllowed) {
-          setScanStatus('BLOCKED');
-          setBlockedItems(batchSummary.blockedItems);
-          const blockedNames = batchSummary.blockedItems.map((b) => b.fileName).join(', ');
-          setError(`Restricted content detected in photo(s): ${blockedNames}. Please remove or replace the flagged photos.`);
-          setIsSubmitting(false);
-          return;
-        }
-
-        if (batchSummary.error) {
-          setScanStatus('ERROR');
-          setError('Failed to verify photos against safety standards. Please try again.');
-          setIsSubmitting(false);
-          return;
-        }
-
-        // All photos passed moderation
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setError('Verification encountered an unexpected error. Please try again.');
-        setIsSubmitting(false);
-        return;
-      }
-    }
 
     const formData = new FormData();
     formData.append('title', title.trim());
@@ -401,25 +331,6 @@ export function CreateProductPage() {
         </form>
       </div>
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        blockedItems={blockedItems}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSubmitting(false);
-        }}
-        onRetry={() => {
-          handleSubmit(new Event('submit'));
-        }}
-        onAcknowledge={handleRemoveBlockedFiles}
-      />
     </div>
   );
 }

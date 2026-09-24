@@ -6,9 +6,7 @@ import useAuth from '../../hooks/useAuth';
 import AccountVerificationModal from '../../components/verification/AccountVerificationModal';
 import { AddFundModal } from '../../components/business/ads/AddFundModal';
 import { ImageAdjustmentModal } from '../../components/posts/modals/ImageAdjustmentModal';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { MODERATION_CONTEXTS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../../components/moderation/ImageModerationScanModal';
+
 
 function getTodayDateString() {
   const d = new Date();
@@ -74,18 +72,7 @@ export function CreateEventPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const {
-    scanImages,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: MODERATION_CONTEXTS.POST_IMAGE });
 
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
-  const [blockedItems, setBlockedItems] = useState([]);
   const [minDate, setMinDate] = useState(() => getTodayDateString());
   const [currentMinTime, setCurrentMinTime] = useState(() => getNextMinuteTimeString());
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -194,20 +181,6 @@ export function CreateEventPage() {
   const hasInsufficientFunds = totalWalletDebit > adBalance;
   const shortfall = hasInsufficientFunds ? (totalWalletDebit - adBalance).toFixed(2) : '0.00';
 
-  const handleRemoveBlockedFiles = () => {
-    setCoverPhoto(null);
-    setCoverPreview(null);
-    setPendingCoverFile(null);
-    setCoverAdjustmentState(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    setBlockedItems([]);
-    setIsScanModalOpen(false);
-    setScanStatus('IDLE');
-    resetModeration();
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -244,41 +217,6 @@ export function CreateEventPage() {
     }
 
     setIsSubmitting(true);
-
-    // Pre-flight Client-Side Image Moderation
-    if (coverPhoto) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-      setBlockedItems([]);
-
-      try {
-        const batchSummary = await scanImages([coverPhoto]);
-
-        if (!batchSummary.allAllowed) {
-          setScanStatus('BLOCKED');
-          setBlockedItems(batchSummary.blockedItems);
-          const blockedNames = batchSummary.blockedItems.map((b) => b.fileName).join(', ');
-          setError(`Restricted content detected in event cover: ${blockedNames}. Please replace the flagged photo.`);
-          setIsSubmitting(false);
-          return;
-        }
-
-        if (batchSummary.error) {
-          setScanStatus('ERROR');
-          setError('Failed to verify cover image against safety standards. Please try again.');
-          setIsSubmitting(false);
-          return;
-        }
-
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setError('Verification encountered an unexpected error. Please try again.');
-        setIsSubmitting(false);
-        return;
-      }
-    }
 
     const payload = new FormData();
     Object.keys(formData).forEach((key) => {
@@ -913,25 +851,6 @@ export function CreateEventPage() {
         />
       )}
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        blockedItems={blockedItems}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSubmitting(false);
-        }}
-        onRetry={() => {
-          handleSubmit(new Event('submit'));
-        }}
-        onAcknowledge={handleRemoveBlockedFiles}
-      />
     </div>
   );
 }

@@ -22,7 +22,6 @@ class VideoCompressionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['content_moderation.enabled' => false]);
     }
 
     protected function tearDown(): void
@@ -247,19 +246,29 @@ class VideoCompressionTest extends TestCase
     public function test_25mb_limit_removal_in_post_controller(): void
     {
         $member = $this->createMember();
+        $unique = Str::lower(Str::random(6));
+        $businessPage = \App\Models\BusinessPage::create([
+            'member_id' => $member->id,
+            'page_name' => 'Test Business ' . $unique,
+            'page_username' => 'bizpage_' . $unique,
+            'slug' => 'test-business-' . $unique,
+            'category' => 'Technology',
+            'status' => 'active',
+        ]);
 
         // 30 MB video (exceeds old 25MB limit of 25600 KB)
         $video30mb = UploadedFile::fake()->create('large_30mb.mp4', 30 * 1024, 'video/mp4');
 
         $response = $this->actingAs($member, 'member')
-            ->postJson(route('member.posts.store'), [
+            ->postJson("/api/member/business-pages/{$businessPage->slug}/posts", [
+                'body' => 'Testing 30MB video upload',
                 'media' => $video30mb,
             ]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
 
-        $post = Post::where('member_id', $member->id)->latest('id')->first();
+        $post = Post::where('business_page_id', $businessPage->id)->latest('id')->first();
         $this->assertNotNull($post);
         $this->assertSame('video', $post->media_type);
         $this->assertNotNull($post->media_path);

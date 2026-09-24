@@ -307,8 +307,7 @@ class CommunityManagementController extends Controller
             $directory,
             $type,
             $fileName,
-            'public_uploads',
-            'COMMUNITY_IMAGE'
+            'public_uploads'
         );
 
         return $storedPath ?: ($directory . '/' . $fileName);

@@ -481,8 +481,7 @@ class MarketplaceController extends Controller
                 $directory,
                 'marketplace',
                 $filename,
-                'public_uploads',
-                'MARKETPLACE_IMAGE'
+                'public_uploads'
             );
         } catch (ValidationException $e) {
             throw $e;

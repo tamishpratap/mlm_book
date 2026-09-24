@@ -5,9 +5,7 @@ import communityApi from '../../api/communityApi';
 import useAuth from '../../hooks/useAuth';
 import { ImageAdjustmentModal } from '../../components/posts/modals/ImageAdjustmentModal';
 import AccountVerificationModal from '../../components/verification/AccountVerificationModal';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { MODERATION_CONTEXTS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../../components/moderation/ImageModerationScanModal';
+
 import { isMemberMobileVerified } from '../../utils/whatsappVerification';
 
 export function CreateCommunityPage() {
@@ -47,18 +45,7 @@ export function CreateCommunityPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const {
-    scanImages,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: MODERATION_CONTEXTS.COMMUNITY_IMAGE });
 
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
-  const [blockedItems, setBlockedItems] = useState([]);
 
   // Clean up blob preview URLs to avoid memory leaks
   useEffect(() => {
@@ -203,22 +190,6 @@ export function CreateCommunityPage() {
     }
   };
 
-  const handleRemoveBlockedFiles = () => {
-    if (blockedItems.length > 0) {
-      const blockedFilesSet = new Set(blockedItems.map((b) => b.file));
-      if (logo && blockedFilesSet.has(logo)) {
-        handleRemoveLogo();
-      }
-      if (coverPhoto && blockedFilesSet.has(coverPhoto)) {
-        handleRemoveCover();
-      }
-    }
-    setBlockedItems([]);
-    setIsScanModalOpen(false);
-    setScanStatus('IDLE');
-    resetModeration();
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isVerified) {
@@ -228,46 +199,6 @@ export function CreateCommunityPage() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
-
-    // Pre-flight Client-Side Image Moderation
-    const imagesToScan = [
-      logo ? { file: logo, type: 'logo' } : null,
-      coverPhoto ? { file: coverPhoto, type: 'cover' } : null,
-    ].filter(Boolean);
-
-    if (imagesToScan.length > 0) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-      setBlockedItems([]);
-
-      try {
-        const batchSummary = await scanImages(imagesToScan.map((i) => i.file));
-
-        if (!batchSummary.allAllowed) {
-          setScanStatus('BLOCKED');
-          setBlockedItems(batchSummary.blockedItems);
-          const blockedNames = batchSummary.blockedItems.map((b) => b.fileName).join(', ');
-          setError(`Restricted content detected in image(s): ${blockedNames}. Please replace the flagged photo(s).`);
-          setIsSubmitting(false);
-          return;
-        }
-
-        if (batchSummary.error) {
-          setScanStatus('ERROR');
-          setError('Failed to verify photos against safety standards. Please try again.');
-          setIsSubmitting(false);
-          return;
-        }
-
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setError('Verification encountered an unexpected error. Please try again.');
-        setIsSubmitting(false);
-        return;
-      }
-    }
 
     const formData = new FormData();
     formData.append('name', name.trim());
@@ -697,25 +628,6 @@ export function CreateCommunityPage() {
         />
       )}
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        blockedItems={blockedItems}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSubmitting(false);
-        }}
-        onRetry={() => {
-          handleSubmit(new Event('submit'));
-        }}
-        onAcknowledge={handleRemoveBlockedFiles}
-      />
     </div>
   );
 }

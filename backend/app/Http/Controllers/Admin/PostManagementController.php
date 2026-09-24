@@ -250,8 +250,7 @@ class PostManagementController extends Controller
                 $newMediaPath = app(\App\Http\Controllers\VideoCompressionController::class)->stageAndStore(
                     $file,
                     $directory,
-                    $filename,
-                    \App\Services\ContentModeration\ContentModerationService::CONTEXT_POST_VIDEO
+                    $filename
                 );
             } else {
                 try {
@@ -260,8 +259,7 @@ class PostManagementController extends Controller
                         $directory,
                         'post',
                         $filename,
-                        'public_uploads',
-                        \App\Services\ContentModeration\ContentModerationService::CONTEXT_POST_IMAGE
+                        'public_uploads'
                     );
                 } catch (\Illuminate\Validation\ValidationException $e) {
                     throw $e;

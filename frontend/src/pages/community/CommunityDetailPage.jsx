@@ -31,9 +31,7 @@ import VerifiedBadge from '../../components/common/VerifiedBadge';
 import MemberAvatar from '../../components/common/MemberAvatar';
 import { ModalPortal } from '../../components/common/ModalPortal';
 import { getCoverUrl, getAvatarUrl } from '../../utils/assetHelper';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { MODERATION_CONTEXTS, POLICY_ACTIONS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../../components/moderation/ImageModerationScanModal';
+
 
 function getInitials(name) {
   if (!name) return 'C';
@@ -74,18 +72,7 @@ export function CommunityDetailPage() {
   const coverInputRef = useRef(null);
   const logoInputRef = useRef(null);
 
-  const {
-    scanImage,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: MODERATION_CONTEXTS.COMMUNITY_IMAGE });
 
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
-  const [blockedItems, setBlockedItems] = useState([]);
 
   const handleSaveNotificationPreferences = async (e) => {
     e.preventDefault();
@@ -158,31 +145,6 @@ export function CommunityDetailPage() {
     const file = e.target.files?.[0];
     if (!file || !slug) return;
 
-    setIsScanModalOpen(true);
-    setScanStatus('SCANNING');
-    setBlockedItems([]);
-
-    try {
-      const decision = await scanImage(file);
-      if (decision.action === POLICY_ACTIONS.BLOCK) {
-        setScanStatus('BLOCKED');
-        setBlockedItems([{ file, fileName: file.name, decision }]);
-        if (coverInputRef.current) coverInputRef.current.value = '';
-        return;
-      }
-      if (decision.isSystemError) {
-        setScanStatus('ERROR');
-        if (coverInputRef.current) coverInputRef.current.value = '';
-        return;
-      }
-      setIsScanModalOpen(false);
-      setScanStatus('IDLE');
-    } catch {
-      setScanStatus('ERROR');
-      if (coverInputRef.current) coverInputRef.current.value = '';
-      return;
-    }
-
     const formData = new FormData();
     formData.append('cover_photo', file);
 
@@ -201,31 +163,6 @@ export function CommunityDetailPage() {
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !slug) return;
-
-    setIsScanModalOpen(true);
-    setScanStatus('SCANNING');
-    setBlockedItems([]);
-
-    try {
-      const decision = await scanImage(file);
-      if (decision.action === POLICY_ACTIONS.BLOCK) {
-        setScanStatus('BLOCKED');
-        setBlockedItems([{ file, fileName: file.name, decision }]);
-        if (logoInputRef.current) logoInputRef.current.value = '';
-        return;
-      }
-      if (decision.isSystemError) {
-        setScanStatus('ERROR');
-        if (logoInputRef.current) logoInputRef.current.value = '';
-        return;
-      }
-      setIsScanModalOpen(false);
-      setScanStatus('IDLE');
-    } catch {
-      setScanStatus('ERROR');
-      if (logoInputRef.current) logoInputRef.current.value = '';
-      return;
-    }
 
     const formData = new FormData();
     formData.append('logo', file);
@@ -811,30 +748,6 @@ export function CommunityDetailPage() {
         </ModalPortal>
       )}
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        blockedItems={blockedItems}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-        }}
-        onRetry={() => {
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-        }}
-        onAcknowledge={() => {
-          setBlockedItems([]);
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          resetModeration();
-        }}
-      />
     </div>
   );
 }

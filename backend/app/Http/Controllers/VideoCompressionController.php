@@ -13,14 +13,13 @@ use Symfony\Component\Process\Process;
 class VideoCompressionController extends Controller
 {
     /**
-     * Store an uploaded video file to a staging/initial location with authoritative content moderation.
+     * Store an uploaded video file to a staging/initial location.
      *
      * @param UploadedFile $file The uploaded video file
      * @param string $directory Target directory relative to public_path (e.g. 'uploads/posts/videos')
      * @param string|null $customFilename Optional custom filename
-     * @param string|null $context Authoritative server-side video moderation context
+     * @param string|null $context Deprecated unused parameter for backwards compatibility
      * @return string|null Relative stored path, or null on failure
-     * @throws \Illuminate\Validation\ValidationException If content moderation blocks video or fails closed
      */
     public function stageAndStore(
         UploadedFile $file,
@@ -32,43 +31,20 @@ class VideoCompressionController extends Controller
             return null;
         }
 
-        $quarantinePath = null;
-
         try {
-            if ($context) {
-                /** @var \App\Services\ContentModeration\VideoModerationService $videoModerationService */
-                $videoModerationService = app(\App\Services\ContentModeration\VideoModerationService::class);
-                $moderationData = $videoModerationService->checkAndQuarantineVideo($file, $context, 'media');
-                $quarantinePath = $moderationData['quarantine_path'] ?? null;
-            }
-
             $fullDir = public_path($directory);
             File::ensureDirectoryExists($fullDir);
 
             $extension = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'mp4');
             $filename = $this->determineStagingFilename($customFilename, $extension);
-            $fullDestination = $fullDir . DIRECTORY_SEPARATOR . $filename;
 
-            if ($quarantinePath && File::exists($quarantinePath)) {
-                if (File::exists($fullDestination)) {
-                    File::delete($fullDestination);
-                }
-                File::move($quarantinePath, $fullDestination);
-            } else {
-                $file->move($fullDir, $filename);
-            }
+            $file->move($fullDir, $filename);
 
             return trim($directory, '/\\') . '/' . $filename;
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            throw $e;
         } catch (\Throwable $e) {
             Log::error("VideoCompressionController: Failed to stage video: {$e->getMessage()}");
 
             return null;
-        } finally {
-            if (! empty($quarantinePath) && File::exists($quarantinePath)) {
-                @File::delete($quarantinePath);
-            }
         }
     }
 

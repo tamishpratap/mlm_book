@@ -24,9 +24,7 @@ import businessApi from '../../api/businessApi';
 import BusinessNotificationModal from '../../components/business/BusinessNotificationModal';
 import MemberAvatar from '../../components/common/MemberAvatar';
 import { ModalPortal } from '../../components/common/ModalPortal';
-import { useImageModeration } from '../../hooks/useImageModeration';
-import { MODERATION_CONTEXTS, POLICY_ACTIONS } from '../../config/imageModerationPolicy';
-import { ImageModerationScanModal } from '../../components/moderation/ImageModerationScanModal';
+
 
 function getInitials(name) {
   if (!name) return 'U';
@@ -79,18 +77,7 @@ export function BusinessInboxPage() {
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  const {
-    scanImage,
-    progress: modProgress,
-    decision: modDecision,
-    error: modError,
-    cancel: cancelModeration,
-    reset: resetModeration,
-  } = useImageModeration({ context: MODERATION_CONTEXTS.MESSAGE_IMAGE });
 
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [scanStatus, setScanStatus] = useState('IDLE');
-  const [blockedItems, setBlockedItems] = useState([]);
 
   // Modals
   const [isQuickRepliesModalOpen, setIsQuickRepliesModalOpen] = useState(false);
@@ -184,15 +171,6 @@ export function BusinessInboxPage() {
     setSearchParams(newParams);
   };
 
-  const handleRemoveBlockedAttachment = () => {
-    setAttachmentFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    setBlockedItems([]);
-    setIsScanModalOpen(false);
-    setScanStatus('IDLE');
-    resetModeration();
-  };
-
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!selectedConvId || isSending) return;
@@ -200,41 +178,6 @@ export function BusinessInboxPage() {
 
     setIsSending(true);
     setSendError(null);
-
-    // Pre-flight Client-Side Moderation: Images only; PDFs, DOCs, and other files bypass moderation safely
-    const isImageAttachment = attachmentFile && attachmentFile.type && attachmentFile.type.startsWith('image/');
-    if (isImageAttachment) {
-      setIsScanModalOpen(true);
-      setScanStatus('SCANNING');
-      setBlockedItems([]);
-
-      try {
-        const decision = await scanImage(attachmentFile);
-
-        if (decision.action === POLICY_ACTIONS.BLOCK) {
-          setScanStatus('BLOCKED');
-          setBlockedItems([{ file: attachmentFile, fileName: attachmentFile.name, decision }]);
-          setSendError(decision.userMessage);
-          setIsSending(false);
-          return;
-        }
-
-        if (decision.isSystemError) {
-          setScanStatus('ERROR');
-          setSendError(decision.userMessage);
-          setIsSending(false);
-          return;
-        }
-
-        setIsScanModalOpen(false);
-        setScanStatus('IDLE');
-      } catch {
-        setScanStatus('ERROR');
-        setSendError('Unable to verify image safety. Please try again.');
-        setIsSending(false);
-        return;
-      }
-    }
 
     const formData = new FormData();
     if (messageText.trim()) formData.append('message', messageText.trim());
@@ -1270,25 +1213,6 @@ export function BusinessInboxPage() {
         }}
       />
 
-      {/* Pre-Flight Client-Side Image Moderation Modal */}
-      <ImageModerationScanModal
-        isOpen={isScanModalOpen}
-        status={scanStatus}
-        progress={modProgress}
-        decision={modDecision}
-        error={modError}
-        blockedItems={blockedItems}
-        onCancel={() => {
-          cancelModeration();
-          setIsScanModalOpen(false);
-          setScanStatus('IDLE');
-          setIsSending(false);
-        }}
-        onRetry={() => {
-          handleSendMessage(new Event('submit'));
-        }}
-        onAcknowledge={handleRemoveBlockedAttachment}
-      />
     </div>
   );
 }

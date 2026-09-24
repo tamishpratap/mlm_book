@@ -1110,8 +1110,7 @@ class EventController extends Controller
                 $directory,
                 $type,
                 $filename,
-                'public_uploads',
-                'POST_IMAGE'
+                'public_uploads'
             );
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;

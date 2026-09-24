@@ -202,8 +202,7 @@ class StoryController extends Controller
                 $directory,
                 'story',
                 $filename,
-                'public_uploads',
-                'STORY_IMAGE'
+                'public_uploads'
             );
 
             if (! $mediaPath || ! File::exists(public_path($mediaPath)) || File::size(public_path($mediaPath)) === 0) {

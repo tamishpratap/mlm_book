@@ -82,8 +82,7 @@ class CommunityPostController extends Controller
                 $directory,
                 'post',
                 $filename,
-                'public_uploads',
-                'COMMUNITY_IMAGE'
+                'public_uploads'
             );
         }
 
