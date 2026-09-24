@@ -794,3 +794,11 @@ Route::prefix('member')->name('api.member.')->group(function () {
         });
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Flutter Dedicated REST API Routes
+|--------------------------------------------------------------------------
+| Base URI: /api/v1/mobile/...
+*/
+Route::prefix('v1/mobile')->group(base_path('routes/mobile.php'));

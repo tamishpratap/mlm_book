@@ -1,0 +1,165 @@
+<USER_REQUEST>
+ROLE:
+You are a Senior Full-Stack Engineer specializing in Laravel + React/Vite campaign systems, Event integrations, reward eligibility, reusable UI flows, API state management, and regression-safe production fixes.
+
+TASK:
+Implement ONLY the following 3 Event Reward phases.
+
+==================================================
+ABSOLUTE SCOPE
+==================================================
+
+ONLY implement:
+
+PHASE 1 — Event "Earn up to" in Socials
+PHASE 2 — Event "Earn up to" on Event Page
+PHASE 3 — "Rewarded" state after reward collection
+
+DO NOT change anything else in the application.
+
+DO NOT redesign existing screens.
+DO NOT redesign Business Page Campaigns.
+DO NOT create a new reward system.
+DO NOT create a duplicate reward modal.
+DO NOT change unrelated APIs.
+DO NOT change unrelated CSS.
+DO NOT refactor unrelated components.
+
+==================================================
+FIRST — TRACE EXISTING BUSINESS PAGE CAMPAIGN SYSTEM
+==================================================
+
+Before editing anything, inspect the CURRENT working Business Page Ad Campaign implementation.
+
+Identify the exact existing:
+
+1. "Earn up to" CTA component.
+2. Campaign card/source component.
+3. Reward modal.
+4. Interested flow.
+5. Reward eligibility logic.
+6. Reward calculation logic.
+7. Reward claim/collect API.
+8. Reward status API/state.
+9. "Rewarded" state.
+10. "Already received reward" handling.
+11. Loading/error/success states.
+12. Existing validation rules.
+13. Relevant backend controller/service/model.
+14. Existing frontend hooks/context/store/helpers.
+
+The Business Page Campaign implementation is the SOURCE OF TRUTH.
+
+REUSE those existing pieces for Events wherever possible.
+
+Do NOT recreate:
+- another modal
+- another reward API
+- another reward calculation
+- another rewarded-state system
+
+==================================================
+PHASE 1 — EVENT IN SOCIALS
+==================================================
+
+CURRENT:
+In Social
+<truncated 12332 bytes>
+T run destructive commands.
+
+Do not claim PASS unless actually executed.
+
+==================================================
+FINAL REPORT
+==================================================
+
+Provide:
+
+1. STATUS
+   COMPLETE / PARTIAL / BLOCKED
+
+2. EXISTING BUSINESS PAGE IMPLEMENTATION REUSED
+   Identify:
+   - CTA
+   - modal
+   - API
+   - reward state
+   - validation logic
+
+3. PHASE 1
+   Exact Socials Event changes.
+
+4. PHASE 2
+   Exact Event Page changes.
+
+5. PHASE 3
+   Exact rewarded-state changes.
+
+6. EVENT DATA MAPPING
+   Explain how Event reward data was connected.
+
+7. FILES MODIFIED
+   Exact paths.
+
+8. TEST RESULTS
+   - Socials CTA
+   - Event Page CTA
+   - reward amount
+   - reward collection
+   - refresh
+   - duplicate claim
+   - owner
+   - non-owner
+   - Business Page regression
+   - cross-source consistency
+
+9. BUILD/LINT
+   Exact commands and actual results.
+
+10. DATABASE/BACKEND SAFETY
+   Confirm:
+   - no destructive commands
+   - no data deletion
+   - no unnecessary schema changes
+   - no package changes
+
+==================================================
+ABSOLUTE FINAL RULE
+==================================================
+
+IMPLEMENT ONLY THESE 3 PHASES:
+
+PHASE 1:
+SOCIALS EVENT
+→ EARN UP TO [ACTUAL AMOUNT]
+
+PHASE 2:
+EVENT PAGE
+→ EARN UP TO [ACTUAL AMOUNT]
+→ EXISTING REWARD MODAL/FLOW
+
+PHASE 3:
+REWARD COLLECTED
+→ REWARDED
+→ NO SECOND CLAIM
+
+REUSE THE EXISTING BUSINESS PAGE CAMPAIGN REWARD MODEL/MODAL/API/STATE/VALIDATION.
+
+DO NOT CREATE DUPLICATE REWARD LOGIC.
+
+DO NOT CHANGE BUSINESS PAGE CAMPAIGNS.
+
+DO NOT CHANGE EVENT CREATION.
+
+DO NOT REDESIGN ANY EXISTING SCREEN.
+
+DO NOT CHANGE UNRELATED FUNCTIONALITY.
+
+FIRST TRACE THE EXISTING BUSINESS PAGE CAMPAIGN REWARD IMPLEMENTATION.
+THEN CONNECT EVENTS TO THAT SAME SYSTEM.
+THEN TEST SOCIALS + EVENT PAGE + REWARDED STATE.
+THEN PROVIDE THE REPORT.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-11T16:25:34+05:30.
+</ADDITIONAL_METADATA>
