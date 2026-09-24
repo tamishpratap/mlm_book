@@ -156,39 +156,6 @@
                             @enderror
                         </div>
 
-                        <div class="member-auth-field" data-member-user-id-field>
-                            <label class="member-auth-label" for="memberUserId">User ID (Optional)</label>
-                            <div class="member-auth-input-wrap @error('user_id') member-auth-input-wrap--error @enderror" data-member-user-id-input-wrap>
-                                <svg class="member-auth-input-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"></path></svg>
-                                <input
-                                    class="member-auth-input"
-                                    id="memberUserId"
-                                    name="user_id"
-                                    type="text"
-                                    value="{{ old('user_id') }}"
-                                    placeholder="Leave blank to auto-generate (e.g. abcd123456)"
-                                    autocomplete="username"
-                                    minlength="10"
-                                    maxlength="10"
-                                    spellcheck="false"
-                                    autocapitalize="characters"
-                                    aria-describedby="memberUserIdFeedback"
-                                    @error('user_id') aria-invalid="true" @enderror
-                                    data-check-url="{{ route('member.register.check-user-id') }}"
-                                >
-                            </div>
-                            <div
-                                id="memberUserIdFeedback"
-                                class="member-user-id-feedback @error('user_id') is-invalid @enderror"
-                                aria-live="polite"
-                            >
-                                @error('user_id')
-                                    {{ $message }}
-                                @else
-                                    Leave blank to auto-generate a 10-character User ID from your name.
-                                @enderror
-                            </div>
-                        </div>
 
                         <div class="member-auth-field">
                             <label class="member-auth-label" for="email">Email address</label>
@@ -242,34 +209,6 @@
                             @enderror
                         </div>
 
-                        <div class="member-auth-field">
-                            <label class="member-auth-label" for="password_confirmation">Confirm password</label>
-                            <div class="member-auth-input-wrap @error('password_confirmation') member-auth-input-wrap--error @enderror">
-                                <svg class="member-auth-input-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3v8Z"></path><path d="m9 12 2 2 4-4"></path></svg>
-                                <input
-                                    class="member-auth-input member-auth-input--password"
-                                    id="password_confirmation"
-                                    name="password_confirmation"
-                                    type="password"
-                                    placeholder="Enter your password again"
-                                    autocomplete="new-password"
-                                    required
-                                    @error('password_confirmation') aria-invalid="true" aria-describedby="member-confirm-password-error" @else aria-describedby="member-confirm-password-help" @enderror
-                                >
-                                <button class="member-auth-password-toggle" type="button" aria-label="Show confirm password" aria-controls="password_confirmation" data-password-toggle data-password-target="password_confirmation">
-                                    <svg class="member-auth-eye member-auth-eye--show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
-                                    <svg class="member-auth-eye member-auth-eye--hide" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18"></path><path d="M10.6 6.2A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a16 16 0 0 1-2.1 2.7"></path><path d="M6.3 6.4C3.9 8.1 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3.1-.5"></path></svg>
-                                </button>
-                            </div>
-                            @error('password_confirmation')
-                                <p class="member-auth-error" id="member-confirm-password-error" role="alert">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 17h.01"></path></svg>
-                                    <span>{{ $message }}</span>
-                                </p>
-                            @else
-                                <span class="member-register-confirm-help" id="member-confirm-password-help">Use the same password entered above.</span>
-                            @enderror
-                        </div>
 
                         <button class="member-auth-submit" type="submit" data-member-register-submit>
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6"></path><path d="M22 11h-6"></path></svg>

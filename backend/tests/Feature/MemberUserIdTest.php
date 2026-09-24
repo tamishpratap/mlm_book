@@ -56,8 +56,8 @@ class MemberUserIdTest extends TestCase
         $response = $this->post(route('member.register.submit'), [
             'name' => 'Rahul Sharma',
             'email' => 'rahul.sharma@example.com',
+            'phone' => '+919876543210',
             'password' => 'secure-password',
-            'password_confirmation' => 'secure-password',
         ]);
 
         $response->assertRedirect(route('member.register.verify'));
@@ -357,12 +357,8 @@ class MemberUserIdTest extends TestCase
     {
         $this->get(route('member.register'))
             ->assertOk()
-            ->assertSee('id="memberUserId"', false)
-            ->assertSee('name="user_id"', false)
-            ->assertSee('minlength="10"', false)
-            ->assertSee('maxlength="10"', false)
-            ->assertSee('aria-live="polite"', false)
-            ->assertSee(route('member.register.check-user-id'), false)
+            ->assertDontSee('id="memberUserId"', false)
+            ->assertDontSee('name="user_id"', false)
             ->assertSee('jquery-3.7.1.min.js', false);
 
         $script = File::get(public_path('member_assets/js/member-register.js'));

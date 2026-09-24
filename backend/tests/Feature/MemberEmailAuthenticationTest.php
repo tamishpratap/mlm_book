@@ -30,8 +30,8 @@ class MemberEmailAuthenticationTest extends TestCase
             'name' => 'Email Member',
             'user_id' => 'EMAL123456',
             'email' => 'email-member@example.com',
+            'phone' => '+919876543210',
             'password' => 'secure-password',
-            'password_confirmation' => 'secure-password',
         ])->assertRedirect(route('member.register.verify'));
 
         // Member must NOT exist before OTP verification

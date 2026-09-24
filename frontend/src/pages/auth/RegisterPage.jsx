@@ -41,13 +41,11 @@ export function RegisterPage() {
 
   const [formData, setFormData] = useState({
     name: '',
-    user_id: '',
     introducer_id: initialRef,
     country_code: '+91',
     phone: '',
     email: searchParams.get('email') || '',
     password: '',
-    password_confirmation: '',
   });
 
   const googleRedirectUrl = authApi.getGoogleAuthUrl(formData.introducer_id || initialRef, 'register');
@@ -122,7 +120,6 @@ export function RegisterPage() {
   }, [searchParams, resolveIntroducer]);
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
@@ -151,88 +148,6 @@ export function RegisterPage() {
     }
   }, [clearGeneralErrorTimer]);
 
-  // Live User ID check states
-  const [userIdStatus, setUserIdStatus] = useState('idle'); // 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'reserved'
-  const [userIdMessage, setUserIdMessage] = useState('Optional. Leave blank to auto-generate a 10-character User ID from your name.');
-  const userIdCheckTimer = useRef(null);
-  const latestUserIdRequestId = useRef(0);
-
-  const checkUserIdAvailability = useCallback(async (val) => {
-    const canonical = (val || '').trim().toUpperCase();
-    if (!canonical || canonical.length !== 10 || !/^[A-Z]{4}[0-9]{6}$/.test(canonical)) {
-      setUserIdStatus('invalid');
-      setUserIdMessage('User ID must be 4 letters followed by 6 digits (e.g. abcd123456).');
-      return;
-    }
-
-    const requestId = ++latestUserIdRequestId.current;
-    setUserIdStatus('checking');
-    setUserIdMessage('Checking User ID availability…');
-
-    try {
-      const res = await authApi.checkUserId(canonical);
-      if (requestId !== latestUserIdRequestId.current) {
-        return;
-      }
-      if (res.available) {
-        setUserIdStatus('available');
-        setUserIdMessage('User ID is available.');
-      } else if (res.message === 'This User ID is reserved.') {
-        setUserIdStatus('reserved');
-        setUserIdMessage(res.message);
-      } else {
-        setUserIdStatus('taken');
-        setUserIdMessage(res.message || 'This User ID already exists.');
-      }
-    } catch (err) {
-      if (requestId !== latestUserIdRequestId.current) {
-        return;
-      }
-      const serverMessage = err.response?.data?.message;
-      setUserIdStatus('invalid');
-      setUserIdMessage(serverMessage || 'Could not verify User ID. Please try again.');
-    }
-  }, []);
-
-  const handleUserIdChange = (e) => {
-    const rawVal = e.target.value;
-    // Strip '@' and spaces, keep alphanumeric, uppercase, max 10 chars
-    const cleanVal = rawVal.replace(/^@/, '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
-    setFormData((prev) => ({ ...prev, user_id: cleanVal }));
-
-    if (errors.user_id) {
-      setErrors((prev) => ({ ...prev, user_id: null }));
-    }
-
-    if (userIdCheckTimer.current) {
-      clearTimeout(userIdCheckTimer.current);
-    }
-
-    if (!cleanVal) {
-      setUserIdStatus('idle');
-      setUserIdMessage('Optional. Leave blank to auto-generate a 10-character User ID from your name.');
-      return;
-    }
-
-    if (cleanVal.length < 10) {
-      setUserIdStatus('idle');
-      setUserIdMessage('Use a 10-character User ID: 4 letters and 6 digits (e.g. abcd123456).');
-      return;
-    }
-
-    if (!/^[A-Z]{4}[0-9]{6}$/.test(cleanVal)) {
-      setUserIdStatus('invalid');
-      setUserIdMessage('User ID must be 4 letters followed by 6 digits (e.g. abcd123456).');
-      return;
-    }
-
-    setUserIdStatus('checking');
-    setUserIdMessage('Checking User ID availability…');
-
-    userIdCheckTimer.current = setTimeout(() => {
-      checkUserIdAvailability(cleanVal);
-    }, 300);
-  };
 
   const checkPhoneAvailability = useCallback(async (num, code = '+91') => {
     const rawDigits = (num || '').replace(/\D/g, '');
@@ -339,9 +254,6 @@ export function RegisterPage() {
 
   useEffect(() => {
     return () => {
-      if (userIdCheckTimer.current) {
-        clearTimeout(userIdCheckTimer.current);
-      }
       if (phoneCheckTimer.current) {
         clearTimeout(phoneCheckTimer.current);
       }
@@ -369,19 +281,6 @@ export function RegisterPage() {
     // Client UX check
     const clientErrors = {};
     if (!formData.name.trim()) clientErrors.name = ['Please enter your full name.'];
-    if (formData.user_id && formData.user_id.trim()) {
-      const canonical = formData.user_id.trim().toUpperCase();
-      if (canonical.length !== 10 || !/^[A-Z]{4}[0-9]{6}$/.test(canonical)) {
-        clientErrors.user_id = ['User ID must be 4 letters followed by 6 digits (e.g. abcd123456).'];
-      } else if (userIdStatus === 'taken') {
-        clientErrors.user_id = [userIdMessage || 'This User ID already exists. Please choose another one.'];
-      } else if (userIdStatus === 'reserved') {
-        clientErrors.user_id = [userIdMessage || 'This User ID is reserved. Please choose another one.'];
-      }
-    }
-    if (formData.introducer_id && formData.user_id && formData.introducer_id.trim().toUpperCase() === formData.user_id.trim().toUpperCase()) {
-      clientErrors.introducer_id = ['You cannot enter your own User ID as Introducer ID.'];
-    }
     if (!formData.phone.trim()) {
       clientErrors.phone = ['Please enter your WhatsApp/mobile number.'];
     } else {
@@ -395,9 +294,6 @@ export function RegisterPage() {
     if (!formData.email.trim()) clientErrors.email = ['Please enter your email address.'];
     if (!formData.password) clientErrors.password = ['Please enter a password.'];
     else if (formData.password.length < 8) clientErrors.password = ['Password must be at least 8 characters long.'];
-    if (formData.password !== formData.password_confirmation) {
-      clientErrors.password_confirmation = ['Password confirmation does not match.'];
-    }
 
     if (Object.keys(clientErrors).length > 0) {
       setErrors(clientErrors);
@@ -756,70 +652,6 @@ export function RegisterPage() {
                 )}
               </div>
 
-              <div className="member-auth-field" data-member-user-id-field>
-                <label className="member-auth-label" htmlFor="memberUserId">
-                  User ID <span className="member-register-confirm-help" style={{ fontWeight: 'normal', color: 'var(--color-text-secondary, #64748b)' }}>(Optional)</span>
-                </label>
-                <div
-                  className={`member-auth-input-wrap ${
-                    errors.user_id || userIdStatus === 'taken' || userIdStatus === 'invalid' || userIdStatus === 'reserved'
-                      ? 'member-auth-input-wrap--error'
-                      : ''
-                  }`}
-                >
-                  <svg className="member-auth-input-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" /></svg>
-                  <input
-                    className="member-auth-input"
-                    id="memberUserId"
-                    name="user_id"
-                    type="text"
-                    value={formData.user_id}
-                    onChange={handleUserIdChange}
-                    placeholder="Leave blank to auto-generate (e.g. abcd123456)"
-                    autoComplete="username"
-                    maxLength={10}
-                    spellCheck="false"
-                    autoCapitalize="characters"
-                    aria-describedby="memberUserIdFeedback"
-                    aria-invalid={
-                      errors.user_id || userIdStatus === 'taken' || userIdStatus === 'invalid' || userIdStatus === 'reserved'
-                        ? 'true'
-                        : 'false'
-                    }
-                  />
-                </div>
-                <div
-                  id="memberUserIdFeedback"
-                  className={`member-user-id-feedback ${
-                    errors.user_id || userIdStatus === 'taken' || userIdStatus === 'invalid' || userIdStatus === 'reserved'
-                      ? 'is-invalid'
-                      : userIdStatus === 'available'
-                      ? 'is-valid'
-                      : ''
-                  }`}
-                  aria-live="polite"
-                  style={
-                    userIdStatus === 'available'
-                      ? { color: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }
-                      : errors.user_id || userIdStatus === 'taken' || userIdStatus === 'invalid' || userIdStatus === 'reserved'
-                      ? { color: '#dc2626' }
-                      : {}
-                  }
-                >
-                  {userIdStatus === 'available' ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#059669' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>User ID is available.</span>
-                    </span>
-                  ) : (
-                    errors.user_id
-                      ? (Array.isArray(errors.user_id) ? errors.user_id[0] : errors.user_id)
-                      : userIdMessage
-                  )}
-                </div>
-              </div>
 
               <div className="member-auth-field" data-member-phone-field>
                 <label className="member-auth-label" htmlFor="phone">
@@ -992,46 +824,6 @@ export function RegisterPage() {
                 )}
               </div>
 
-              <div className="member-auth-field">
-                <label className="member-auth-label" htmlFor="password_confirmation">Confirm password</label>
-                <div className={`member-auth-input-wrap ${errors.password_confirmation ? 'member-auth-input-wrap--error' : ''}`}>
-                  <svg className="member-auth-input-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3v8Z" /><path d="m9 12 2 2 4-4" /></svg>
-                  <input
-                    className="member-auth-input member-auth-input--password"
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={formData.password_confirmation}
-                    onChange={handleChange}
-                    placeholder="Enter your password again"
-                    autoComplete="new-password"
-                    required
-                    aria-invalid={errors.password_confirmation ? 'true' : 'false'}
-                    aria-describedby={errors.password_confirmation ? 'member-confirm-password-error' : 'member-confirm-password-help'}
-                  />
-                  <button
-                    className="member-auth-password-toggle"
-                    type="button"
-                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                    aria-controls="password_confirmation"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? (
-                      <svg className="member-auth-eye member-auth-eye--hide" viewBox="0 0 24 24" aria-hidden="true" style={{ display: 'block' }}><path d="m3 3 18 18" /><path d="M10.6 6.2A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a16 16 0 0 1-2.1 2.7" /><path d="M6.3 6.4C3.9 8.1 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3.1-.5" /></svg>
-                    ) : (
-                      <svg className="member-auth-eye member-auth-eye--show" viewBox="0 0 24 24" aria-hidden="true" style={{ display: 'block' }}><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>
-                    )}
-                  </button>
-                </div>
-                {errors.password_confirmation ? (
-                  <p className="member-auth-error" id="member-confirm-password-error" role="alert">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 17h.01" /></svg>
-                    <span>{Array.isArray(errors.password_confirmation) ? errors.password_confirmation[0] : errors.password_confirmation}</span>
-                  </p>
-                ) : (
-                  <span className="member-register-confirm-help" id="member-confirm-password-help">Use the same password entered above.</span>
-                )}
-              </div>
 
               <button className="member-auth-submit" type="submit" disabled={isSubmitting}>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></svg>

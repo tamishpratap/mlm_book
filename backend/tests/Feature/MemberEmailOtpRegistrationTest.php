@@ -37,7 +37,7 @@ class MemberEmailOtpRegistrationTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Create your account');
         $response->assertSee('Full name');
-        $response->assertSee('User ID');
+        $response->assertDontSee('User ID');
         $response->assertSee('Email address');
     }
 
@@ -82,6 +82,34 @@ class MemberEmailOtpRegistrationTest extends TestCase
         Mail::assertSent(MemberRegistrationOtpMail::class, function ($mail) use ($email) {
             return $mail->hasTo($email) && strlen($mail->otpCode) === 6;
         });
+    }
+
+    public function test_registration_submits_without_user_id_and_without_password_confirmation_and_autogenerates_user_id(): void
+    {
+        Mail::fake();
+
+        $email = 'autouser_' . Str::random(8) . '@example.com';
+        $phone = '+9198' . rand(10000000, 99999999);
+
+        // Submit registration without user_id and without password_confirmation
+        $response = $this->post(route('member.register.submit'), [
+            'name' => 'Aarav Sharma',
+            'email' => $email,
+            'phone' => $phone,
+            'password' => 'SecretPass123!',
+        ]);
+
+        $response->assertRedirect(route('member.register.verify'));
+        $response->assertSessionHas('pending_registration_token');
+
+        $pending = PendingMemberRegistration::where('email', $email)->first();
+        $this->assertNotNull($pending);
+        $this->assertSame(10, strlen($pending->user_id));
+        $this->assertMatchesRegularExpression('/^[a-z0-9]{10}$/', $pending->user_id);
+        $this->assertStringStartsWith('aara', $pending->user_id);
+        $this->assertTrue(Hash::check('SecretPass123!', $pending->password_hash));
+
+        $response->assertSessionDoesntHaveErrors();
     }
 
     public function test_verify_email_page_accessible_with_pending_session(): void
