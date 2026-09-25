@@ -10,7 +10,7 @@ use Intervention\Gif\Exceptions\DecoderException;
 class PlainTextExtensionDecoder extends AbstractDecoder
 {
     /**
-     * Decode current source.
+     * Decode current source
      *
      * @throws DecoderException
      */
@@ -19,10 +19,10 @@ class PlainTextExtensionDecoder extends AbstractDecoder
         $extension = new PlainTextExtension();
 
         // skip marker & label
-        $this->nextBytesOrFail(2);
+        $this->getNextBytesOrFail(2);
 
         // skip info block
-        $this->nextBytesOrFail($this->infoBlockSize());
+        $this->getNextBytesOrFail($this->getInfoBlockSize());
 
         // text blocks
         $extension->setText($this->decodeTextBlocks());
@@ -31,42 +31,41 @@ class PlainTextExtensionDecoder extends AbstractDecoder
     }
 
     /**
-     * Get number of bytes in header block.
+     * Get number of bytes in header block
      *
      * @throws DecoderException
      */
-    private function infoBlockSize(): int
+    protected function getInfoBlockSize(): int
     {
-        $unpacked = unpack('C', $this->nextByteOrFail());
-
+        $unpacked = unpack('C', $this->getNextByteOrFail());
         if ($unpacked === false || !array_key_exists(1, $unpacked)) {
-            throw new DecoderException('Failed to decode info block size of plain text extension');
+            throw new DecoderException('Unable to decode info block size.');
         }
 
         return $unpacked[1];
     }
 
     /**
-     * Decode text sub blocks.
+     * Decode text sub blocks
      *
      * @throws DecoderException
      * @return array<string>
      */
-    private function decodeTextBlocks(): array
+    protected function decodeTextBlocks(): array
     {
         $blocks = [];
 
         do {
-            $char = $this->nextByteOrFail();
+            $char = $this->getNextByteOrFail();
             $unpacked = unpack('C', $char);
             if ($unpacked === false || !array_key_exists(1, $unpacked)) {
-                throw new DecoderException('Failed to decode text blocks in plain text extension');
+                throw new DecoderException('Unable to decode text block.');
             }
 
             $size = (int) $unpacked[1];
 
             if ($size > 0) {
-                $blocks[] = $this->nextBytesOrFail($size);
+                $blocks[] = $this->getNextBytesOrFail($size);
             }
         } while ($char !== PlainTextExtension::TERMINATOR);
 

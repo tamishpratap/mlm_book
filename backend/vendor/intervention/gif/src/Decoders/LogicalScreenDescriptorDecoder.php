@@ -6,12 +6,11 @@ namespace Intervention\Gif\Decoders;
 
 use Intervention\Gif\Blocks\LogicalScreenDescriptor;
 use Intervention\Gif\Exceptions\DecoderException;
-use Intervention\Gif\Exceptions\InvalidArgumentException;
 
 class LogicalScreenDescriptorDecoder extends AbstractPackedBitDecoder
 {
     /**
-     * Decode given string to current instance.
+     * Decode given string to current instance
      *
      * @throws DecoderException
      */
@@ -20,17 +19,13 @@ class LogicalScreenDescriptorDecoder extends AbstractPackedBitDecoder
         $logicalScreenDescriptor = new LogicalScreenDescriptor();
 
         // bytes 1-4
-        try {
-            $logicalScreenDescriptor->setSize(
-                $this->decodeWidth($this->nextBytesOrFail(2)),
-                $this->decodeHeight($this->nextBytesOrFail(2))
-            );
-        } catch (InvalidArgumentException $e) {
-            throw new DecoderException('Failed to decode image size of logical screen descriptor', previous: $e);
-        }
+        $logicalScreenDescriptor->setSize(
+            $this->decodeWidth($this->getNextBytesOrFail(2)),
+            $this->decodeHeight($this->getNextBytesOrFail(2))
+        );
 
         // byte 5
-        $packedField = $this->nextByteOrFail();
+        $packedField = $this->getNextByteOrFail();
 
         $logicalScreenDescriptor->setGlobalColorTableExistance(
             $this->decodeGlobalColorTableExistance($packedField)
@@ -50,116 +45,116 @@ class LogicalScreenDescriptorDecoder extends AbstractPackedBitDecoder
 
         // byte 6
         $logicalScreenDescriptor->setBackgroundColorIndex(
-            $this->decodeBackgroundColorIndex($this->nextByteOrFail())
+            $this->decodeBackgroundColorIndex($this->getNextByteOrFail())
         );
 
         // byte 7
         $logicalScreenDescriptor->setPixelAspectRatio(
-            $this->decodePixelAspectRatio($this->nextByteOrFail())
+            $this->decodePixelAspectRatio($this->getNextByteOrFail())
         );
 
         return $logicalScreenDescriptor;
     }
 
     /**
-     * Decode width.
+     * Decode width
      *
      * @throws DecoderException
      */
-    private function decodeWidth(string $source): int
+    protected function decodeWidth(string $source): int
     {
         $unpacked = unpack('v*', $source);
 
         if ($unpacked === false || !array_key_exists(1, $unpacked)) {
-            throw new DecoderException('Failed to decode width in logical screen descriptor');
+            throw new DecoderException('Unable to decode width.');
         }
 
         return $unpacked[1];
     }
 
     /**
-     * Decode height.
+     * Decode height
      *
      * @throws DecoderException
      */
-    private function decodeHeight(string $source): int
+    protected function decodeHeight(string $source): int
     {
         $unpacked = unpack('v*', $source);
 
         if ($unpacked === false || !array_key_exists(1, $unpacked)) {
-            throw new DecoderException('Failed to decode height in logical screen descriptor');
+            throw new DecoderException('Unable to decode height.');
         }
 
         return $unpacked[1];
     }
 
     /**
-     * Decode existance of global color table.
+     * Decode existance of global color table
      *
      * @throws DecoderException
      */
-    private function decodeGlobalColorTableExistance(string $byte): bool
+    protected function decodeGlobalColorTableExistance(string $byte): bool
     {
         return $this->hasPackedBit($byte, 0);
     }
 
     /**
-     * Decode color resolution in bits per pixel.
+     * Decode color resolution in bits per pixel
      *
      * @throws DecoderException
      */
-    private function decodeBitsPerPixel(string $byte): int
+    protected function decodeBitsPerPixel(string $byte): int
     {
-        return intval(bindec($this->packedBits($byte, 1, 3))) + 1;
+        return intval(bindec($this->getPackedBits($byte, 1, 3))) + 1;
     }
 
     /**
-     * Decode global color table sorted status.
+     * Decode global color table sorted status
      *
      * @throws DecoderException
      */
-    private function decodeGlobalColorTableSorted(string $byte): bool
+    protected function decodeGlobalColorTableSorted(string $byte): bool
     {
         return $this->hasPackedBit($byte, 4);
     }
 
     /**
-     * Decode size of global color table.
+     * Decode size of global color table
      *
      * @throws DecoderException
      */
-    private function decodeGlobalColorTableSize(string $byte): int
+    protected function decodeGlobalColorTableSize(string $byte): int
     {
-        return intval(bindec($this->packedBits($byte, 5, 3)));
+        return intval(bindec($this->getPackedBits($byte, 5, 3)));
     }
 
     /**
-     * Decode background color index.
+     * Decode background color index
      *
      * @throws DecoderException
      */
-    private function decodeBackgroundColorIndex(string $source): int
+    protected function decodeBackgroundColorIndex(string $source): int
     {
         $unpacked = unpack('C', $source);
 
         if ($unpacked === false || !array_key_exists(1, $unpacked)) {
-            throw new DecoderException('Failed to decode background color index in logical screen descriptor');
+            throw new DecoderException('Unable to decode background color index.');
         }
 
         return $unpacked[1];
     }
 
     /**
-     * Decode pixel aspect ratio.
+     * Decode pixel aspect ratio
      *
      * @throws DecoderException
      */
-    private function decodePixelAspectRatio(string $source): int
+    protected function decodePixelAspectRatio(string $source): int
     {
         $unpacked = unpack('C', $source);
 
         if ($unpacked === false || !array_key_exists(1, $unpacked)) {
-            throw new DecoderException('Failed to decode pixel aspect ratio in logical screen descriptor');
+            throw new DecoderException('Unable to decode pixel aspect ratio.');
         }
 
         return $unpacked[1];

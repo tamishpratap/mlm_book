@@ -9,15 +9,15 @@ use Intervention\Gif\Blocks\GraphicControlExtension;
 class GraphicControlExtensionEncoder extends AbstractEncoder
 {
     /**
-     * Create new instance.
+     * Create new instance
      */
-    public function __construct(GraphicControlExtension $entity)
+    public function __construct(GraphicControlExtension $source)
     {
-        parent::__construct($entity);
+        $this->source = $source;
     }
 
     /**
-     * Encode current entity.
+     * Encode current source
      */
     public function encode(): string
     {
@@ -33,31 +33,31 @@ class GraphicControlExtensionEncoder extends AbstractEncoder
     }
 
     /**
-     * Encode delay time.
+     * Encode delay time
      */
-    private function encodeDelay(): string
+    protected function encodeDelay(): string
     {
-        return pack('v*', $this->entity->delay());
+        return pack('v*', $this->source->getDelay());
     }
 
     /**
-     * Encode transparent color index.
+     * Encode transparent color index
      */
-    private function encodeTransparentColorIndex(): string
+    protected function encodeTransparentColorIndex(): string
     {
-        return pack('C', $this->entity->transparentColorIndex());
+        return pack('C', $this->source->getTransparentColorIndex());
     }
 
     /**
-     * Encode packed field.
+     * Encode packed field
      */
-    private function encodePackedField(): string
+    protected function encodePackedField(): string
     {
         return pack('C', bindec(implode('', [
             str_pad('0', 3, '0', STR_PAD_LEFT),
-            str_pad(decbin($this->entity->disposalMethod()->value), 3, '0', STR_PAD_LEFT),
-            (int) $this->entity->userInput(),
-            (int) $this->entity->transparentColorExistance(),
+            str_pad(decbin($this->source->getDisposalMethod()->value), 3, '0', STR_PAD_LEFT),
+            (int) $this->source->getUserInput(),
+            (int) $this->source->getTransparentColorExistance(),
         ])));
     }
 }

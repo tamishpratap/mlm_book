@@ -9,19 +9,19 @@ use Intervention\Gif\Blocks\PlainTextExtension;
 class PlainTextExtensionEncoder extends AbstractEncoder
 {
     /**
-     * Create new instance.
+     * Create new instance
      */
-    public function __construct(PlainTextExtension $entity)
+    public function __construct(PlainTextExtension $source)
     {
-        parent::__construct($entity);
+        $this->source = $source;
     }
 
     /**
-     * Encode current entity.
+     * Encode current source
      */
     public function encode(): string
     {
-        if (!$this->entity->hasText()) {
+        if (!$this->source->hasText()) {
             return '';
         }
 
@@ -35,21 +35,21 @@ class PlainTextExtensionEncoder extends AbstractEncoder
     }
 
     /**
-     * Encode head block.
+     * Encode head block
      */
-    private function encodeHead(): string
+    protected function encodeHead(): string
     {
         return "\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
     }
 
     /**
-     * Encode text chunks.
+     * Encode text chunks
      */
-    private function encodeTexts(): string
+    protected function encodeTexts(): string
     {
         return implode('', array_map(
             fn(string $text): string => pack('C', strlen($text)) . $text,
-            $this->entity->text(),
+            $this->source->getText(),
         ));
     }
 }

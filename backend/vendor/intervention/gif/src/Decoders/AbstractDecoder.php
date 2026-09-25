@@ -4,68 +4,67 @@ declare(strict_types=1);
 
 namespace Intervention\Gif\Decoders;
 
-use Intervention\Gif\AbstractEntity;
 use Intervention\Gif\Exceptions\DecoderException;
 
 abstract class AbstractDecoder
 {
     /**
-     * Decode current source.
+     * Decode current source
      */
-    abstract public function decode(): AbstractEntity;
+    abstract public function decode(): mixed;
 
     /**
-     * Create new instance.
+     * Create new instance
      */
-    public function __construct(protected mixed $stream, protected ?int $length = null)
+    public function __construct(protected mixed $handle, protected ?int $length = null)
     {
         //
     }
 
     /**
-     * Set source to decode.
+     * Set source to decode
      */
-    public function setStream(mixed $stream): self
+    public function setHandle(mixed $handle): self
     {
-        $this->stream = $stream;
+        $this->handle = $handle;
 
         return $this;
     }
 
     /**
-     * Read given number of bytes and move stream position.
+     * Read given number of bytes and move file pointer
      *
      * @throws DecoderException
      */
-    protected function nextBytesOrFail(int $length): string
+    protected function getNextBytesOrFail(int $length): string
     {
         if ($length < 1) {
-            throw new DecoderException('The length of the next byte chain must be at least one byte');
+            throw new DecoderException('The length passed must be at least one byte.');
         }
 
-        $bytes = fread($this->stream, $length);
+        $bytes = fread($this->handle, $length);
         if ($bytes === false || strlen($bytes) !== $length) {
-            throw new DecoderException('Unexpected end of file');
+            throw new DecoderException('Unexpected end of file.');
         }
 
         return $bytes;
     }
 
     /**
-     * Read given number of bytes and move stream position back to previous position.
+     * Read given number of bytes and move pointer back to previous position
      *
      * @throws DecoderException
      */
     protected function viewNextBytesOrFail(int $length): string
     {
-        $bytes = $this->nextBytesOrFail($length);
-        $this->moveStreamPosition($length * -1);
+        $bytes = $this->getNextBytesOrFail($length);
+        $this->movePointer($length * -1);
 
         return $bytes;
     }
 
     /**
-     * Read next byte and move stream position back to previous position.
+     * Read next byte and move pointer back to previous position
      *
      * @throws DecoderException
      */
@@ -75,49 +74,41 @@ abstract class AbstractDecoder
     }
 
     /**
-     * Read all remaining bytes from stream.
-     *
-     * @throws DecoderException
+     * Read all remaining bytes from file handler
      */
-    protected function remainingBytes(): string
+    protected function getRemainingBytes(): string
     {
-        $contents = stream_get_contents($this->stream);
+        $all = '';
+        do {
+            $byte = fread($this->handle, 1);
+            $all .= $byte;
+        } while (!feof($this->handle));
 
-        if ($contents === false) {
-            throw new DecoderException('Failed to read remaining bytes from stream');
-        }
-
-        return $contents;
+        return $all;
     }
 
     /**
-     * Get next byte in stream and move stream position.
+     * Get next byte in stream and move file pointer
      *
      * @throws DecoderException
      */
-    protected function nextByteOrFail(): string
+    protected function getNextByteOrFail(): string
     {
-        return $this->nextBytesOrFail(1);
+        return $this->getNextBytesOrFail(1);
     }
 
     /**
-     * Move stream position by given offset.
-     *
-     * @throws DecoderException
+     * Move file pointer on handle by given offset
      */
-    protected function moveStreamPosition(int $offset): self
+    protected function movePointer(int $offset): self
     {
-        $result = fseek($this->stream, $offset, SEEK_CUR);
-
-        if ($result !== 0) {
-            throw new DecoderException('Failed to move stream position by offset ' . $offset);
-        }
+        fseek($this->handle, $offset, SEEK_CUR);
 
         return $this;
     }
 
     /**
-     * Decode multi byte value.
+     * Decode multi byte value
      *
      * @throws DecoderException
      */
@@ -126,14 +117,14 @@ abstract class AbstractDecoder
         $unpacked = unpack('v*', $bytes);
 
         if ($unpacked === false || !array_key_exists(1, $unpacked)) {
-            throw new DecoderException('Failed to decode given bytes');
+            throw new DecoderException('Unable to decode given bytes.');
         }
 
         return $unpacked[1];
     }
 
     /**
-     * Set length.
+     * Set length
      */
     public function setLength(int $length): self
     {
@@ -143,24 +134,24 @@ abstract class AbstractDecoder
     }
 
     /**
-     * Get length.
+     * Get length
      */
-    public function length(): ?int
+    public function getLength(): ?int
     {
         return $this->length;
     }
 
     /**
-     * Get current stream position.
+     * Get current handle position
      *
      * @throws DecoderException
      */
-    public function position(): int
+    public function getPosition(): int
     {
-        $position = ftell($this->stream);
+        $position = ftell($this->handle);
 
         if ($position === false) {
-            throw new DecoderException('Failed to read current position from stream');
+            throw new DecoderException('Unable to read current position from handle.');
         }
 
         return $position;

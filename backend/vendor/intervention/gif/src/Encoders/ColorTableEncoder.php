@@ -11,15 +11,15 @@ use Intervention\Gif\Exceptions\EncoderException;
 class ColorTableEncoder extends AbstractEncoder
 {
     /**
-     * Create new instance.
+     * Create new instance
      */
-    public function __construct(ColorTable $entity)
+    public function __construct(ColorTable $source)
     {
-        parent::__construct($entity);
+        $this->source = $source;
     }
 
     /**
-     * Encode current entity.
+     * Encode current source
      *
      * @throws EncoderException
      */
@@ -27,7 +27,7 @@ class ColorTableEncoder extends AbstractEncoder
     {
         return implode('', array_map(
             fn(Color $color): string => $color->encode(),
-            $this->entity->colors(),
+            $this->source->getColors(),
         ));
     }
 }

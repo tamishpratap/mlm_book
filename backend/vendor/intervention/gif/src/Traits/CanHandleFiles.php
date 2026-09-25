@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Intervention\Gif\Traits;
 
-use Intervention\Gif\Exceptions\StreamException;
+use Intervention\Gif\Exceptions\RuntimeException;
 
 trait CanHandleFiles
 {
      /**
-     * Determines if input is file path.
+     * Determines if input is file path
      */
     private static function isFilePath(mixed $input): bool
     {
-        return is_string($input) && !self::hasNullBytes($input) && @is_file($input) === true;
+        return is_string($input) && !self::hasNullBytes($input) && @is_file($input);
     }
 
     /**
-     * Determine if given string contains null bytes.
+     * Determine if given string contains null bytes
      */
     private static function hasNullBytes(string $string): bool
     {
@@ -25,46 +25,29 @@ trait CanHandleFiles
     }
 
     /**
-     * Create stream resource from given gif image data.
+     * Create file pointer from given gif image data
      *
-     * @throws StreamException
+     * @throws RuntimeException
      */
-    private static function streamFromData(string $data): mixed
+    private static function getHandleFromData(string $data): mixed
     {
-        $stream = fopen('php://temp', 'r+');
+        $handle = fopen('php://temp', 'r+');
 
-        if ($stream === false) {
-            throw new StreamException('Failed to create tempory stream resource');
+        if ($handle === false) {
+            throw new RuntimeException('Unable to create tempory file handle.');
         }
 
-        $result = fwrite($stream, $data);
-        if ($result === false) {
-            fclose($stream);
-            throw new StreamException('Failed to write tempory stream resource');
-        }
+        fwrite($handle, $data);
+        rewind($handle);
 
-        $result = rewind($stream);
-        if ($result === false) {
-            fclose($stream);
-            throw new StreamException('Failed to rewind tempory stream resource');
-        }
-
-        return $stream;
+        return $handle;
     }
 
     /**
-     * Create stream resource from given file path.
-     *
-     * @throws StreamException
+     * Create file pounter from given file path
      */
-    private static function streamFromFilePath(string $path): mixed
+    private static function getHandleFromFilePath(string $path): mixed
     {
-        $stream = fopen($path, 'rb');
-
-        if ($stream === false) {
-            throw new StreamException('Failed to create stream resource from path');
-        }
-
-        return $stream;
+        return fopen($path, 'rb');
     }
 }

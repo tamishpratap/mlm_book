@@ -15,7 +15,7 @@ use Intervention\Gif\Blocks\Trailer;
 class GifDataStream extends AbstractEntity
 {
     /**
-     * Create new instance.
+     * Create new instance
      *
      * @param array<FrameBlock> $frames
      * @param array<CommentExtension> $comments
@@ -31,15 +31,15 @@ class GifDataStream extends AbstractEntity
     }
 
     /**
-     * Get header.
+     * Get header
      */
-    public function header(): Header
+    public function getHeader(): Header
     {
         return $this->header;
     }
 
     /**
-     * Set header.
+     * Set header
      */
     public function setHeader(Header $header): self
     {
@@ -49,15 +49,15 @@ class GifDataStream extends AbstractEntity
     }
 
     /**
-     * Get logical screen descriptor.
+     * Get logical screen descriptor
      */
-    public function logicalScreenDescriptor(): LogicalScreenDescriptor
+    public function getLogicalScreenDescriptor(): LogicalScreenDescriptor
     {
         return $this->logicalScreenDescriptor;
     }
 
     /**
-     * Set logical screen descriptor.
+     * Set logical screen descriptor
      */
     public function setLogicalScreenDescriptor(LogicalScreenDescriptor $descriptor): self
     {
@@ -67,35 +67,34 @@ class GifDataStream extends AbstractEntity
     }
 
     /**
-     * Return global color table if available else null.
+     * Return global color table if available else null
      */
-    public function globalColorTable(): ?ColorTable
+    public function getGlobalColorTable(): ?ColorTable
     {
         return $this->globalColorTable;
     }
 
     /**
-     * Set global color table.
+     * Set global color table
      */
     public function setGlobalColorTable(ColorTable $table): self
     {
         $this->globalColorTable = $table;
         $this->logicalScreenDescriptor->setGlobalColorTableExistance(true);
         $this->logicalScreenDescriptor->setGlobalColorTableSize(
-            $table->logicalSize()
+            $table->getLogicalSize()
         );
 
         return $this;
     }
 
     /**
-     * Get main graphic control extension.
+     * Get main graphic control extension
      */
-    public function mainApplicationExtension(): ?NetscapeApplicationExtension
+    public function getMainApplicationExtension(): ?NetscapeApplicationExtension
     {
         foreach ($this->frames as $frame) {
-            $extension = $frame->netscapeExtension();
-            if ($extension !== null) {
+            if ($extension = $frame->getNetscapeExtension()) {
                 return $extension;
             }
         }
@@ -104,34 +103,30 @@ class GifDataStream extends AbstractEntity
     }
 
     /**
-     * Get array of frames.
+     * Get array of frames
      *
      * @return array<FrameBlock>
      */
-    public function frames(): array
+    public function getFrames(): array
     {
         return $this->frames;
     }
 
     /**
-     * Return array of "global" comments.
+     * Return array of "global" comments
      *
      * @return array<CommentExtension>
      */
-    public function comments(): array
+    public function getComments(): array
     {
         return $this->comments;
     }
 
     /**
-     * Return first frame.
+     * Return first frame
      */
-    public function firstFrame(): ?FrameBlock
+    public function getFirstFrame(): ?FrameBlock
     {
-        if ($this->frames === []) {
-            return null;
-        }
-
         if (!array_key_exists(0, $this->frames)) {
             return null;
         }
@@ -140,7 +135,7 @@ class GifDataStream extends AbstractEntity
     }
 
     /**
-     * Add frame.
+     * Add frame
      */
     public function addFrame(FrameBlock $frame): self
     {
@@ -150,7 +145,7 @@ class GifDataStream extends AbstractEntity
     }
 
     /**
-     * Add comment extension.
+     * Add comment extension
      */
     public function addComment(CommentExtension $comment): self
     {
@@ -160,7 +155,7 @@ class GifDataStream extends AbstractEntity
     }
 
     /**
-     * Set the current data.
+     * Set the current data
      *
      * @param array<FrameBlock> $frames
      */
@@ -172,23 +167,23 @@ class GifDataStream extends AbstractEntity
     }
 
     /**
-     * Get trailer.
+     * Get trailer
      */
-    public function trailer(): Trailer
+    public function getTrailer(): Trailer
     {
         return new Trailer();
     }
 
     /**
-     * Determine if gif is animated.
+     * Determine if gif is animated
      */
     public function isAnimated(): bool
     {
-        return count($this->frames()) > 1;
+        return count($this->getFrames()) > 1;
     }
 
     /**
-     * Determine if global color table is set.
+     * Determine if global color table is set
      */
     public function hasGlobalColorTable(): bool
     {

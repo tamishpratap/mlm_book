@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Intervention\Image\Drivers;
 
-use Intervention\Image\Alignment;
-use Intervention\Image\Exceptions\InvalidArgumentException;
+use Intervention\Image\Exceptions\FontException;
 use Intervention\Image\Geometry\Point;
-use Intervention\Image\Geometry\Polygon;
+use Intervention\Image\Geometry\Rectangle;
 use Intervention\Image\Interfaces\FontInterface;
 use Intervention\Image\Interfaces\FontProcessorInterface;
 use Intervention\Image\Interfaces\PointInterface;
-use Intervention\Image\Size;
 use Intervention\Image\Typography\Line;
 use Intervention\Image\Typography\TextBlock;
 
@@ -21,8 +19,6 @@ abstract class AbstractFontProcessor implements FontProcessorInterface
      * {@inheritdoc}
      *
      * @see FontProcessorInterface::textBlock()
-     *
-     * @throws InvalidArgumentException
      */
     public function textBlock(string $text, FontInterface $font, PointInterface $position): TextBlock
     {
@@ -33,17 +29,16 @@ abstract class AbstractFontProcessor implements FontProcessorInterface
         $blockWidth = $this->boxSize((string) $lines->longestLine(), $font)->width();
 
         $x = $pivot->x();
-        $y = $font->hasFile() ? $pivot->y() + $this->capHeight($font) : $pivot->y();
+        $y = $font->hasFilename() ? $pivot->y() + $this->capHeight($font) : $pivot->y();
         $xAdjustment = 0;
 
         // adjust line positions according to alignment
-        $horizontalAlignment = $font->alignmentHorizontal();
         foreach ($lines as $line) {
             $lineBoxSize = $this->boxSize((string) $line, $font);
             $lineWidth = $lineBoxSize->width() + $lineBoxSize->pivot()->x();
-            $xAdjustment = $horizontalAlignment === Alignment::LEFT ? 0 : $blockWidth - $lineWidth;
-            $xAdjustment = $horizontalAlignment === Alignment::RIGHT ? intval(round($xAdjustment)) : $xAdjustment;
-            $xAdjustment = $horizontalAlignment === Alignment::CENTER ? intval(round($xAdjustment / 2)) : $xAdjustment;
+            $xAdjustment = $font->alignment() === 'left' ? 0 : $blockWidth - $lineWidth;
+            $xAdjustment = $font->alignment() === 'right' ? intval(round($xAdjustment)) : $xAdjustment;
+            $xAdjustment = $font->alignment() === 'center' ? intval(round($xAdjustment / 2)) : $xAdjustment;
             $position = new Point($x + $xAdjustment, $y);
             $position->rotate($font->angle(), $pivot);
             $line->setPosition($position);
@@ -94,7 +89,9 @@ abstract class AbstractFontProcessor implements FontProcessorInterface
     }
 
     /**
-     * Reformat a text block by wrapping each line before the given maximum width.
+     * Reformat a text block by wrapping each line before the given maximum width
+     *
+     * @throws FontException
      */
     protected function wrapTextBlock(TextBlock $block, FontInterface $font): TextBlock
     {
@@ -113,6 +110,7 @@ abstract class AbstractFontProcessor implements FontProcessorInterface
      * The output will be an array of formatted lines that are all within the
      * maximum width.
      *
+     * @throws FontException
      * @return array<Line>
      */
     protected function wrapLine(Line $line, FontInterface $font): array
@@ -149,24 +147,24 @@ abstract class AbstractFontProcessor implements FontProcessorInterface
     }
 
     /**
-     * Build pivot point of textblock according to the font settings and based on given position.
+     * Build pivot point of textblock according to the font settings and based on given position
      *
-     * @throws InvalidArgumentException
+     * @throws FontException
      */
     protected function buildPivot(TextBlock $block, FontInterface $font, PointInterface $position): PointInterface
     {
         // bounding box
-        $box = Polygon::fromSize(new Size(
+        $box = new Rectangle(
             $this->boxSize((string) $block->longestLine(), $font)->width(),
-            $this->leading($font) * ($block->count() - 1) + $this->capHeight($font),
-        ));
+            $this->leading($font) * ($block->count() - 1) + $this->capHeight($font)
+        );
 
         // set position
         $box->setPivot($position);
 
         // alignment
-        $box->alignHorizontally($font->alignmentHorizontal());
-        $box->alignVertically($font->alignmentVertical());
+        $box->align($font->alignment());
+        $box->valign($font->valignment());
         $box->rotate($font->angle());
 
         return $box->last();
