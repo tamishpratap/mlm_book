@@ -135,8 +135,8 @@ class EventRewardResolver
         // 4. Retrieve Authoritative Verified Direct Referral Count (Server-side)
         $verifiedCount = $this->getVerifiedDirectReferralCount($resolvedMember);
 
-        // 5. Resolve against Active Event Reward Rules
-        $resolution = $this->resolveForCount($verifiedCount, $resolvedMember);
+        // 5. Resolve against Central Dynamic Rank Rules
+        $resolution = $this->ruleResolver->resolveForMember($resolvedMember);
 
         // Enrich resolution payload with event and campaign context
         $resolution['event_id'] = $resolvedEvent->id;
@@ -157,6 +157,9 @@ class EventRewardResolver
      */
     public function resolveForCount(int $count, ?Member $member = null): array
     {
-        return $this->ruleResolver->resolveForCount($count, $member, AdRewardRule::TYPE_EVENT);
+        $hasCentral = AdRewardRule::ofType(AdRewardRule::TYPE_CENTRAL)->active()->exists();
+        $targetType = $hasCentral ? AdRewardRule::TYPE_CENTRAL : AdRewardRule::TYPE_EVENT;
+
+        return $this->ruleResolver->resolveForCount($count, $member, $targetType);
     }
 }

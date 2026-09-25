@@ -18,6 +18,7 @@ import {
   Megaphone,
   Wallet,
   MessageSquare,
+  Gift,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useBranding } from '../../hooks/useBranding';
@@ -96,9 +97,17 @@ const NAV_GROUPS = [
           { label: 'Pending Review', to: '/admin/ad-campaigns?approval_status=pending' },
           { label: 'Active Ads', to: '/admin/ad-campaigns?status=active' },
           { label: 'Analytics Overview', to: '/admin/ad-campaigns/analytics' },
-          { label: 'Reward History', to: '/admin/ad-campaigns/rewards' },
-          { label: 'Ad Reward Rules', to: '/admin/ad-campaigns/reward-rules' },
           { label: 'Campaign Settings', to: '/admin/ad-campaigns/settings' },
+        ],
+      },
+      {
+        label: 'Reward Management',
+        icon: Gift,
+        basePath: '/admin/rewards',
+        ownerKey: '/admin/rewards',
+        children: [
+          { label: 'Reward Rules', to: '/admin/rewards/rules' },
+          { label: 'Reward History', to: '/admin/rewards/history' },
         ],
       },
       {
@@ -141,7 +150,6 @@ const NAV_GROUPS = [
         children: [
           { label: 'All Events', to: '/admin/events' },
           { label: 'Event Control Center', to: '/admin/events/campaigns' },
-          { label: 'Event Reward Rules', to: '/admin/events/reward-rules' },
         ],
       },
     ],
@@ -207,6 +215,7 @@ function getCanonicalRouteOwner(pathname) {
   if (cleanPath.startsWith('/admin/stories')) return '/admin/stories';
   if (cleanPath.startsWith('/admin/business-pages')) return '/admin/business-pages';
   if (cleanPath.startsWith('/admin/ad-campaigns')) return '/admin/ad-campaigns';
+  if (cleanPath.startsWith('/admin/rewards')) return '/admin/rewards';
   if (cleanPath.startsWith('/admin/funds') || cleanPath.startsWith('/admin/withdrawals')) return '/admin/funds';
   if (cleanPath.startsWith('/admin/communities')) return '/admin/communities';
   if (cleanPath.startsWith('/admin/marketplace')) return '/admin/marketplace';

@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Friendship;
 use App\Models\Member;
 use App\Models\Post;
+use App\Models\RewardRankRule;
 use Illuminate\Support\Collection;
 
 class AdDeliveryService
@@ -512,7 +513,7 @@ class AdDeliveryService
                 ->exists();
         }
 
-        $maxReward = AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_BUSINESS_AD) ?? 0.0500;
+        $maxReward = RewardRankRule::getMaximumActiveRewardAmount() ?? AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_BUSINESS_AD) ?? 0.0500;
         $maxRewardFormatted = null;
         if ($maxReward !== null) {
             $formattedNumber = rtrim(rtrim(sprintf('%.4f', $maxReward), '0'), '.');
@@ -577,7 +578,7 @@ class AdDeliveryService
         $alreadyRewarded = false;
 
         if ($hasActiveCampaign) {
-            $maxReward = AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT);
+            $maxReward = RewardRankRule::getMaximumActiveRewardAmount() ?? AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT);
             if ($maxReward !== null) {
                 $formattedNumber = rtrim(rtrim(sprintf('%.4f', $maxReward), '0'), '.');
                 if (strpos($formattedNumber, '.') !== false && strlen(substr($formattedNumber, strpos($formattedNumber, '.') + 1)) == 1) {

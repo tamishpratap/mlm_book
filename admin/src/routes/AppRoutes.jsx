@@ -34,6 +34,9 @@ import { AdminCampaignSettingsPage } from '../pages/ads/AdminCampaignSettingsPag
 import { AdminRewardHistoryPage } from '../pages/ads/AdminRewardHistoryPage';
 import { AdRewardRulesPage } from '../pages/ads/AdRewardRulesPage';
 
+// Centralized Reward Management Pages
+import { RewardRulesPage, RewardHistoryPage } from '../pages/rewards';
+
 // Funds & Deposit Management Pages
 import { DepositSettingsPage } from '../pages/funds/DepositSettingsPage';
 import { DepositsListPage } from '../pages/funds/DepositsListPage';
@@ -127,12 +130,17 @@ export function AppRoutes() {
         <Route path="business-pages/category/create" element={<Navigate to="/admin/business-pages/categories/create" replace />} />
         <Route path="business-pages/:id" element={<BusinessPageDetailsPage />} />
 
+        {/* Centralized Reward Management Module */}
+        <Route path="rewards" element={<Navigate to="/admin/rewards/rules" replace />} />
+        <Route path="rewards/rules" element={<RewardRulesPage />} />
+        <Route path="rewards/history" element={<RewardHistoryPage />} />
+
         {/* Advertising Campaigns Management Module */}
         <Route path="ad-campaigns" element={<AdCampaignsListPage />} />
         <Route path="ad-campaigns/analytics" element={<AdCampaignAnalyticsPage />} />
-        <Route path="ad-campaigns/rewards" element={<AdminRewardHistoryPage />} />
-        <Route path="ad-campaigns/reward-rules" element={<AdRewardRulesPage />} />
-        <Route path="ad-campaigns/rules" element={<Navigate to="/admin/ad-campaigns/reward-rules" replace />} />
+        <Route path="ad-campaigns/rewards" element={<Navigate to="/admin/rewards/history?tab=ads" replace />} />
+        <Route path="ad-campaigns/reward-rules" element={<Navigate to="/admin/rewards/rules" replace />} />
+        <Route path="ad-campaigns/rules" element={<Navigate to="/admin/rewards/rules" replace />} />
         <Route path="ad-campaigns/settings" element={<AdminCampaignSettingsPage />} />
 
         {/* Funds & Deposit Management Module */}
@@ -154,7 +162,7 @@ export function AppRoutes() {
         {/* Events Module */}
         <Route path="events" element={<EventsListPage />} />
         <Route path="events/campaigns" element={<EventCampaignsControlCenterPage />} />
-        <Route path="events/reward-rules" element={<EventRewardRulesPage />} />
+        <Route path="events/reward-rules" element={<Navigate to="/admin/rewards/rules" replace />} />
         <Route path="events/:id" element={<EventDetailsPage />} />
 
         {/* Central Moderation Reports Queue */}

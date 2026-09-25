@@ -12,10 +12,12 @@ class AdRewardRule extends Model
 {
     use HasFactory;
 
+    public const TYPE_CENTRAL = 'central';
     public const TYPE_BUSINESS_AD = 'business_ad';
     public const TYPE_EVENT = 'event';
 
     public const MAX_PERMISSIBLE_REWARD_USD = 0.0500;
+    public const CACHE_KEY_ACTIVE_CENTRAL_RULES = 'central_reward_rules_active';
     public const CACHE_KEY_ACTIVE_RULES = 'ad_reward_rules_active';
     public const CACHE_KEY_ACTIVE_EVENT_RULES = 'event_reward_rules_active';
 
@@ -61,6 +63,14 @@ class AdRewardRule extends Model
     }
 
     /**
+     * Scope for central authoritative reward rules.
+     */
+    public function scopeForCentral($query)
+    {
+        return $query->where('rule_type', self::TYPE_CENTRAL);
+    }
+
+    /**
      * Scope for business ad reward rules.
      */
     public function scopeForBusinessAd($query)
@@ -93,29 +103,27 @@ class AdRewardRule extends Model
     }
 
     /**
-     * Clear the cached active rules.
-     * If type is null, clears both business_ad and event cache keys.
+     * Clear the cached active rules across all scopes.
+     * If type is null, clears central, business_ad, and event cache keys.
      */
     public static function clearCache(?string $type = null): void
     {
-        if ($type === null) {
-            Cache::forget(self::CACHE_KEY_ACTIVE_RULES);
-            Cache::forget(self::CACHE_KEY_ACTIVE_EVENT_RULES);
-        } elseif ($type === self::TYPE_EVENT) {
-            Cache::forget(self::CACHE_KEY_ACTIVE_EVENT_RULES);
-        } else {
-            Cache::forget(self::CACHE_KEY_ACTIVE_RULES);
-        }
+        Cache::forget(self::CACHE_KEY_ACTIVE_CENTRAL_RULES);
+        Cache::forget(self::CACHE_KEY_ACTIVE_RULES);
+        Cache::forget(self::CACHE_KEY_ACTIVE_EVENT_RULES);
     }
 
     /**
      * Get all active rules for a specific rule type from cache or database.
+     * When central rules exist, they serve as the single authoritative source for both events and ads.
      */
-    public static function getActiveRules(string $type = self::TYPE_BUSINESS_AD): Collection
+    public static function getActiveRules(string $type = self::TYPE_CENTRAL): Collection
     {
-        $cacheKey = ($type === self::TYPE_EVENT)
-            ? self::CACHE_KEY_ACTIVE_EVENT_RULES
-            : self::CACHE_KEY_ACTIVE_RULES;
+        $cacheKey = match ($type) {
+            self::TYPE_CENTRAL => self::CACHE_KEY_ACTIVE_CENTRAL_RULES,
+            self::TYPE_EVENT => self::CACHE_KEY_ACTIVE_EVENT_RULES,
+            default => self::CACHE_KEY_ACTIVE_RULES,
+        };
 
         return Cache::remember($cacheKey, 3600, function () use ($type) {
             return static::ofType($type)->active()->get();
@@ -125,11 +133,8 @@ class AdRewardRule extends Model
     /**
      * Get the minimum active reward amount in USD.
      * Centralized source for campaign exhaustion checks.
-     *
-     * Strict rule: For TYPE_EVENT, if no active rules exist, returns null (never fabricates $0.05 or $0.025).
-     * For legacy Business Ads, maintains backward compatibility.
      */
-    public static function getMinimumActiveRewardAmount(string $type = self::TYPE_BUSINESS_AD): ?float
+    public static function getMinimumActiveRewardAmount(string $type = self::TYPE_CENTRAL): ?float
     {
         $active = static::getActiveRules($type);
         $validRewards = $active->whereNotNull('reward_amount')
@@ -146,11 +151,8 @@ class AdRewardRule extends Model
     /**
      * Get the maximum active reward amount in USD.
      * Centralized dynamic source for "Earn up to $X" messaging.
-     *
-     * Strict rule: For TYPE_EVENT, returns the highest active reward configured (or null if none exist).
-     * Never fabricates hardcoded rewards.
      */
-    public static function getMaximumActiveRewardAmount(string $type = self::TYPE_EVENT): ?float
+    public static function getMaximumActiveRewardAmount(string $type = self::TYPE_CENTRAL): ?float
     {
         $active = static::getActiveRules($type);
         $validRewards = $active->whereNotNull('reward_amount')
@@ -158,7 +160,7 @@ class AdRewardRule extends Model
             ->filter(fn ($amt) => $amt > 0);
 
         if ($validRewards->isEmpty()) {
-            return $type === self::TYPE_EVENT ? null : 0.0500;
+            return null;
         }
 
         return (float) $validRewards->max();
@@ -168,9 +170,17 @@ class AdRewardRule extends Model
      * Resolve the applicable active reward rule for a given direct verified referral count.
      * Pure reader / resolver - does NOT execute any wallet credits.
      */
-    public static function resolveForDirectVerifiedReferrals(int $count, string $type = self::TYPE_BUSINESS_AD): ?self
+    public static function resolveForDirectVerifiedReferrals(int $count, string $type = self::TYPE_CENTRAL): ?self
     {
-        $activeRules = static::getActiveRules($type);
+        $targetType = $type;
+        if ($targetType === self::TYPE_CENTRAL) {
+            $hasCentral = static::ofType(self::TYPE_CENTRAL)->active()->exists();
+            if (!$hasCentral) {
+                $targetType = self::TYPE_BUSINESS_AD;
+            }
+        }
+
+        $activeRules = static::getActiveRules($targetType);
 
         foreach ($activeRules as $rule) {
             $min = (int) $rule->min_referrals;
@@ -187,9 +197,17 @@ class AdRewardRule extends Model
     /**
      * Check if a specific rule range overlaps with any other active rule of the same type.
      */
-    public static function checkOverlap(int $min, ?int $max, ?int $ignoreId = null, string $type = self::TYPE_BUSINESS_AD): ?self
+    public static function checkOverlap(int $min, ?int $max, ?int $ignoreId = null, string $type = self::TYPE_CENTRAL): ?self
     {
-        $query = static::ofType($type)->where('is_active', true);
+        $targetType = $type;
+        if ($targetType === self::TYPE_CENTRAL) {
+            $hasCentral = static::ofType(self::TYPE_CENTRAL)->active()->exists();
+            if (!$hasCentral) {
+                $targetType = self::TYPE_BUSINESS_AD;
+            }
+        }
+
+        $query = static::ofType($targetType)->where('is_active', true);
 
         if ($ignoreId !== null) {
             $query->where('id', '!=', $ignoreId);
@@ -230,10 +248,18 @@ class AdRewardRule extends Model
      * Validate the entire active rule set for continuity (starts at 0, no gaps, single unlimited top tier).
      * Returns an array of error messages (empty if valid).
      */
-    public static function validateActiveSetContinuity(string $type = self::TYPE_BUSINESS_AD): array
+    public static function validateActiveSetContinuity(string $type = self::TYPE_CENTRAL): array
     {
+        $targetType = $type;
+        if ($targetType === self::TYPE_CENTRAL) {
+            $hasCentral = static::ofType(self::TYPE_CENTRAL)->active()->exists();
+            if (!$hasCentral) {
+                $targetType = self::TYPE_BUSINESS_AD;
+            }
+        }
+
         $errors = [];
-        $rules = static::ofType($type)->active()->get();
+        $rules = static::ofType($targetType)->active()->get();
 
         if ($rules->isEmpty()) {
             return $errors;
@@ -278,9 +304,17 @@ class AdRewardRule extends Model
     /**
      * Get full structural active set validation results via RewardRuleValidationService.
      */
-    public static function validateActiveSet(string $type = self::TYPE_EVENT): array
+    public static function validateActiveSet(string $type = self::TYPE_CENTRAL): array
     {
-        return app(\App\Services\RewardRuleValidationService::class)->validateActiveSet($type);
+        $targetType = $type;
+        if ($targetType === self::TYPE_CENTRAL) {
+            $hasCentral = static::ofType(self::TYPE_CENTRAL)->active()->exists();
+            if (!$hasCentral) {
+                $targetType = self::TYPE_BUSINESS_AD;
+            }
+        }
+
+        return app(\App\Services\RewardRuleValidationService::class)->validateActiveSet($targetType);
     }
 }
 
