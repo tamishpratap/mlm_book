@@ -55,7 +55,7 @@ class MobileFeedController extends Controller
                 'is_liked' => $isLiked,
                 'is_saved' => $isSaved,
                 'user_reaction' => $userReaction,
-                'comments' => $post->comments->take(5)->map(function ($c) {
+                'comments' => $post->comments->take(4)->map(function ($c) {
                     return [
                         'id' => $c->id,
                         'comment' => $c->comment,
@@ -289,11 +289,19 @@ class MobileFeedController extends Controller
     {
         $post = Post::findOrFail($postId);
 
+        $offset = (int) $request->input('offset', 0);
+        $limit = (int) $request->input('limit', (int) $request->input('per_page', 4));
+        if ($limit <= 0 || $limit > 50) {
+            $limit = 4;
+        }
+
         $comments = PostComment::query()
             ->where('post_id', $post->id)
             ->whereNull('parent_id')
             ->with(['member:id,name,user_id,profile_photo', 'replies.member:id,name,user_id,profile_photo'])
             ->latest()
+            ->skip($offset)
+            ->take($limit)
             ->get()
             ->map(function ($c) {
                 return [

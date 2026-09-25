@@ -432,28 +432,61 @@ export function PostCard({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Comments state
-  const [comments, setComments] = useState(post.comments || []);
+  // Comments state - standardized to only 4 newest comments initially
+  const [comments, setComments] = useState(() => {
+    if (Array.isArray(post.comments)) {
+      return post.comments.slice(-4);
+    }
+    return [];
+  });
   const [commentsCount, setCommentsCount] = useState(
     post.comments_count !== undefined ? post.comments_count : (post.comments ? post.comments.length : 0)
   );
   const [newCommentText, setNewCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [hasMoreComments, setHasMoreComments] = useState(
-    (post.comments_count || 0) > (post.comments ? post.comments.length : 0)
-  );
+  const [hasMoreComments, setHasMoreComments] = useState(() => {
+    const total = post.comments_count !== undefined ? post.comments_count : (post.comments ? post.comments.length : 0);
+    const initialLen = Array.isArray(post.comments) ? Math.min(post.comments.length, 4) : 0;
+    return total > initialLen;
+  });
   const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
 
   useEffect(() => {
-    if (post.comments) {
-      setComments(post.comments);
+    if (Array.isArray(post.comments)) {
+      setComments(post.comments.slice(-4));
     }
     const count = typeof post.comments_count !== 'undefined'
       ? post.comments_count
       : (post.comments ? post.comments.length : 0);
     setCommentsCount(count);
-    setHasMoreComments(count > (post.comments ? post.comments.length : 0));
+    const initialLen = Array.isArray(post.comments) ? Math.min(post.comments.length, 4) : 0;
+    setHasMoreComments(count > initialLen);
   }, [post.comments, post.comments_count]);
+
+  // Fetch initial 4 newest comments if not preloaded in feed payload but comments exist
+  useEffect(() => {
+    let isCancelled = false;
+    if (post.id && (!post.comments || post.comments.length === 0) && (post.comments_count || 0) > 0) {
+      setIsLoadingMoreComments(true);
+      postApi.getComments(post.id, 0, 4)
+        .then((data) => {
+          if (!isCancelled && data && Array.isArray(data.comments)) {
+            setComments(data.comments);
+            setHasMoreComments(data.has_more);
+            if (typeof data.comments_count !== 'undefined') {
+              setCommentsCount(data.comments_count);
+            }
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!isCancelled) setIsLoadingMoreComments(false);
+        });
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [post.id]);
 
   const clearPickerTimers = () => {
     if (pickerOpenTimerRef.current) {
@@ -723,7 +756,7 @@ export function PostCard({
     if (isLoadingMoreComments) return;
     setIsLoadingMoreComments(true);
     try {
-      const data = await postApi.getComments(post.id, comments.length);
+      const data = await postApi.getComments(post.id, comments.length, 4);
       if (data && Array.isArray(data.comments)) {
         setComments((prev) => {
           const existingIds = new Set(prev.map((c) => c.id));
