@@ -20,10 +20,13 @@ class AdReward extends Model
         'ad_campaign_id',
         'member_id',
         'ad_reward_rule_id',
+        'reward_rank_rule_id',
         'direct_verified_referral_count',
+        'team_count',
         'rule_min_referrals',
         'rule_max_referrals',
         'rule_version',
+        'rank_at_reward',
         'reward_amount_usd',
         'qualifying_event_id',
         'landing_page_url',
@@ -66,6 +69,14 @@ class AdReward extends Model
     public function adRewardRule(): BelongsTo
     {
         return $this->belongsTo(AdRewardRule::class, 'ad_reward_rule_id');
+    }
+
+    /**
+     * The rank reward rule snapshot applied at the time of qualification.
+     */
+    public function rewardRankRule(): BelongsTo
+    {
+        return $this->belongsTo(RewardRankRule::class, 'reward_rank_rule_id');
     }
 
     /**
