@@ -84,16 +84,16 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
 
       if (!hasHistorySuccess) {
         const historyErr = historySettled.status === 'rejected' ? historySettled.reason : null;
-        console.error('Failed to load reward history:', historyErr);
-        setError('Unable to load reward wallet data.');
+        console.error('Failed to load history:', historyErr);
+        setError('Unable to load wallet data.');
       } else if (!hasWalletSuccess) {
         const walletErr = walletSettled.status === 'rejected' ? walletSettled.reason : null;
-        console.error('Failed to load reward wallet:', walletErr);
-        setError('Unable to load reward wallet data.');
+        console.error('Failed to load wallet:', walletErr);
+        setError('Unable to load wallet data.');
       }
     } catch (err) {
-      console.error('Failed to load reward wallet:', err);
-      setError('Unable to load reward wallet data.');
+      console.error('Failed to load wallet:', err);
+      setError('Unable to load wallet data.');
     } finally {
       setLoading(false);
     }
@@ -179,7 +179,7 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
       });
 
       if (res.success) {
-        setWalletSuccess(res.message || 'Reward wallet address verified successfully!');
+        setWalletSuccess(res.message || 'Wallet address verified successfully!');
         setIsEditingAddress(false);
         setOtpSent(false);
         setOtpInput('');
@@ -207,7 +207,7 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
   if (!isOpen || !user) return null;
 
   const isVerified = Boolean(user.is_verified || user.mobile_verified_at);
-  const balance = walletData ? walletData.reward_balance : parseFloat(user.reward_balance || 0);
+  const balance = walletData ? (walletData.wallet ?? walletData.reward_balance ?? 0) : parseFloat(user.wallet ?? user.reward_balance ?? 0);
   const activeAddress = walletData?.wallet_address;
   const isAddressVerified = Boolean(walletData?.has_verified_wallet || (walletData?.wallet_status === 'verified' && activeAddress));
 
@@ -262,7 +262,7 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <h3 id="reward-wallet-modal-title" style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#ffffff', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-                Reward Wallet
+                Wallet
               </h3>
               <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255, 255, 255, 0.85)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                 USDT (BEP-20) Destination Address &amp; Interaction Rewards
@@ -272,7 +272,7 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close Reward Wallet"
+            aria-label="Close Wallet"
             style={{
               background: 'rgba(255, 255, 255, 0.15)',
               border: 'none',
@@ -314,7 +314,7 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
                   WhatsApp Mobile Verification Required
                 </div>
                 <div style={{ fontSize: '12.5px', color: '#b45309', marginTop: '2px' }}>
-                  Only WhatsApp-verified members can configure their Reward Wallet destination address and earn campaign rewards.
+                  Only WhatsApp-verified members can configure their Wallet destination address and earn campaign rewards.
                 </div>
                 {onOpenVerification && (
                   <button
@@ -382,10 +382,10 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
               }}
             >
               <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
-                Reward Wallet Balance
+                Wallet Balance
               </div>
               <div style={{ fontSize: '24px', fontWeight: 900, color: '#047857' }}>
-                ${Number(balance).toFixed(4)} <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>USD</span>
+                ${Number(balance).toFixed(2)} <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>USD</span>
               </div>
               <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
                 Separate from Advertising Funds
@@ -634,7 +634,7 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
                       }}
                     >
                       <Wallet size={14} />
-                      <span>Add Reward Wallet Address</span>
+                      <span>Add Wallet Address</span>
                     </button>
                   </div>
                 )}

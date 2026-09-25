@@ -224,8 +224,10 @@ class MobileAuthController extends Controller
             'avatar_url' => $member->avatar_url,
             'is_verified' => $member->isMobileVerified(),
             'direct_referral_count' => (int) $member->direct_referral_count,
-            'ad_balance' => (float) $member->ad_balance,
-            'reward_balance' => (float) $member->reward_balance,
+            'wallet' => (float) ($member->wallet ?? 0.00),
+            'p2p_wallet' => (float) ($member->p2p_wallet ?? 0.00),
+            'ad_balance' => (float) ($member->p2p_wallet ?? 0.00),
+            'reward_balance' => (float) ($member->wallet ?? 0.00),
         ];
     }
 

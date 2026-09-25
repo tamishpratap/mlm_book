@@ -70,7 +70,7 @@ class RewardWalletController extends Controller
 
         $member = $member->fresh() ?? $member;
 
-        $rewardBalance = (float) ($member->reward_balance ?? 0.00);
+        $walletBalance = (float) ($member->wallet ?? 0.00);
         $totalEarned = (float) AdReward::where('member_id', $member->id)
             ->where('status', AdReward::STATUS_CREDITED)
             ->sum('reward_amount_usd');
@@ -92,8 +92,9 @@ class RewardWalletController extends Controller
             ->latest('id')
             ->first();
 
-        $hasVerifiedWallet = !empty($member->reward_wallet_address) && $member->reward_wallet_verified_at !== null;
-        $walletStatus = $hasVerifiedWallet ? 'verified' : (!empty($member->reward_wallet_address) ? 'unverified' : 'not_added');
+        $walletAddress = $member->wallet_address;
+        $hasVerifiedWallet = !empty($walletAddress) && $member->reward_wallet_verified_at !== null;
+        $walletStatus = $hasVerifiedWallet ? 'verified' : (!empty($walletAddress) ? 'unverified' : 'not_added');
 
         $minReward = \App\Models\AdRewardRule::getMinimumActiveRewardAmount();
         $maxReward = (float) (\App\Models\AdRewardRule::getActiveRules()->max('reward_amount') ?? 0.05);
@@ -101,8 +102,10 @@ class RewardWalletController extends Controller
         return response()->json([
             'success' => true,
             'wallet' => [
-                'reward_balance' => $rewardBalance,
-                'reward_balance_formatted' => '$' . number_format($rewardBalance, 4) . ' USD',
+                'wallet' => $walletBalance,
+                'wallet_formatted' => '$' . number_format($walletBalance, 2) . ' USD',
+                'reward_balance' => $walletBalance,
+                'reward_balance_formatted' => '$' . number_format($walletBalance, 2) . ' USD',
                 'total_rewards_earned' => round($totalEarned, 4),
                 'total_rewards_earned_formatted' => '$' . number_format($totalEarned, 4) . ' USD',
                 'total_reward_count' => $totalCount,
@@ -116,7 +119,7 @@ class RewardWalletController extends Controller
                 'max_reward_usd' => $maxReward,
                 'reward_range_formatted' => '$' . number_format($minReward, 3) . ' – $' . number_format($maxReward, 3) . ' USD',
                 // Destination Wallet Details (USDT BEP-20)
-                'wallet_address' => $member->reward_wallet_address,
+                'wallet_address' => $walletAddress,
                 'wallet_network' => $member->reward_wallet_network ?? 'BEP-20',
                 'wallet_currency' => $member->reward_wallet_currency ?? 'USDT',
                 'wallet_status' => $walletStatus,
@@ -301,7 +304,7 @@ class RewardWalletController extends Controller
                 }
 
                 $member->update([
-                    'reward_wallet_address' => $otp->pending_value,
+                    'wallet_address' => $otp->pending_value,
                     'reward_wallet_network' => 'BEP-20',
                     'reward_wallet_currency' => 'USDT',
                     'reward_wallet_verified_at' => now(),
@@ -310,18 +313,20 @@ class RewardWalletController extends Controller
         );
 
         $freshMember = $member->fresh();
+        $walletBalance = (float) ($freshMember->wallet ?? 0.00);
 
         return response()->json([
             'success' => true,
             'message' => 'USDT (BEP-20) wallet address verified and activated successfully via email verification!',
             'wallet' => [
-                'wallet_address' => $freshMember->reward_wallet_address,
+                'wallet' => $walletBalance,
+                'wallet_address' => $freshMember->wallet_address,
                 'wallet_network' => $freshMember->reward_wallet_network ?? 'BEP-20',
                 'wallet_currency' => $freshMember->reward_wallet_currency ?? 'USDT',
                 'wallet_status' => 'verified',
                 'wallet_verified_at' => $freshMember->reward_wallet_verified_at?->toIso8601String(),
                 'has_verified_wallet' => true,
-                'reward_balance' => (float) ($freshMember->reward_balance ?? 0.00),
+                'reward_balance' => $walletBalance,
             ],
         ]);
     }
@@ -400,7 +405,8 @@ class RewardWalletController extends Controller
                 'last_page' => $rewards->lastPage(),
             ],
             'summary' => [
-                'reward_balance' => (float) ($member->reward_balance ?? 0.00),
+                'wallet' => (float) ($member->wallet ?? 0.00),
+                'reward_balance' => (float) ($member->wallet ?? 0.00),
                 'total_reward_count' => $rewards->total(),
             ],
         ]);

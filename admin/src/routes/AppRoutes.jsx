@@ -50,11 +50,11 @@ import { CommunityDetailsPage } from '../pages/communities/CommunityDetailsPage'
 import { MarketplaceListPage } from '../pages/marketplace/MarketplaceListPage';
 import { ProductDetailsPage } from '../pages/marketplace/ProductDetailsPage';
 
-// Events Module Pages
-import { EventsListPage } from '../pages/events/EventsListPage';
-import { EventDetailsPage } from '../pages/events/EventDetailsPage';
-import { EventRewardRulesPage } from '../pages/events/EventRewardRulesPage';
-import { EventCampaignsControlCenterPage } from '../pages/events/EventCampaignsControlCenterPage';
+// Events Module Pages - Temporarily Disabled
+// import { EventsListPage } from '../pages/events/EventsListPage';
+// import { EventDetailsPage } from '../pages/events/EventDetailsPage';
+// import { EventRewardRulesPage } from '../pages/events/EventRewardRulesPage';
+// import { EventCampaignsControlCenterPage } from '../pages/events/EventCampaignsControlCenterPage';
 
 // Central Moderation Reports Pages
 import { ReportsListPage } from '../pages/reports/ReportsListPage';
@@ -159,11 +159,15 @@ export function AppRoutes() {
         <Route path="marketplace" element={<MarketplaceListPage />} />
         <Route path="marketplace/:id" element={<ProductDetailsPage />} />
 
-        {/* Events Module */}
+        {/* Events Module - Temporarily Disabled (Redirect to Dashboard) */}
+        {/*
         <Route path="events" element={<EventsListPage />} />
         <Route path="events/campaigns" element={<EventCampaignsControlCenterPage />} />
         <Route path="events/reward-rules" element={<Navigate to="/admin/rewards/rules" replace />} />
         <Route path="events/:id" element={<EventDetailsPage />} />
+        */}
+        <Route path="events" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="events/*" element={<Navigate to="/admin/dashboard" replace />} />
 
         {/* Central Moderation Reports Queue */}
         <Route path="reports" element={<ReportsListPage />} />

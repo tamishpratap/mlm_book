@@ -203,10 +203,13 @@ export function MemberProfileBanner({
             <span className="text-lg font-extrabold text-emerald-600 block">{counts.products || 0}</span>
             <span className="text-[10px] font-bold uppercase text-slate-400">Marketplace</span>
           </div>
+          {/* Events Count - Temporarily Disabled */}
+          {/*
           <div className="p-2.5 bg-slate-50/80 rounded-xl">
             <span className="text-lg font-extrabold text-purple-600 block">{counts.events || 0}</span>
             <span className="text-[10px] font-bold uppercase text-slate-400">Events</span>
           </div>
+          */}
           <div className="p-2.5 bg-slate-50/80 rounded-xl">
             <span className="text-lg font-extrabold text-red-600 block">{counts.reports || 0}</span>
             <span className="text-[10px] font-bold uppercase text-slate-400">Reports</span>

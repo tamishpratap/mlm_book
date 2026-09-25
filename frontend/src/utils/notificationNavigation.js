@@ -326,13 +326,8 @@ export function getNotificationDestination(notification) {
     title.includes('event');
 
   if (isEvent) {
-    if (eventId) {
-      return `/member/events/${eventId}`;
-    }
-    if (normalizedCandidateUrl && normalizedCandidateUrl.startsWith('/member/events/')) {
-      return normalizedCandidateUrl;
-    }
-    return '/member/events';
+    // Event module temporarily disabled: fallback to notifications page
+    return '/member/notifications';
   }
 
   // -------------------------------------------------------------------------

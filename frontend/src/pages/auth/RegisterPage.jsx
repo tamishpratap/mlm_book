@@ -1,3 +1,23 @@
+const sanitizePhoneNumber = (value, currentCountryCode = '+91') => {
+  if (!value) return '';
+  let str = String(value).trim();
+  const cleanCode = (currentCountryCode || '').replace(/\D/g, '');
+  if (str.startsWith('+')) {
+    if (cleanCode && str.startsWith('+' + cleanCode)) {
+      str = str.slice(cleanCode.length + 1);
+    } else {
+      str = str.slice(1);
+    }
+  } else if (cleanCode && str.startsWith(cleanCode) && str.length > cleanCode.length + 7) {
+    str = str.slice(cleanCode.length);
+  }
+  let digits = str.replace(/\D/g, '');
+  if (cleanCode === '91' && digits.startsWith('91') && digits.length === 12) {
+    digits = digits.slice(2);
+  }
+  return digits.slice(0, 15);
+};
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import authApi from '../../api/authApi';
@@ -183,9 +203,32 @@ export function RegisterPage() {
     }
   }, []);
 
+  const handlePhoneKeyDown = (e) => {
+    if (
+      e.key === 'Backspace' ||
+      e.key === 'Delete' ||
+      e.key === 'Tab' ||
+      e.key === 'Escape' ||
+      e.key === 'Enter' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight' ||
+      e.key === 'ArrowUp' ||
+      e.key === 'ArrowDown' ||
+      e.key === 'Home' ||
+      e.key === 'End' ||
+      e.ctrlKey ||
+      e.metaKey
+    ) {
+      return;
+    }
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const handlePhoneChange = (e) => {
-    const val = e.target.value;
-    setFormData((prev) => ({ ...prev, phone: val }));
+    const cleanDigits = sanitizePhoneNumber(e.target.value, formData.country_code);
+    setFormData((prev) => ({ ...prev, phone: cleanDigits }));
 
     if (errors.phone) {
       setErrors((prev) => ({ ...prev, phone: null }));
@@ -196,16 +239,20 @@ export function RegisterPage() {
       clearTimeout(phoneCheckTimer.current);
     }
 
-    const cleanDigits = val.replace(/\D/g, '');
     if (!cleanDigits) {
       setPhoneStatus('idle');
       setPhoneMessage('');
       return;
     }
 
-    if (cleanDigits.length < 10) {
+    const minDigits = formData.country_code === '+91' ? 10 : 7;
+    if (cleanDigits.length < minDigits) {
       setPhoneStatus('idle');
-      setPhoneMessage('Enter at least 10 digits for your phone number.');
+      setPhoneMessage(
+        formData.country_code === '+91'
+          ? 'Enter at least 10 digits for your phone number.'
+          : 'Enter at least 7 digits for your phone number.'
+      );
       return;
     }
 
@@ -218,8 +265,12 @@ export function RegisterPage() {
     const code = e.target.value;
     setFormData((prev) => ({ ...prev, country_code: code }));
     if (formData.phone) {
-      const cleanDigits = formData.phone.replace(/\D/g, '');
-      if (cleanDigits.length >= 10) {
+      const cleanDigits = sanitizePhoneNumber(formData.phone, code);
+      if (cleanDigits !== formData.phone) {
+        setFormData((prev) => ({ ...prev, country_code: code, phone: cleanDigits }));
+      }
+      const minDigits = code === '+91' ? 10 : 7;
+      if (cleanDigits.length >= minDigits) {
         checkPhoneAvailability(cleanDigits, code);
       }
     }
@@ -700,11 +751,15 @@ export function RegisterPage() {
                     className="member-auth-input"
                     id="phone"
                     name="phone"
-                    type="tel"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={15}
                     value={formData.phone}
                     onChange={handlePhoneChange}
+                    onKeyDown={handlePhoneKeyDown}
                     placeholder="Enter WhatsApp / mobile number"
-                    autoComplete="tel"
+                    autoComplete="tel-national"
                     required
                     aria-invalid={errors.phone || phoneStatus === 'taken' || phoneStatus === 'invalid' ? 'true' : 'false'}
                     aria-describedby="member-phone-feedback"
@@ -802,16 +857,34 @@ export function RegisterPage() {
                     aria-describedby={errors.password ? 'member-register-password-error' : 'member-password-help'}
                   />
                   <button
-                    className="member-auth-password-toggle"
+                    className={`member-auth-password-toggle ${showPassword ? 'is-visible' : ''}`}
                     type="button"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     aria-controls="password"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setShowPassword((prev) => !prev)}
                   >
                     {showPassword ? (
-                      <svg className="member-auth-eye member-auth-eye--hide" viewBox="0 0 24 24" aria-hidden="true" style={{ display: 'block' }}><path d="m3 3 18 18" /><path d="M10.6 6.2A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a16 16 0 0 1-2.1 2.7" /><path d="M6.3 6.4C3.9 8.1 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3.1-.5" /></svg>
+                      <svg
+                        className="member-auth-eye member-auth-eye--hide"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        style={{ display: 'block', opacity: 1, pointerEvents: 'none' }}
+                      >
+                        <path d="m2 2 20 20" />
+                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                      </svg>
                     ) : (
-                      <svg className="member-auth-eye member-auth-eye--show" viewBox="0 0 24 24" aria-hidden="true" style={{ display: 'block' }}><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>
+                      <svg
+                        className="member-auth-eye member-auth-eye--show"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        style={{ display: 'block', opacity: 1, pointerEvents: 'none' }}
+                      >
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
                     )}
                   </button>
                 </div>

@@ -221,6 +221,8 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <Compass size={18} />
             <span>Business Directory</span>
           </NavLink>
+          {/* Events - Temporarily disabled/hidden */}
+          {/*
           <NavLink
             to="/member/events"
             className={getSideNavClass('/member/events')}
@@ -229,6 +231,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <Calendar size={18} />
             <span>Events</span>
           </NavLink>
+          */}
           {/* Member Direct Messages - Temporarily disabled/hidden */}
           {/*
           <NavLink

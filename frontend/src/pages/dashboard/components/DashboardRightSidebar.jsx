@@ -26,7 +26,7 @@ const DEFAULT_SHORTCUTS = [
   { name: 'Watch Videos', path: '/member/watch', icon: 'monitor-play' },
   { name: 'Community Groups', path: '/member/community', icon: 'users' },
   { name: 'Business Directory', path: '/member/business-directory', icon: 'compass' },
-  { name: 'Upcoming Events', path: '/member/events', icon: 'calendar' },
+  // { name: 'Upcoming Events', path: '/member/events', icon: 'calendar' }, // Temporarily disabled
 ];
 
 export function DashboardRightSidebar({ member, shortcuts }) {

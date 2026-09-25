@@ -27,7 +27,7 @@ const REWARD_CONDITIONS = [
   },
   {
     title: 'Reward Credit',
-    description: 'Successfully issued rewards are added to the member’s Reward Wallet.',
+    description: 'Successfully issued rewards are added to the member’s Wallet.',
     icon: Wallet,
     color: 'purple',
   },

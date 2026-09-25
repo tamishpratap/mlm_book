@@ -609,7 +609,7 @@ export function RewardRulesPage() {
               />
             </div>
             <p className="text-[11px] text-neutral-400 mt-1">
-              Authoritative payout amount credited to the user&apos;s Reward Wallet when qualifying for this rank.
+              Authoritative payout amount credited to the user&apos;s Wallet when qualifying for this rank.
             </p>
           </div>
 

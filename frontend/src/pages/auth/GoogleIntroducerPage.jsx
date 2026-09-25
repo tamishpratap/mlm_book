@@ -1,3 +1,23 @@
+const sanitizePhoneNumber = (value, currentCountryCode = '+91') => {
+  if (!value) return '';
+  let str = String(value).trim();
+  const cleanCode = (currentCountryCode || '').replace(/\D/g, '');
+  if (str.startsWith('+')) {
+    if (cleanCode && str.startsWith('+' + cleanCode)) {
+      str = str.slice(cleanCode.length + 1);
+    } else {
+      str = str.slice(1);
+    }
+  } else if (cleanCode && str.startsWith(cleanCode) && str.length > cleanCode.length + 7) {
+    str = str.slice(cleanCode.length);
+  }
+  let digits = str.replace(/\D/g, '');
+  if (cleanCode === '91' && digits.startsWith('91') && digits.length === 12) {
+    digits = digits.slice(2);
+  }
+  return digits.slice(0, 15);
+};
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import authApi from '../../api/authApi';
@@ -120,9 +140,32 @@ export function GoogleIntroducerPage() {
     }
   }, []);
 
+  const handlePhoneKeyDown = (e) => {
+    if (
+      e.key === 'Backspace' ||
+      e.key === 'Delete' ||
+      e.key === 'Tab' ||
+      e.key === 'Escape' ||
+      e.key === 'Enter' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight' ||
+      e.key === 'ArrowUp' ||
+      e.key === 'ArrowDown' ||
+      e.key === 'Home' ||
+      e.key === 'End' ||
+      e.ctrlKey ||
+      e.metaKey
+    ) {
+      return;
+    }
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const handlePhoneChange = (e) => {
-    const val = e.target.value;
-    setPhone(val);
+    const cleanDigits = sanitizePhoneNumber(e.target.value, countryCode);
+    setPhone(cleanDigits);
     setPhoneError('');
     setFormError('');
 
@@ -130,7 +173,6 @@ export function GoogleIntroducerPage() {
       clearTimeout(phoneCheckTimer.current);
     }
 
-    const cleanDigits = val.replace(/\D/g, '');
     if (!cleanDigits) {
       setPhoneStatus('idle');
       setPhoneMessage('');
@@ -160,7 +202,10 @@ export function GoogleIntroducerPage() {
     setCountryCode(code);
     setPhoneError('');
     if (phone) {
-      const cleanDigits = phone.replace(/\D/g, '');
+      const cleanDigits = sanitizePhoneNumber(phone, code);
+      if (cleanDigits !== phone) {
+        setPhone(cleanDigits);
+      }
       if (cleanDigits.length >= 7) {
         checkPhoneAvailability(cleanDigits, code);
       }
@@ -219,8 +264,9 @@ export function GoogleIntroducerPage() {
         setIsLoadingPending(false);
 
         if (res.phone) {
-          setPhone(res.phone);
-          checkPhoneAvailability(res.phone, '+91');
+          const cleanInitial = sanitizePhoneNumber(res.phone, '+91');
+          setPhone(cleanInitial);
+          checkPhoneAvailability(cleanInitial, '+91');
         }
 
         const activeRef = res.ref || initialRef;
@@ -472,11 +518,15 @@ export function GoogleIntroducerPage() {
                       className="member-auth-input"
                       id="googlePhone"
                       name="phone"
-                      type="tel"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={15}
                       value={phone}
                       onChange={handlePhoneChange}
+                      onKeyDown={handlePhoneKeyDown}
                       placeholder="Enter your WhatsApp number"
-                      autoComplete="tel"
+                      autoComplete="tel-national"
                       required
                       disabled={isSubmitting}
                       aria-invalid={phoneError || phoneStatus === 'taken' || phoneStatus === 'invalid' ? 'true' : 'false'}

@@ -17,7 +17,7 @@ import { MemberPostsTab } from './components/tabs/MemberPostsTab';
 import { MemberStoriesTab } from './components/tabs/MemberStoriesTab';
 import { MemberCommunitiesTab } from './components/tabs/MemberCommunitiesTab';
 import { MemberMarketplaceTab } from './components/tabs/MemberMarketplaceTab';
-import { MemberEventsTab } from './components/tabs/MemberEventsTab';
+// import { MemberEventsTab } from './components/tabs/MemberEventsTab';
 import { MemberReportsTab } from './components/tabs/MemberReportsTab';
 
 export function MemberDetailsPage() {
@@ -310,13 +310,15 @@ export function MemberDetailsPage() {
             />
           </TabPanel>
 
-          {/* Tab 6: Events */}
+          {/* Tab 6: Events - Temporarily Disabled */}
+          {/*
           <TabPanel header={`Events (${events.length})`}>
             <MemberEventsTab
               events={events}
               onRefresh={handleRefresh}
             />
           </TabPanel>
+          */}
 
           {/* Tab 7: Reports */}
           <TabPanel header={`Reports (${reports.length})`}>

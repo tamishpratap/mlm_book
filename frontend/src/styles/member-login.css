@@ -711,6 +711,8 @@ img {
     border-radius: 11px;
     background: transparent;
     color: #7e8ba1;
+    z-index: 2;
+    cursor: pointer;
     transition: color var(--member-transition-fast), background var(--member-transition-fast), transform var(--member-transition-fast);
 }
 
@@ -727,17 +729,20 @@ img {
     grid-area: 1 / 1;
     width: 21px;
     height: 21px;
+    opacity: 1;
+    transform: scale(1);
     transition: opacity var(--member-transition-fast), transform var(--member-transition-fast);
 }
 
+.member-auth-eye--show,
 .member-auth-eye--hide {
-    opacity: 0;
-    transform: scale(.72);
+    opacity: 1;
+    transform: scale(1);
 }
 
 .member-auth-password-toggle.is-visible .member-auth-eye--show {
-    opacity: 0;
-    transform: scale(.72);
+    opacity: 1;
+    transform: scale(1);
 }
 
 .member-auth-password-toggle.is-visible .member-auth-eye--hide {

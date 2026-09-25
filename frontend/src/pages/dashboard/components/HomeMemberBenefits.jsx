@@ -26,6 +26,7 @@ const MEMBER_BENEFITS = [
     path: '/member/community',
     linkText: 'Communities',
   },
+  /*
   {
     title: 'Discover Events',
     description: 'Explore events and connect with participants.',
@@ -34,6 +35,7 @@ const MEMBER_BENEFITS = [
     path: '/member/events',
     linkText: 'Events',
   },
+  */
   {
     title: 'Earn Eligible Rewards',
     description: 'Participate in supported campaign flows and earn when qualifying conditions are met.',

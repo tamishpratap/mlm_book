@@ -40,9 +40,10 @@ class MobileSocialController extends Controller
                 'direct_referrals_count' => $member->getVerifiedDirectReferralCount(),
                 'friends_count' => count($member->acceptedFriendIds()),
                 'followers_count' => $member->followers()->count(),
-                'following_count' => $member->following()->count(),
-                'ad_balance' => (float) $member->ad_balance,
-                'reward_balance' => (float) $member->reward_balance,
+                'wallet' => (float) ($member->wallet ?? 0.00),
+                'p2p_wallet' => (float) ($member->p2p_wallet ?? 0.00),
+                'ad_balance' => (float) ($member->p2p_wallet ?? 0.00),
+                'reward_balance' => (float) ($member->wallet ?? 0.00),
             ],
         ]);
     }

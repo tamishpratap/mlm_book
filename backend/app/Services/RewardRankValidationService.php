@@ -135,7 +135,7 @@ class RewardRankValidationService
             // If next higher rank pays less reward than current rank:
             if ((float) $next->reward_amount < (float) $current->reward_amount) {
                 $orderWarnings[] = "Reward order warning: Higher rank '{$next->rank_name}' pays less reward ($" .
-                    "{$next->reward_amount}) than lower rank '{$current->rank_name}' (${$current->reward_amount}).";
+                    "{$next->reward_amount}) than lower rank '{$current->rank_name}' ($" . "{$current->reward_amount}).";
             }
         }
 
