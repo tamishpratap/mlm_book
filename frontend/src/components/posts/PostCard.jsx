@@ -819,8 +819,10 @@ export function PostCard({
     : origAuthor?.profile_photo
     ? getAvatarUrl(origAuthor.profile_photo)
     : null;
-
-
+  // Event module temporarily disabled: hide event posts from feed
+  if (isEventSponsored || post.type === 'event' || post.event_id || post.event) {
+    return null;
+  }
 
   return (
     <article

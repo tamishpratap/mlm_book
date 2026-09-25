@@ -480,7 +480,7 @@ export default function AdRewardPreviewModal({
                         'Reward is resolved dynamically based on current direct verified referrals.',
                         'Clicking "Interested" acts as the qualifying trigger for this event.',
                         'One reward per member per event campaign.',
-                        'Reward amount is credited directly to your Reward Wallet upon confirmation.',
+                        'Reward amount is credited directly to your Wallet upon confirmation.',
                       ]
                     : [
                         'WhatsApp / mobile verified member required for reward qualification.',

@@ -484,16 +484,34 @@ export function LoginPage() {
                     aria-describedby={errors.password ? 'member-password-error' : undefined}
                   />
                   <button
-                    className="member-auth-password-toggle"
+                    className={`member-auth-password-toggle ${showPassword ? 'is-visible' : ''}`}
                     type="button"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     aria-controls="password"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setShowPassword((prev) => !prev)}
                   >
                     {showPassword ? (
-                      <svg className="member-auth-eye member-auth-eye--hide" viewBox="0 0 24 24" aria-hidden="true" style={{ display: 'block' }}><path d="m3 3 18 18" /><path d="M10.6 6.2A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a16 16 0 0 1-2.1 2.7" /><path d="M6.3 6.4C3.9 8.1 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3.1-.5" /></svg>
+                      <svg
+                        className="member-auth-eye member-auth-eye--hide"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        style={{ display: 'block', opacity: 1, pointerEvents: 'none' }}
+                      >
+                        <path d="m2 2 20 20" />
+                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                      </svg>
                     ) : (
-                      <svg className="member-auth-eye member-auth-eye--show" viewBox="0 0 24 24" aria-hidden="true" style={{ display: 'block' }}><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>
+                      <svg
+                        className="member-auth-eye member-auth-eye--show"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        style={{ display: 'block', opacity: 1, pointerEvents: 'none' }}
+                      >
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
                     )}
                   </button>
                 </div>

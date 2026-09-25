@@ -11,10 +11,10 @@ export function HomeRewardWallet() {
         </div>
         <h2 className="home-section__title" id="wallet-heading" style={{ fontSize: '1.45rem' }}>
           <Wallet size={22} aria-hidden="true" />
-          <span>Your Reward Wallet</span>
+          <span>Your Wallet</span>
         </h2>
         <p className="home-section__desc" style={{ fontSize: '14.5px', lineHeight: '1.65' }}>
-          Successfully credited campaign rewards are added to your Reward Wallet, where you can view and manage your available reward balance and reward history.
+          Successfully credited campaign rewards are added to your Wallet, where you can view and manage your available wallet balance and reward history.
         </p>
       </div>
 
@@ -32,7 +32,7 @@ export function HomeRewardWallet() {
           </p>
           <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
             <Link to="/member/web3-wallet" className="workflow-card__link">
-              <span>View Reward Wallet</span>
+              <span>View Wallet</span>
               <ArrowRight size={13} aria-hidden="true" />
             </Link>
           </div>

@@ -88,9 +88,10 @@ class MobileAdminController extends Controller
                 'status' => $m->status,
                 'is_verified' => $m->isMobileVerified(),
                 'is_blocked' => $m->isBlocked(),
-                'direct_referrals' => (int) $m->direct_referral_count,
-                'ad_balance' => (float) $m->ad_balance,
-                'reward_balance' => (float) $m->reward_balance,
+                'wallet' => (float) ($m->wallet ?? 0.00),
+                'p2p_wallet' => (float) ($m->p2p_wallet ?? 0.00),
+                'ad_balance' => (float) ($m->p2p_wallet ?? 0.00),
+                'reward_balance' => (float) ($m->wallet ?? 0.00),
                 'joined_at' => $m->created_at?->format('M d, Y'),
             ];
         });

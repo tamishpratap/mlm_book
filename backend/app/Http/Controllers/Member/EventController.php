@@ -146,7 +146,7 @@ class EventController extends Controller
                     'tab' => 'add-fund',
                     'my_events_count' => $myEventsCount,
                     'fundable_events_count' => $fundableEventsCount,
-                    'available_ad_funds' => round((float) ($member->ad_balance ?? 0.00), 2),
+                    'available_ad_funds' => round((float) ($member->p2p_wallet ?? 0.00), 2),
                     'platform_fee_percent' => $feePercent,
                     'events' => $fundableEvents,
                     'categories' => $categories,
@@ -285,7 +285,7 @@ class EventController extends Controller
                 'tab' => $tab,
                 'my_events_count' => $myEventsCount,
                 'fundable_events_count' => $fundableEventsCount,
-                'available_ad_funds' => $member ? round((float) ($member->ad_balance ?? 0.00), 2) : 0.00,
+                'available_ad_funds' => $member ? round((float) ($member->p2p_wallet ?? 0.00), 2) : 0.00,
                 'platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 2.50),
                 'earn_up_to_usd' => (float) $maxReward,
                 'earn_up_to_formatted' => $maxRewardFormatted,
@@ -528,7 +528,7 @@ class EventController extends Controller
                 if ($hasBudget) {
                     /** @var Member $lockedMember */
                     $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
-                    $availableFunds = (float) ($lockedMember->ad_balance ?? 0.00);
+                    $availableFunds = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
                     if ($availableFunds < $totalWalletDebit) {
                         $shortfall = round($totalWalletDebit - $availableFunds, 2);
@@ -539,8 +539,8 @@ class EventController extends Controller
                         ]);
                     }
 
-                    // Deduct total debit (budget + platform fee) from advertiser's ad_balance
-                    $lockedMember->ad_balance = round($availableFunds - $totalWalletDebit, 2);
+                    // Deduct total debit (budget + platform fee) from advertiser's Fund Wallet (p2p_wallet)
+                    $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 2);
                     $lockedMember->save();
 
                     $fundingHistory = [

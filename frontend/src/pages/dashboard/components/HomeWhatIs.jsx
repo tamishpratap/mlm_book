@@ -69,7 +69,7 @@ export function HomeWhatIs() {
           </div>
           <h3 className="home-info-card-v2__title">Campaign Ecosystem</h3>
           <p className="home-info-card-v2__desc">
-            Promote qualifying business content through supported advertising campaigns and receive rewards in your Reward Wallet upon meeting campaign conditions.
+            Promote qualifying business content through supported advertising campaigns and receive rewards in your Wallet upon meeting campaign conditions.
           </p>
         </div>
       </div>

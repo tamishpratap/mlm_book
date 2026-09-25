@@ -50,11 +50,12 @@ import CommunityAdminPanelPage from '../pages/community/CommunityAdminPanelPage'
 import CommunityNotificationsPage from '../pages/community/CommunityNotificationsPage';
 import CommunityActivityTimelinePage from '../pages/community/CommunityActivityTimelinePage';
 import CommunityAnalyticsPage from '../pages/community/CommunityAnalyticsPage';
-import EventsPage from '../pages/events/EventsPage';
-import CreateEventPage from '../pages/events/CreateEventPage';
-import EventDetailPage from '../pages/events/EventDetailPage';
-import EditEventPage from '../pages/events/EditEventPage';
-import EventOutreachPage from '../pages/events/EventOutreachPage';
+// Event Module Pages - Temporarily Disabled
+// import EventsPage from '../pages/events/EventsPage';
+// import CreateEventPage from '../pages/events/CreateEventPage';
+// import EventDetailPage from '../pages/events/EventDetailPage';
+// import EditEventPage from '../pages/events/EditEventPage';
+// import EventOutreachPage from '../pages/events/EventOutreachPage';
 import BusinessPagesPage from '../pages/business/BusinessPagesPage';
 import CreateBusinessPage from '../pages/business/CreateBusinessPage';
 import EditBusinessPage from '../pages/business/EditBusinessPage';
@@ -150,6 +151,8 @@ export function AppRoutes() {
           <Route path="/member/groups" element={<Navigate to="/member/community" replace />} />
           <Route path="/member/groups/create" element={<Navigate to="/member/community/create" replace />} />
           <Route path="/member/groups/:slug" element={<LegacyGroupRedirect />} />
+          {/* Event Routes - Temporarily Disabled (Redirect to Dashboard) */}
+          {/*
           <Route path="/member/events" element={<EventsPage />} />
           <Route path="/member/events/add-fund" element={<EventsPage defaultTab="add-fund" />} />
           <Route path="/member/events/create" element={<CreateEventPage />} />
@@ -157,6 +160,9 @@ export function AppRoutes() {
           <Route path="/member/events/:id/edit" element={<EditEventPage />} />
           <Route path="/member/events/:id/outreach" element={<EventOutreachPage />} />
           <Route path="/member/events/:id/attendees" element={<EventOutreachPage />} />
+          */}
+          <Route path="/member/events" element={<Navigate to="/member/dashboard" replace />} />
+          <Route path="/member/events/*" element={<Navigate to="/member/dashboard" replace />} />
           <Route path="/member/business-pages" element={<BusinessPagesPage />} />
           <Route path="/member/business-pages/create" element={<CreateBusinessPage />} />
           <Route path="/member/business-pages/:slug" element={<BusinessDetailPage />} />

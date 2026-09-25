@@ -512,6 +512,99 @@
     line-height: 1;
 }
 
+/* ========================================================
+   Desktop-only (>= 1024px) Action Row & Comment Area Fix
+   Prevents action buttons and comment input clipping/overflow
+   at 100% browser zoom while preserving mobile & tablet layouts
+   ======================================================== */
+@media (min-width: 1024px) {
+    .feed-post {
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .post-footer {
+        min-height: 48px;
+        height: auto;
+        padding: 6px 0;
+        box-sizing: border-box;
+    }
+
+    .post-actions {
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 6px;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .post-actions button,
+    .post-actions .post-action-btn,
+    .post-actions .post-action-badge {
+        padding: 0 12px;
+        gap: 5px;
+        flex-shrink: 0;
+        white-space: nowrap;
+        box-sizing: border-box;
+    }
+
+    .post-like-wrapper {
+        display: inline-flex;
+        flex-shrink: 0;
+    }
+
+    .post-owner-reaction-banner {
+        flex-wrap: wrap;
+    }
+
+    .sponsored-cta-banner {
+        flex-wrap: wrap;
+    }
+
+    .post-comments {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .post-comment-form {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .post-comment-form__input-wrap {
+        flex: 1;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .post-comment-form__input {
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .post-reply-form {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .post-reply-form__input-wrap {
+        flex: 1;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .post-reply-form__input {
+        min-width: 0;
+        box-sizing: border-box;
+    }
+}
+
 @media (max-width: 767.98px) {
     .post-footer {
         margin: 0 12px !important;

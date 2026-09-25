@@ -25,9 +25,8 @@ class Member extends Authenticatable
         'mobile_verified_at',
         'mobile_verification_requested_at',
         'p2p_wallet',
-        'ad_balance',
-        'reward_balance',
-        'reward_wallet_address',
+        'wallet',
+        'wallet_address',
         'reward_wallet_network',
         'reward_wallet_currency',
         'reward_wallet_verified_at',
@@ -60,8 +59,7 @@ class Member extends Authenticatable
             'direct_referral_count' => 'integer',
             'referral_counted_at' => 'datetime',
             'p2p_wallet' => 'float',
-            'ad_balance' => 'float',
-            'reward_balance' => 'float',
+            'wallet' => 'float',
             'password' => 'hashed',
         ];
     }
@@ -78,28 +76,31 @@ class Member extends Authenticatable
         return (float) $this->p2p_wallet;
     }
 
+    public function creditWallet(float $amount): float
+    {
+        $this->wallet = round((float) ($this->wallet ?? 0.00) + max(0.00, $amount), 2);
+        $this->save();
+        return (float) $this->wallet;
+    }
+
     public function hasVerifiedRewardWallet(): bool
     {
-        return !empty($this->reward_wallet_address) && $this->reward_wallet_verified_at !== null;
+        return !empty($this->wallet_address ?? null) && $this->reward_wallet_verified_at !== null;
     }
 
     public function creditAdBalance(float $amount): float
     {
-        $this->ad_balance = round((float) ($this->ad_balance ?? 0.00) + max(0.00, $amount), 2);
-        $this->save();
-        return (float) $this->ad_balance;
+        return $this->creditP2pWallet($amount);
     }
 
     public function creditRewardBalance(float $amount): float
     {
-        $this->reward_balance = round((float) ($this->reward_balance ?? 0.00) + max(0.00, $amount), 4);
-        $this->save();
-        return (float) $this->reward_balance;
+        return $this->creditWallet($amount);
     }
 
     public function hasAdBalance(float $amount): bool
     {
-        return ((float) ($this->ad_balance ?? 0.00)) >= $amount;
+        return ((float) ($this->p2p_wallet ?? 0.00)) >= $amount;
     }
 
     public function adRewards(): HasMany

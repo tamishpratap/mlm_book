@@ -1882,7 +1882,7 @@ export function AdCampaignPeopleEngagedPage() {
           }}
           onOpenDepositModal={() => {
             setShowTopUpModal(false);
-            setShowAddFundModal(true);
+            navigate('/member/deposit');
           }}
         />
       )}

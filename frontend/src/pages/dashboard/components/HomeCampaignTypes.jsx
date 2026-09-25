@@ -39,7 +39,8 @@ export function HomeCampaignTypes() {
           </div>
         </div>
 
-        {/* Card 2: Event Campaigns */}
+        {/* Card 2: Event Campaigns - Temporarily Disabled */}
+        {/*
         <div className="home-info-card-v2">
           <div className="home-info-card-v2__header">
             <div className="home-info-card-v2__icon" style={{ background: 'rgba(124, 58, 237, 0.12)', color: '#7c3aed' }}>
@@ -60,6 +61,7 @@ export function HomeCampaignTypes() {
             </Link>
           </div>
         </div>
+        */}
       </div>
 
       {/* Small Informational Note */}

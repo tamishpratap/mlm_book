@@ -61,6 +61,7 @@ export function SecuritySettingsPage() {
   };
 
   const member = user || {};
+  const isVerified = Boolean(member.is_verified || member.mobile_verified_at || member.verification_status === 'verified');
 
   return (
     <div className="account-page-wrapper settings-shell" style={{ maxWidth: '680px', margin: '20px auto', padding: '0 16px' }}>
@@ -101,8 +102,8 @@ export function SecuritySettingsPage() {
                 width: '46px',
                 height: '46px',
                 borderRadius: '14px',
-                background: member.is_verified || member.mobile_verified_at ? '#f0fdf4' : '#fffbeb',
-                color: member.is_verified || member.mobile_verified_at ? '#16a34a' : '#d97706',
+                background: isVerified ? '#f0fdf4' : '#fffbeb',
+                color: isVerified ? '#16a34a' : '#d97706',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -116,7 +117,7 @@ export function SecuritySettingsPage() {
                 <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#111827', margin: 0 }}>
                   WhatsApp Mobile Verification
                 </h2>
-                {member.is_verified || member.mobile_verified_at ? (
+                {isVerified ? (
                   <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '10px' }}>
                     Verified
                   </span>
@@ -127,7 +128,7 @@ export function SecuritySettingsPage() {
                 )}
               </div>
               <p style={{ margin: '0 0 6px 0', color: '#6b7280', fontSize: '13px', lineHeight: 1.4 }}>
-                {member.is_verified || member.mobile_verified_at
+                {isVerified
                   ? `Your mobile number (${member.phone || 'Verified'}) is confirmed on WhatsApp. Your account displays the official Green Verified Tick.`
                   : 'Verify your mobile number via WhatsApp OTP to unlock your Green Verified Tick badge and boost member trust.'}
               </p>
@@ -137,18 +138,18 @@ export function SecuritySettingsPage() {
           <div className="security-verification-card__action">
             <Link
               to="/member/account/verify"
-              className={`member-button ${member.is_verified || member.mobile_verified_at ? 'member-button--secondary' : 'member-button--primary'}`}
+              className={`member-button ${isVerified ? 'member-button--secondary' : 'member-button--primary'}`}
               style={{
                 padding: '10px 18px',
                 fontSize: '13.5px',
                 fontWeight: 700,
-                background: member.is_verified || member.mobile_verified_at ? undefined : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                border: member.is_verified || member.mobile_verified_at ? undefined : 'none',
-                color: '#ffffff',
+                background: isVerified ? undefined : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                border: isVerified ? undefined : 'none',
+                color: isVerified ? undefined : '#ffffff',
               }}
             >
-              <ShieldCheck size={16} />
-              <span>{member.is_verified || member.mobile_verified_at ? 'Manage Verification' : 'Verify via WhatsApp'}</span>
+              <ShieldCheck size={16} style={{ color: isVerified ? '#16a34a' : 'currentColor', flexShrink: 0 }} />
+              <span>{isVerified ? 'Manage Verification' : 'Verify via WhatsApp'}</span>
             </Link>
           </div>
         </div>

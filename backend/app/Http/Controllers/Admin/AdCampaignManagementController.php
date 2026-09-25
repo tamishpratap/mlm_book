@@ -661,7 +661,7 @@ class AdCampaignManagementController extends Controller
                 /** @var Member $owner */
                 $owner = Member::where('id', $adCampaign->member_id)->lockForUpdate()->first();
                 if ($owner) {
-                    $owner->ad_balance = round((float) ($owner->ad_balance ?? 0.00) + $unspent, 2);
+                    $owner->p2p_wallet = round((float) ($owner->p2p_wallet ?? 0.00) + $unspent, 2);
                     $owner->save();
                     $refundedAmount = $unspent;
                 }

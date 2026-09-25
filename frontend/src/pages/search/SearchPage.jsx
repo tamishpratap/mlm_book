@@ -32,7 +32,7 @@ const TABS = [
   { type: 'pages', label: 'Business Pages', icon: Flag },
   { type: 'groups', label: 'Communities', icon: UsersRound },
   { type: 'posts', label: 'Posts', icon: FileText },
-  { type: 'events', label: 'Events', icon: CalendarDays },
+  // { type: 'events', label: 'Events', icon: CalendarDays }, // Temporarily disabled
 ];
 
 function getInitials(name) {
@@ -474,7 +474,8 @@ export function SearchPage() {
                   </section>
                 )}
 
-                {/* Events section */}
+                {/* Events section - Temporarily Disabled */}
+                {/*
                 {events && events.length > 0 && (
                   <section className="member-search-result-group" style={{ marginTop: '24px' }}>
                     <header className="member-search-result-group__header">
@@ -498,6 +499,7 @@ export function SearchPage() {
                     </div>
                   </section>
                 )}
+                */}
 
                 {/* Posts section */}
                 {posts && posts.length > 0 && (
@@ -567,7 +569,7 @@ export function SearchPage() {
                   ))}
                 </div>
               </section>
-            ) : activeType === 'events' ? (
+            ) /* : activeType === 'events' ? (
               <section className="member-search-results">
                 <header className="member-search-results__header">
                   <div>
@@ -582,7 +584,7 @@ export function SearchPage() {
                   ))}
                 </div>
               </section>
-            ) : activeType === 'posts' ? (
+            ) */ : activeType === 'posts' ? (
               <section className="member-search-results">
                 <header className="member-search-results__header">
                   <div>

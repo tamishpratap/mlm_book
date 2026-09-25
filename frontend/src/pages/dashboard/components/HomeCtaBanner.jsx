@@ -59,10 +59,13 @@ export function HomeCtaBanner() {
             <span>Create Business Page</span>
           </Link>
 
+          {/* Discover Events - Temporarily Disabled */}
+          {/*
           <Link className="member-button cta-secondary-btn" to="/member/events">
             <CalendarDays size={16} aria-hidden="true" />
             <span>Discover Events</span>
           </Link>
+          */}
         </div>
       </div>
 

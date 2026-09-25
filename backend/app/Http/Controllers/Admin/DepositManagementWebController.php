@@ -222,9 +222,8 @@ class DepositManagementWebController extends Controller
             $amount = (float) $lockedDeposit->amount;
 
             if ($member) {
-                // Atomically credit member Fund Wallet (p2p_wallet) and ad_balance
+                // Atomically credit member Fund Wallet (p2p_wallet)
                 $member->increment('p2p_wallet', $amount);
-                $member->increment('ad_balance', $amount);
             }
 
             // Update ImportFund

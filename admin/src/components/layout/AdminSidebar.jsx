@@ -141,6 +141,7 @@ const NAV_GROUPS = [
           { label: 'All Products', to: '/admin/marketplace' },
         ],
       },
+      /*
       {
         label: 'Events Management',
         icon: Calendar,
@@ -152,6 +153,7 @@ const NAV_GROUPS = [
           { label: 'Event Control Center', to: '/admin/events/campaigns' },
         ],
       },
+      */
     ],
   },
   {

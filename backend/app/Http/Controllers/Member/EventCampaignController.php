@@ -45,7 +45,7 @@ class EventCampaignController extends Controller
                 'success' => true,
                 'message' => 'This event does not have an active campaign foundation yet.',
                 'campaign' => null,
-                'available_ad_funds' => round((float) ($member?->fresh()->ad_balance ?? 0.00), 2),
+                'available_ad_funds' => round((float) ($member?->fresh()->p2p_wallet ?? 0.00), 2),
                 'platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 2.50),
             ], 200);
         }
@@ -53,7 +53,7 @@ class EventCampaignController extends Controller
         return response()->json([
             'success' => true,
             'campaign' => $this->transformCampaign($campaign),
-            'available_ad_funds' => round((float) ($member?->fresh()->ad_balance ?? 0.00), 2),
+            'available_ad_funds' => round((float) ($member?->fresh()->p2p_wallet ?? 0.00), 2),
             'platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 2.50),
         ]);
     }
@@ -114,7 +114,7 @@ class EventCampaignController extends Controller
                     'success' => true,
                     'message' => 'Event campaign foundation already exists.',
                     'campaign' => $this->transformCampaign($existing),
-                    'available_ad_funds' => round((float) ($member->fresh()->ad_balance ?? 0.00), 2),
+                    'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? 0.00), 2),
                 ], 200);
             }
 
@@ -176,7 +176,7 @@ class EventCampaignController extends Controller
                 'success' => true,
                 'message' => $message,
                 'campaign' => $this->transformCampaign($campaign),
-                'available_ad_funds' => round((float) ($member->fresh()->ad_balance ?? 0.00), 2),
+                'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? 0.00), 2),
             ], $statusCode);
 
         } catch (\Throwable $e) {
@@ -247,7 +247,7 @@ class EventCampaignController extends Controller
                             'success' => true,
                             'message' => 'Campaign budget was already allocated.',
                             'campaign' => $this->transformCampaign($campaign),
-                            'available_ad_funds' => round((float) ($member->fresh()->ad_balance ?? 0.00), 2),
+                            'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? 0.00), 2),
                             'is_replay' => true,
                         ], 200);
                     }
@@ -305,7 +305,7 @@ class EventCampaignController extends Controller
                     return $targetCampaign;
                 }
 
-                $availableFunds = (float) ($lockedMember->ad_balance ?? 0.00);
+                $availableFunds = (float) ($lockedMember->p2p_wallet ?? 0.00);
                 if ($availableFunds < $totalWalletDebit) {
                     $shortfall = round($totalWalletDebit - $availableFunds, 2);
                     throw ValidationException::withMessages([
@@ -315,8 +315,8 @@ class EventCampaignController extends Controller
                     ]);
                 }
 
-                // Deduct total debit (budget + platform fee) from advertiser's ad_balance
-                $lockedMember->ad_balance = round($availableFunds - $totalWalletDebit, 2);
+                // Deduct total debit (budget + platform fee) from advertiser's Fund Wallet (p2p_wallet)
+                $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 2);
                 $lockedMember->save();
 
                 $fundingHistoryEntry = [
@@ -384,7 +384,7 @@ class EventCampaignController extends Controller
                 'success' => true,
                 'message' => 'Event campaign budget allocated successfully.',
                 'campaign' => $this->transformCampaign($allocatedCampaign),
-                'available_ad_funds' => round((float) ($member->fresh()->ad_balance ?? 0.00), 2),
+                'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? 0.00), 2),
             ], 201);
 
         } catch (ValidationException $ve) {
@@ -517,7 +517,7 @@ class EventCampaignController extends Controller
                     }
                 }
 
-                $availableFunds = (float) ($lockedMember->ad_balance ?? 0.00);
+                $availableFunds = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
                 if ($availableFunds < $totalWalletDebit) {
                     $shortfall = round($totalWalletDebit - $availableFunds, 2);
@@ -528,9 +528,9 @@ class EventCampaignController extends Controller
                     ]);
                 }
 
-                // Deduct total debit (top-up + platform fee) from advertiser's ad_balance
+                // Deduct total debit (top-up + platform fee) from advertiser's Fund Wallet (p2p_wallet)
                 $previousMemberBalance = $availableFunds;
-                $lockedMember->ad_balance = round($availableFunds - $totalWalletDebit, 2);
+                $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 2);
                 $lockedMember->save();
 
                 $previousRemaining = (float) ($lockedCampaign->remaining_amount ?? 0.00);
@@ -566,7 +566,7 @@ class EventCampaignController extends Controller
                     'previous_remaining' => $previousRemaining,
                     'new_remaining' => (float) $lockedCampaign->remaining_amount,
                     'previous_ad_balance' => $previousMemberBalance,
-                    'new_ad_balance' => (float) $lockedMember->ad_balance,
+                    'new_ad_balance' => (float) $lockedMember->p2p_wallet,
                 ];
 
                 // Automatically activate and approve campaign if it now has sufficient budget and event is eligible
@@ -621,7 +621,7 @@ class EventCampaignController extends Controller
                 'success' => true,
                 'message' => $message,
                 'campaign' => $this->transformCampaign($updatedCampaign),
-                'available_ad_funds' => round((float) ($member->fresh()->ad_balance ?? 0.00), 2),
+                'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? 0.00), 2),
                 'is_replay' => $isReplay,
             ]);
 
@@ -1415,10 +1415,10 @@ class EventCampaignController extends Controller
                     ]
                 );
 
-                // Credit Member's canonical Reward Wallet atomically
-                $lockedMember->reward_balance = round((float) ($lockedMember->reward_balance ?? 0.00) + $rewardAmount, 4);
+                // Credit Member's canonical Wallet atomically
+                $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 2);
                 $lockedMember->save();
-                $newRewardBalance = (float) $lockedMember->reward_balance;
+                $newWalletBalance = (float) $lockedMember->wallet;
 
                 // Create immutable AdReward record
                 $reward = AdReward::create([
@@ -1450,7 +1450,7 @@ class EventCampaignController extends Controller
                     'payload' => [
                         'success' => true,
                         'status' => 'qualified_and_rewarded',
-                        'message' => "Congratulations! You earned \${$rewardAmountExact} USD. Your reward has been credited to your Reward Wallet.",
+                        'message' => "Congratulations! You earned \${$rewardAmountExact} USD. Your reward has been credited to your Wallet.",
                         'rewarded' => true,
                         'already_rewarded' => false,
                         'reward_amount_usd' => $rewardAmount,
@@ -1459,8 +1459,9 @@ class EventCampaignController extends Controller
                         'event_id' => $lockedEvent->id,
                         'campaign_id' => $lockedCampaign->id,
                         'reward_id' => $reward->id,
-                        'member_reward_balance' => $newRewardBalance,
-                        'reward_wallet_balance' => $newRewardBalance,
+                        'member_wallet' => $newWalletBalance,
+                        'member_reward_balance' => $newWalletBalance,
+                        'reward_wallet_balance' => $newWalletBalance,
                         'remaining_budget' => (float) ($freshCampaign->remaining_amount ?? 0.00),
                         'campaign_status' => $freshCampaign->status,
                     ],
@@ -1955,7 +1956,7 @@ class EventCampaignController extends Controller
                 'success' => true,
                 'message' => 'Event campaign reactivated successfully.',
                 'campaign' => $this->transformCampaign($reactivatedCampaign),
-                'available_ad_funds' => round((float) ($member->fresh()->ad_balance ?? 0.00), 2),
+                'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? 0.00), 2),
             ], 200);
 
         } catch (\RuntimeException $e) {

@@ -20,7 +20,7 @@ export function QuickNavigation({ pendingReports = 0 }) {
     { label: 'Business Pages', to: '/admin/business-pages', icon: Briefcase },
     { label: 'Communities', to: '/admin/communities', icon: Globe },
     { label: 'Marketplace', to: '/admin/marketplace', icon: ShoppingBag },
-    { label: 'Events', to: '/admin/events', icon: Calendar },
+    // { label: 'Events', to: '/admin/events', icon: Calendar },
     {
       label: 'Reports',
       to: '/admin/reports',

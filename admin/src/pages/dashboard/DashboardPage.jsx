@@ -15,7 +15,7 @@ import { BusinessCategoriesCard } from './components/BusinessCategoriesCard';
 import { RecentMembersTable } from './components/RecentMembersTable';
 import { RecentBusinessPagesTable } from './components/RecentBusinessPagesTable';
 import { RecentPostsFeed } from './components/RecentPostsFeed';
-import { UpcomingEventsList } from './components/UpcomingEventsList';
+// import { UpcomingEventsList } from './components/UpcomingEventsList';
 import { SystemStatusCard } from './components/SystemStatusCard';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 
@@ -224,9 +224,9 @@ export function DashboardPage() {
         {/* Left Column: Recent Posts */}
         <RecentPostsFeed posts={data.recentPosts} />
 
-        {/* Right Column: Upcoming Events & System Status */}
+        {/* Right Column: Upcoming Events (Disabled) & System Status */}
         <div className="flex flex-col space-y-4 justify-between">
-          <UpcomingEventsList events={data.upcomingEvents} />
+          {/* <UpcomingEventsList events={data.upcomingEvents} /> */}
           <SystemStatusCard totalNotifications={data.totalNotifications} />
         </div>
       </div>
