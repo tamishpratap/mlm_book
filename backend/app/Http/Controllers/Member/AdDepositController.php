@@ -45,7 +45,8 @@ class AdDepositController extends Controller
                 'token' => $token,
                 'currency_label' => 'USDT (BEP-20)',
                 'currency_symbol' => 'USDT',
-                'fee_percent' => 0.00,
+                'fee_percent' => (float) Setting::get('deposit_fee_percent', 0.00),
+                'service_charge_percent' => (float) Setting::get('deposit_fee_percent', 0.00),
                 'instructions' => $instructions,
                 'disclaimer' => $disclaimer,
                 'is_available' => $isAvailable,
@@ -241,13 +242,22 @@ class AdDepositController extends Controller
                     throw new \RuntimeException('This transaction hash has already been credited.');
                 }
 
+                $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
+                if ($feePercent > 0.00) {
+                    $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 2);
+                    $feeAmount = round($verifiedAmount - $netAmount, 2);
+                } else {
+                    $netAmount = $verifiedAmount;
+                    $feeAmount = 0.00;
+                }
+
                 $newDeposit = AdDeposit::create([
                     'member_id' => $lockedMember->id,
                     'business_page_id' => $businessPageId,
                     'amount_inr' => $verifiedAmount,
-                    'fee_percent' => 0.00,
-                    'fee_amount_inr' => 0.00,
-                    'net_amount_inr' => $verifiedAmount,
+                    'fee_percent' => $feePercent,
+                    'fee_amount_inr' => $feeAmount,
+                    'net_amount_inr' => $netAmount,
                     'submitted_amount' => $grossAmount,
                     'verified_amount' => $verifiedAmount,
                     'currency_in' => 'USDT',
@@ -258,7 +268,7 @@ class AdDepositController extends Controller
                     'sender_address' => $verification['from_address'] ?? null,
                     'block_number' => $verification['block_number'] ?? null,
                     'exchange_rate' => 1.00,
-                    'expected_usd_amount' => $verifiedAmount,
+                    'expected_usd_amount' => $netAmount,
                     'transaction_reference' => $txRef,
                     'transaction_hash' => $txRef,
                     'status' => AdDeposit::STATUS_APPROVED,
@@ -267,26 +277,28 @@ class AdDepositController extends Controller
                     'verification_payload' => $verification,
                     'submitted_at' => now(),
                     'verified_at' => now(),
-                    'admin_notes' => "Verified on BNB Smart Chain: Transferred {$verifiedAmount} USDT from " . ($verification['from_address'] ?? 'sender') . " to destination wallet.",
+                    'admin_notes' => "Verified on BNB Smart Chain: Transferred {$verifiedAmount} USDT from " . ($verification['from_address'] ?? 'sender') . " to destination wallet. Fee ({$feePercent}%): {$feeAmount} USDT. Net Credited: {$netAmount} USD.",
                 ]);
 
-                // Atomically credit Member Fund Wallet (p2p_wallet)
-                $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $verifiedAmount, 2);
+                // Atomically credit Member Fund Wallet (p2p_wallet) with Net Amount
+                $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $netAmount, 2);
                 $lockedMember->save();
 
                 return $newDeposit;
             });
 
+            $creditedAmount = (float) ($deposit->net_amount_inr ?? $deposit->expected_usd_amount ?? $verifiedAmount);
+
             return response()->json([
                 'success' => true,
                 'verified' => true,
                 'status' => 'approved',
-                'message' => "USDT (BEP-20) transaction verified on-chain! \${$verifiedAmount} USD has been credited to your Fund Wallet.",
+                'message' => "USDT (BEP-20) transaction verified on-chain! \${$creditedAmount} USD has been credited to your Fund Wallet.",
                 'deposit' => $deposit->load(['businessPage:id,page_name,slug']),
                 'member_fund_wallet' => (float) $member->fresh()->p2p_wallet,
                 'member_p2p_wallet' => (float) $member->fresh()->p2p_wallet,
                 'member_ad_balance' => (float) $member->fresh()->p2p_wallet,
-                'credited_amount' => $verifiedAmount,
+                'credited_amount' => $creditedAmount,
                 'tx_explorer_url' => $explorerUrl,
             ], 201);
         }
