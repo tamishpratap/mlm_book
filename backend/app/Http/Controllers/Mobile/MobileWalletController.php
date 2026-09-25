@@ -34,10 +34,12 @@ class MobileWalletController extends Controller
         return response()->json([
             'success' => true,
             'wallet' => [
-                'reward_balance' => (float) ($member->reward_balance ?? 0.00),
-                'reward_balance_formatted' => '$' . number_format((float) ($member->reward_balance ?? 0.00), 4) . ' USD',
-                'ad_balance' => (float) ($member->ad_balance ?? 0.00),
-                'ad_balance_formatted' => '$' . number_format((float) ($member->ad_balance ?? 0.00), 2) . ' USDT',
+                'wallet' => (float) ($member->wallet ?? 0.00),
+                'wallet_formatted' => '$' . number_format((float) ($member->wallet ?? 0.00), 2) . ' USD',
+                'reward_balance' => (float) ($member->wallet ?? 0.00),
+                'reward_balance_formatted' => '$' . number_format((float) ($member->wallet ?? 0.00), 2) . ' USD',
+                'ad_balance' => (float) ($member->p2p_wallet ?? 0.00),
+                'ad_balance_formatted' => '$' . number_format((float) ($member->p2p_wallet ?? 0.00), 2) . ' USDT',
                 'total_earned' => round($totalEarned, 4),
                 'total_earned_formatted' => '$' . number_format($totalEarned, 4) . ' USD',
                 'is_mobile_verified' => $member->isMobileVerified(),
@@ -48,10 +50,10 @@ class MobileWalletController extends Controller
                     'reward_amount_exact' => $tierResolution['reward_amount_exact'] ?? '0.0000',
                     'range_label' => $tierResolution['matched_range']['label'] ?? 'Standard',
                 ],
-                'wallet_address' => $member->reward_wallet_address,
+                'wallet_address' => $member->wallet_address,
                 'wallet_network' => $member->reward_wallet_network ?? 'BEP-20',
                 'wallet_currency' => $member->reward_wallet_currency ?? 'USDT',
-                'is_wallet_verified' => !empty($member->reward_wallet_address) && $member->reward_wallet_verified_at !== null,
+                'is_wallet_verified' => !empty($member->wallet_address) && $member->reward_wallet_verified_at !== null,
             ],
         ]);
     }
@@ -123,7 +125,7 @@ class MobileWalletController extends Controller
 
         $otpRecord->update(['verified_at' => now()]);
 
-        $member->reward_wallet_address = $otpRecord->pending_value;
+        $member->wallet_address = $otpRecord->pending_value;
         $member->reward_wallet_network = 'BEP-20';
         $member->reward_wallet_currency = 'USDT';
         $member->reward_wallet_verified_at = now();
@@ -132,7 +134,7 @@ class MobileWalletController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'USDT (BEP-20) wallet address linked and verified successfully.',
-            'wallet_address' => $member->reward_wallet_address,
+            'wallet_address' => $member->wallet_address,
         ]);
     }
 
@@ -210,7 +212,7 @@ class MobileWalletController extends Controller
                         'verified_at' => now(),
                         'verification_status' => 'verified',
                     ]);
-                    $member->creditAdBalance((float) $validated['amount_usdt']);
+                    $member->creditP2pWallet((float) $validated['amount_usdt']);
                     $isVerified = true;
                 }
             } catch (\Throwable $e) {
@@ -220,11 +222,12 @@ class MobileWalletController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $isVerified ? 'Blockchain deposit verified! Funds credited to ad balance.' : 'Deposit submitted for verification. It will be credited upon confirmation.',
+            'message' => $isVerified ? 'Blockchain deposit verified! Funds credited to Fund Wallet.' : 'Deposit submitted for verification. It will be credited upon confirmation.',
             'deposit_id' => $deposit->deposit_id,
             'status' => $deposit->status,
             'is_auto_credited' => $isVerified,
-            'new_ad_balance' => (float) $member->fresh()->ad_balance,
+            'new_ad_balance' => (float) $member->fresh()->p2p_wallet,
+            'new_fund_wallet' => (float) $member->fresh()->p2p_wallet,
         ]);
     }
 

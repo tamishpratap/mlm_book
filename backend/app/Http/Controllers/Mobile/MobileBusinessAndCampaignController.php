@@ -154,15 +154,16 @@ class MobileBusinessAndCampaignController extends Controller
         $feeAmount = round($budget * ($feePercent / 100), 2);
         $totalDebit = round($budget + $feeAmount, 2);
 
-        if (((float) ($member->ad_balance ?? 0.00)) < $totalDebit) {
+        $availableFunds = (float) ($member->p2p_wallet ?? 0.00);
+        if ($availableFunds < $totalDebit) {
             return response()->json([
-                'message' => "Insufficient ad funds. Required: \${$totalDebit} (Budget \${$budget} + \${$feeAmount} platform fee). Please deposit funds first.",
+                'message' => "Insufficient ad funds. Required: \${$totalDebit} (Budget \${$budget} + \${$feeAmount} platform fee). Available: \${$availableFunds} USD. Please deposit funds first.",
             ], 422);
         }
 
-        $campaign = DB::transaction(function () use ($member, $page, $validated, $budget, $feePercent, $feeAmount, $totalDebit) {
-            // Deduct funds from member ad balance
-            $member->ad_balance = round((float) $member->ad_balance - $totalDebit, 2);
+        $campaign = DB::transaction(function () use ($member, $page, $validated, $budget, $feePercent, $feeAmount, $totalDebit, $availableFunds) {
+            // Deduct funds from member Fund Wallet (p2p_wallet)
+            $member->p2p_wallet = round($availableFunds - $totalDebit, 2);
             $member->save();
 
             return AdCampaign::create([
@@ -185,7 +186,7 @@ class MobileBusinessAndCampaignController extends Controller
             'success' => true,
             'message' => 'Campaign submitted successfully for admin review.',
             'campaign_id' => $campaign->campaign_id,
-            'new_ad_balance' => (float) $member->fresh()->ad_balance,
+            'new_ad_balance' => (float) $member->fresh()->p2p_wallet,
         ], 201);
     }
 
@@ -291,7 +292,8 @@ class MobileBusinessAndCampaignController extends Controller
                 'success' => true,
                 'message' => "Congratulations! You earned \${$resolution['reward_amount_exact']} USD reward.",
                 'reward_credited' => $rewardAmount,
-                'new_reward_balance' => (float) $member->fresh()->reward_balance,
+                'new_wallet_balance' => (float) $member->fresh()->wallet,
+                'new_reward_balance' => (float) $member->fresh()->wallet,
             ]);
         });
     }

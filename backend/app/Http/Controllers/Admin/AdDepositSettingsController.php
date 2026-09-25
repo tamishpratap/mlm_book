@@ -222,14 +222,10 @@ class AdDepositSettingsController extends Controller
                 ], 422);
             }
 
-            // 1. Credit Member's Fund Wallet (p2p_wallet) and ad_balance
+            // 1. Credit Member's Fund Wallet (p2p_wallet)
             $previousP2pBalance = (float) ($member->p2p_wallet ?? 0.00);
             $newP2pBalance = round($previousP2pBalance + $usdCredit, 2);
             $member->p2p_wallet = $newP2pBalance;
-
-            $previousBalance = (float) ($member->ad_balance ?? 0.00);
-            $newBalance = round($previousBalance + $usdCredit, 2);
-            $member->ad_balance = $newBalance;
             $member->save();
 
             // 2. Mark deposit Approved with audit timestamps and admin identity
@@ -269,12 +265,12 @@ class AdDepositSettingsController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Deposit #{$deposit->deposit_id} successfully approved! \${$usdCredit} USD credited to {$member->name}'s Fund Wallet.",
-                'deposit' => $deposit->fresh(['member:id,name,user_id,email,p2p_wallet,ad_balance', 'businessPage:id,page_name,slug', 'verifiedBy:id,name,email']),
+                'deposit' => $deposit->fresh(['member:id,name,user_id,email,p2p_wallet', 'businessPage:id,page_name,slug', 'verifiedBy:id,name,email']),
                 'credited_usd_amount' => $usdCredit,
                 'previous_fund_wallet' => $previousP2pBalance,
                 'new_fund_wallet' => $newP2pBalance,
-                'previous_ad_balance' => $previousBalance,
-                'new_ad_balance' => $newBalance,
+                'previous_ad_balance' => $previousP2pBalance,
+                'new_ad_balance' => $newP2pBalance,
             ]);
         });
     }
@@ -352,7 +348,7 @@ class AdDepositSettingsController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Deposit #{$deposit->deposit_id} has been rejected.",
-                'deposit' => $deposit->fresh(['member:id,name,user_id,email,ad_balance', 'businessPage:id,page_name,slug', 'verifiedBy:id,name,email']),
+                'deposit' => $deposit->fresh(['member:id,name,user_id,email,p2p_wallet', 'businessPage:id,page_name,slug', 'verifiedBy:id,name,email']),
             ]);
         });
     }
@@ -404,7 +400,7 @@ class AdDepositSettingsController extends Controller
                 'verified' => false,
                 'status' => $verification['status'],
                 'message' => $verification['message'],
-                'deposit' => $deposit->fresh(['member:id,name,user_id,email,ad_balance', 'businessPage:id,page_name,slug']),
+                'deposit' => $deposit->fresh(['member:id,name,user_id,email,p2p_wallet', 'businessPage:id,page_name,slug']),
             ], 422);
         }
 
@@ -432,7 +428,6 @@ class AdDepositSettingsController extends Controller
 
             if (!$previouslyApproved && $member) {
                 $member->p2p_wallet = round((float) ($member->p2p_wallet ?? 0.00) + $verifiedAmount, 2);
-                $member->ad_balance = round((float) ($member->ad_balance ?? 0.00) + $verifiedAmount, 2);
                 $member->save();
             }
 
@@ -440,7 +435,7 @@ class AdDepositSettingsController extends Controller
                 'success' => true,
                 'verified' => true,
                 'message' => "Deposit #{$lockedDeposit->deposit_id} successfully verified on-chain! \${$verifiedAmount} USD credited to {$member->name}'s Fund Wallet.",
-                'deposit' => $lockedDeposit->fresh(['member:id,name,user_id,email,p2p_wallet,ad_balance', 'businessPage:id,page_name,slug', 'verifiedBy:id,name,email']),
+                'deposit' => $lockedDeposit->fresh(['member:id,name,user_id,email,p2p_wallet', 'businessPage:id,page_name,slug', 'verifiedBy:id,name,email']),
                 'credited_amount' => $verifiedAmount,
             ]);
         });

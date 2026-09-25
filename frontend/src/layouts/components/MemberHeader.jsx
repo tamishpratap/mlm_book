@@ -257,10 +257,13 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
             <Compass size={18} />
             <span>Business Directory</span>
           </NavLink>
+          {/* Events Navigation - Temporarily Disabled */}
+          {/*
           <NavLink to="/member/events" className={getNavClass('/member/events')}>
             <CalendarDays size={18} />
             <span>Events</span>
           </NavLink>
+          */}
         </nav>
 
         <div className="topbar__actions">

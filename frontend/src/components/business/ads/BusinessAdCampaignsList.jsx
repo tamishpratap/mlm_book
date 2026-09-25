@@ -297,7 +297,7 @@ export function BusinessAdCampaignsList({
               <button
                 type="button"
                 className="btn"
-                onClick={() => setShowAddFundModal(true)}
+                onClick={() => navigate('/member/deposit')}
                 style={{
                   padding: '9px 16px',
                   borderRadius: '10px',
@@ -664,7 +664,7 @@ export function BusinessAdCampaignsList({
           platformFeePercent={Number(metrics.campaign_platform_fee_percent ?? 2.5)}
           onAddFundClick={() => {
             setShowCreateModal(false);
-            setShowAddFundModal(true);
+            navigate('/member/deposit');
           }}
           onOpenExistingCampaign={(existing) => {
             setShowCreateModal(false);
@@ -703,7 +703,7 @@ export function BusinessAdCampaignsList({
           }}
           onOpenDepositModal={() => {
             setTopUpCampaign(null);
-            setShowAddFundModal(true);
+            navigate('/member/deposit');
           }}
         />
       )}

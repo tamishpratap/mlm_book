@@ -17,7 +17,7 @@ class WithdrawalManagementController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = WithdrawalRequest::with([
-            'member:id,name,user_id,email,phone,wallet,ad_balance,reward_balance,wallet_address,profile_photo,mobile_verified_at,blocked_at'
+            'member:id,name,user_id,email,phone,wallet,wallet_address,profile_photo,mobile_verified_at,blocked_at'
         ]);
 
         // Filter by Status: Pending, Approved, Verified, Cancelled (or 'all')
@@ -152,7 +152,7 @@ class WithdrawalManagementController extends Controller
     public function show($id): JsonResponse
     {
         $withdrawal = WithdrawalRequest::with([
-            'member:id,name,user_id,email,phone,wallet,ad_balance,reward_balance,wallet_address,profile_photo,mobile_verified_at,blocked_at'
+            'member:id,name,user_id,email,phone,wallet,wallet_address,profile_photo,mobile_verified_at,blocked_at'
         ])
             ->where('id', $id)
             ->orWhere('request_id', $id)
@@ -220,7 +220,7 @@ class WithdrawalManagementController extends Controller
                 'success' => true,
                 'message' => "Withdrawal request #{$withdrawal->request_id} has been accepted and approved successfully!",
                 'withdrawal' => $withdrawal->fresh([
-                    'member:id,name,user_id,email,phone,wallet,ad_balance,reward_balance,wallet_address,profile_photo,mobile_verified_at,blocked_at'
+                    'member:id,name,user_id,email,phone,wallet,wallet_address,profile_photo,mobile_verified_at,blocked_at'
                 ]),
             ]);
         });
@@ -270,7 +270,7 @@ class WithdrawalManagementController extends Controller
                 'success' => true,
                 'message' => "Withdrawal request #{$withdrawal->request_id} has been verified successfully!",
                 'withdrawal' => $withdrawal->fresh([
-                    'member:id,name,user_id,email,phone,wallet,ad_balance,reward_balance,wallet_address,profile_photo,mobile_verified_at,blocked_at'
+                    'member:id,name,user_id,email,phone,wallet,wallet_address,profile_photo,mobile_verified_at,blocked_at'
                 ]),
             ]);
         });
@@ -340,7 +340,7 @@ class WithdrawalManagementController extends Controller
                 'previous_wallet_balance' => $previousBalance,
                 'new_wallet_balance' => $newBalance,
                 'withdrawal' => $withdrawal->fresh([
-                    'member:id,name,user_id,email,phone,wallet,ad_balance,reward_balance,wallet_address,profile_photo,mobile_verified_at,blocked_at'
+                    'member:id,name,user_id,email,phone,wallet,wallet_address,profile_photo,mobile_verified_at,blocked_at'
                 ]),
             ]);
         });

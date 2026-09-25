@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   BadgeCheck,
   Tag,
@@ -71,6 +71,7 @@ function formatDate(dateString) {
 
 export function BusinessDetailPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user: currentUser } = useAuth();
   const isVerified = isMemberMobileVerified(currentUser);
@@ -78,6 +79,13 @@ export function BusinessDetailPage() {
   const [verifyPromptMessage, setVerifyPromptMessage] = useState('Please verify your mobile number through WhatsApp to perform this action.');
 
   const activeTab = searchParams.get('tab') || 'home';
+
+  // Automatically redirect any direct visit to the Add Fund tab to the authoritative Fund Wallet / Deposit page
+  useEffect(() => {
+    if (activeTab === 'add-fund' || activeTab === 'funds') {
+      navigate('/member/deposit');
+    }
+  }, [activeTab, navigate]);
 
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -1153,8 +1161,9 @@ export function BusinessDetailPage() {
         {(isOwner || Boolean(data.is_admin)) && (
           <button
             type="button"
-            className={`biz-nav-tab ${activeTab === 'add-fund' || activeTab === 'funds' ? 'is-active' : ''}`}
-            onClick={() => handleTabChange('add-fund')}
+            className="biz-nav-tab"
+            onClick={() => navigate('/member/deposit')}
+            title="Add funds to your Fund Wallet"
           >
             <Wallet size={15} aria-hidden="true" />
             <span>Add Fund</span>
@@ -2288,7 +2297,11 @@ export function BusinessDetailPage() {
           initialPost={targetPostForAd}
           availablePosts={timelinePosts}
           hasPageContent={Boolean(targetPostForAd) || (timelinePosts && timelinePosts.length > 0) || (Number(data?.audience_counters?.posts || 0) > 0)}
-          availableAdFunds={Number(currentUser?.ad_balance ?? 0.00)}
+          availableAdFunds={Number(currentUser?.p2p_wallet ?? currentUser?.fund_wallet ?? 0.00)}
+          onAddFundClick={() => {
+            setShowRunAdModal(false);
+            navigate('/member/deposit');
+          }}
           onClose={() => {
             setShowRunAdModal(false);
             setTargetPostForAd(null);

@@ -51,7 +51,7 @@ class AdDepositController extends Controller
                 'is_available' => $isAvailable,
                 'member_fund_wallet' => (float) ($member ? ($member->p2p_wallet ?? 0.00) : 0.00),
                 'member_p2p_wallet' => (float) ($member ? ($member->p2p_wallet ?? 0.00) : 0.00),
-                'member_ad_balance' => (float) ($member ? ($member->p2p_wallet ?? $member->ad_balance ?? 0.00) : 0.00),
+                'member_ad_balance' => (float) ($member ? ($member->p2p_wallet ?? 0.00) : 0.00),
             ],
         ]);
     }
@@ -270,9 +270,8 @@ class AdDepositController extends Controller
                     'admin_notes' => "Verified on BNB Smart Chain: Transferred {$verifiedAmount} USDT from " . ($verification['from_address'] ?? 'sender') . " to destination wallet.",
                 ]);
 
-                // Atomically credit Member Fund Wallet (p2p_wallet) and ad_balance
+                // Atomically credit Member Fund Wallet (p2p_wallet)
                 $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $verifiedAmount, 2);
-                $lockedMember->ad_balance = round((float) ($lockedMember->ad_balance ?? 0.00) + $verifiedAmount, 2);
                 $lockedMember->save();
 
                 return $newDeposit;
@@ -286,7 +285,7 @@ class AdDepositController extends Controller
                 'deposit' => $deposit->load(['businessPage:id,page_name,slug']),
                 'member_fund_wallet' => (float) $member->fresh()->p2p_wallet,
                 'member_p2p_wallet' => (float) $member->fresh()->p2p_wallet,
-                'member_ad_balance' => (float) $member->fresh()->ad_balance,
+                'member_ad_balance' => (float) $member->fresh()->p2p_wallet,
                 'credited_amount' => $verifiedAmount,
                 'tx_explorer_url' => $explorerUrl,
             ], 201);
@@ -355,7 +354,7 @@ class AdDepositController extends Controller
         return response()->json([
             'success' => true,
             'deposits' => $deposits,
-            'member_ad_balance' => (float) ($member->ad_balance ?? 0.00),
+            'member_ad_balance' => (float) ($member->p2p_wallet ?? 0.00),
         ]);
     }
 }

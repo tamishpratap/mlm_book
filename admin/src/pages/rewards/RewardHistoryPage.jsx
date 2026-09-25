@@ -46,8 +46,8 @@ export function RewardHistoryPage() {
   const { showError } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Tab State: 'events' or 'ads'
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'events');
+  // Tab State: 'ads' (events temporarily disabled)
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'events' ? 'ads' : (searchParams.get('tab') || 'ads'));
 
   const [rewards, setRewards] = useState([]);
   const [metrics, setMetrics] = useState({
@@ -196,16 +196,18 @@ export function RewardHistoryPage() {
     });
   };
 
-  const handleDateFilterChange = ({ startDate, endDate, preset }) => {
-    setDateFrom(startDate || '');
-    setDateTo(endDate || '');
+  const handleDateFilterChange = ({ startDate, endDate, preset, date_from, date_to }) => {
+    const from = date_from ?? startDate ?? '';
+    const to = date_to ?? endDate ?? '';
+    setDateFrom(from);
+    setDateTo(to);
     setDatePreset(preset || '');
     setPagination((prev) => ({ ...prev, page: 1 }));
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (startDate) next.set('date_from', startDate);
+      if (from) next.set('date_from', from);
       else next.delete('date_from');
-      if (endDate) next.set('date_to', endDate);
+      if (to) next.set('date_to', to);
       else next.delete('date_to');
       if (preset && preset !== 'all' && preset !== 'custom') next.set('date_preset', preset);
       else next.delete('date_preset');
@@ -322,6 +324,8 @@ export function RewardHistoryPage() {
 
       {/* Primary Tab Navigation */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 flex items-center gap-1.5 w-full sm:w-auto self-start">
+        {/* Event Rewards Tab - Temporarily Disabled */}
+        {/*
         <button
           type="button"
           onClick={() => handleTabChange('events')}
@@ -341,6 +345,7 @@ export function RewardHistoryPage() {
             {metrics.events?.total_rewards_count ?? '—'}
           </span>
         </button>
+        */}
 
         <button
           type="button"
@@ -385,6 +390,8 @@ export function RewardHistoryPage() {
           />
 
           <AdminDateFilter
+            dateFrom={dateFrom}
+            dateTo={dateTo}
             startDate={dateFrom}
             endDate={dateTo}
             preset={datePreset}
@@ -422,7 +429,7 @@ export function RewardHistoryPage() {
           <EmptyState
             title={`No ${activeTab === 'events' ? 'Event' : 'Ad'} Reward Transactions Found`}
             description={`There are no qualifying ${activeTab === 'events' ? 'event registration or participation' : 'advertisement landing-page'} rewards matching your search or filters.`}
-            icon="pi pi-gift"
+            icon={Gift}
           />
         ) : (
           <div className="overflow-x-auto">
@@ -490,15 +497,19 @@ export function RewardHistoryPage() {
                       <div className="text-xs text-slate-400">{r.member?.email || r.member?.user_id}</div>
                     </td>
 
-                    {/* Referral Tier Snapshot */}
+                    {/* Referral Tier / Rank Snapshot */}
                     <td className="px-4 py-3">
                       <span className="font-semibold text-xs px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        {r.tier_label ? `Tier: ${r.tier_label} refs` : 'Default'}
+                        {r.rank_at_reward ? `Rank: ${r.rank_at_reward}` : (r.tier_label ? `Tier: ${r.tier_label} refs` : 'Default')}
                       </span>
                       <div className="text-xs text-slate-400 mt-0.5">
-                        {r.direct_verified_referral_count !== null && r.direct_verified_referral_count !== undefined
-                          ? `${r.direct_verified_referral_count} verified refs`
-                          : 'Legacy'}
+                        {r.rank_at_reward ? (
+                          `${r.team_count ?? 0} team (${r.direct_count ?? 0} direct)`
+                        ) : r.direct_verified_referral_count !== null && r.direct_verified_referral_count !== undefined ? (
+                          `${r.direct_verified_referral_count} verified refs`
+                        ) : (
+                          'Legacy'
+                        )}
                       </div>
                     </td>
 
@@ -534,7 +545,7 @@ export function RewardHistoryPage() {
 
                     {/* Timestamp */}
                     <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
-                      {new Date(r.created_at).toLocaleString()}
+                      {r.created_at ? new Date(r.created_at).toLocaleString() : '—'}
                     </td>
                   </tr>
                 ))}

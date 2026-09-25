@@ -57,6 +57,7 @@ const FEATURES = [
     path: '/member/business-directory',
     linkText: 'View Directory',
   },
+  /*
   {
     icon: CalendarDays,
     title: 'Events',
@@ -66,6 +67,7 @@ const FEATURES = [
     path: '/member/events',
     linkText: 'Discover Events',
   },
+  */
   {
     icon: UserPlus,
     title: 'Connections',

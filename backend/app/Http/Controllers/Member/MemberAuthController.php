@@ -1037,10 +1037,14 @@ class MemberAuthController extends Controller
                 }
             }
 
+            $incomingGoogleEmail = strtolower(trim((string) $email));
+
             $member = Member::where('google_id', $googleId)->first();
 
             if ($member) {
-                if (strtolower(trim((string) $member->email)) !== strtolower(trim((string) $email))) {
+                $storedMemberEmail = strtolower(trim((string) $member->email));
+
+                if ($storedMemberEmail !== $incomingGoogleEmail) {
                     Log::warning('Google Member email mismatch on google_id lookup', [
                         'member_id' => $member->getKey(),
                         'member_email' => $member->email,
@@ -1048,25 +1052,63 @@ class MemberAuthController extends Controller
                         'google_id' => $googleId,
                     ]);
 
-                    $msg = 'Google authentication could not be completed. Please try again.';
-                    if ($frontendUrl) {
-                        return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
-                    }
+                    // Treat stored google_id as stale/mismatched, clear it, and do not authenticate this member via that google_id
+                    $member->google_id = null;
+                    $member->save();
 
-                    return redirect()->route('member.login')->with('error', $msg);
+                    $member = null;
                 }
             }
 
             // 1. Existing Member Found by Google ID or Email
             if (! $member) {
-                $member = Member::where('email', $email)->first();
+                $member = Member::whereRaw('LOWER(TRIM(email)) = ?', [$incomingGoogleEmail])->first();
 
                 if ($member) {
+                    $storedMemberEmail = strtolower(trim((string) $member->email));
+
+                    // Verify incoming Google email matches the member's current email
+                    if ($storedMemberEmail !== $incomingGoogleEmail) {
+                        Log::warning('Google Member email mismatch on email lookup', [
+                            'member_id' => $member->getKey(),
+                            'member_email' => $member->email,
+                            'google_email' => $email,
+                        ]);
+
+                        $msg = 'Google authentication could not be completed. Please try again.';
+                        if ($frontendUrl) {
+                            return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+                        }
+
+                        return redirect()->route('member.login')->with('error', $msg);
+                    }
+
+                    // Preserve existing conflict check: If member has an active different google_id, prevent conflict
                     if ($member->google_id && $member->google_id !== $googleId) {
                         Log::warning('Google Member account linking conflict', [
                             'member_id' => $member->getKey(),
                             'request_host' => $request->getHost(),
                             'environment' => app()->environment(),
+                        ]);
+
+                        $msg = 'Google authentication could not be completed. Please try again.';
+                        if ($frontendUrl) {
+                            return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+                        }
+
+                        return redirect()->route('member.login')->with('error', $msg);
+                    }
+
+                    // Verify incoming Google identity can be linked without violating existing unique google_id constraint
+                    $conflictMember = Member::where('google_id', $googleId)
+                        ->where('id', '!=', $member->id)
+                        ->first();
+
+                    if ($conflictMember) {
+                        Log::warning('Google ID collision during account linking', [
+                            'member_id' => $member->getKey(),
+                            'conflicting_member_id' => $conflictMember->getKey(),
+                            'google_id' => $googleId,
                         ]);
 
                         $msg = 'Google authentication could not be completed. Please try again.';

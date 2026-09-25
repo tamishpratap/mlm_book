@@ -73,7 +73,7 @@ class BusinessAdCampaignController extends Controller
         $totalClicks = AdClick::whereIn('ad_campaign_id', $pageCampaignIds)->count();
         $avgCtr = $totalImpressions > 0 ? round(($totalClicks / $totalImpressions) * 100, 2) : 0.00;
 
-        $availableAdFunds = round((float) ($member->ad_balance ?? 0.00), 2);
+        $availableAdFunds = round((float) ($member->p2p_wallet ?? 0.00), 2);
         $campaignFeePercent = (float) Setting::get('campaign_platform_fee_percent', 2.50);
 
         $metrics = [
@@ -194,7 +194,7 @@ class BusinessAdCampaignController extends Controller
 
             /** @var Member $lockedMember */
             $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
-            $availableFunds = (float) ($lockedMember->ad_balance ?? 0.00);
+            $availableFunds = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
             if ($availableFunds < $totalWalletDebit) {
                 $shortfall = round($totalWalletDebit - $availableFunds, 2);
@@ -205,8 +205,8 @@ class BusinessAdCampaignController extends Controller
                 ]);
             }
 
-            // Deduct total debit (budget + platform fee) from member's available ad balance
-            $lockedMember->ad_balance = round($availableFunds - $totalWalletDebit, 2);
+            // Deduct total debit (budget + platform fee) from member's Fund Wallet (p2p_wallet)
+            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 2);
             $lockedMember->save();
 
             return AdCampaign::create([
@@ -301,7 +301,7 @@ class BusinessAdCampaignController extends Controller
         $updatedCampaign = DB::transaction(function () use ($campaign, $member, $topUpAmount, $feeAmount, $totalWalletDebit) {
             /** @var Member $lockedMember */
             $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
-            $availableFunds = (float) ($lockedMember->ad_balance ?? 0.00);
+            $availableFunds = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
             if ($availableFunds < $totalWalletDebit) {
                 $shortfall = round($totalWalletDebit - $availableFunds, 2);
@@ -312,8 +312,8 @@ class BusinessAdCampaignController extends Controller
                 ]);
             }
 
-            // Deduct total debit (top-up + fee) from member's ad balance
-            $lockedMember->ad_balance = round($availableFunds - $totalWalletDebit, 2);
+            // Deduct total debit (top-up + fee) from member's Fund Wallet (p2p_wallet)
+            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 2);
             $lockedMember->save();
 
             /** @var AdCampaign $lockedCampaign */
@@ -348,7 +348,7 @@ class BusinessAdCampaignController extends Controller
             'success' => true,
             'message' => "Successfully added \${$topUpAmount} USD to campaign '{$campaign->campaign_name}'. New running budget: \${$updatedCampaign->remaining_amount} USD.",
             'campaign' => $updatedCampaign->fresh(['post', 'owner:id,name,user_id,email', 'businessPage:id,page_name,slug']),
-            'available_ad_funds' => round((float) ($member->fresh()->ad_balance ?? 0.00), 2),
+            'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? 0.00), 2),
         ]);
     }
 
@@ -433,7 +433,7 @@ class BusinessAdCampaignController extends Controller
                 if ($deltaDebit > 0) {
                     /** @var Member $lockedMember */
                     $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
-                    $available = (float) ($lockedMember->ad_balance ?? 0.00);
+                    $available = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
                     if ($available < $deltaDebit) {
                         $shortfall = round($deltaDebit - $available, 2);
@@ -444,14 +444,14 @@ class BusinessAdCampaignController extends Controller
                         ]);
                     }
 
-                    $lockedMember->ad_balance = round($available - $deltaDebit, 2);
+                    $lockedMember->p2p_wallet = round($available - $deltaDebit, 2);
                     $lockedMember->save();
                 } elseif ($deltaDebit < 0) {
                     $refund = abs($deltaDebit);
                     /** @var Member $lockedMember */
                     $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
                     if ($lockedMember) {
-                        $lockedMember->ad_balance = round((float) ($lockedMember->ad_balance ?? 0.00) + $refund, 2);
+                        $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $refund, 2);
                         $lockedMember->save();
                     }
                 }
@@ -637,7 +637,7 @@ class BusinessAdCampaignController extends Controller
                 /** @var Member $lockedMember */
                 $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
                 if ($lockedMember) {
-                    $lockedMember->ad_balance = round((float) ($lockedMember->ad_balance ?? 0.00) + $unspent, 2);
+                    $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $unspent, 2);
                     $lockedMember->save();
                     $refundedAmount = $unspent;
                 }
@@ -659,6 +659,10 @@ class BusinessAdCampaignController extends Controller
      */
     protected function resolveCampaign(BusinessPage $businessPage, $campaignIdentifier): AdCampaign
     {
+        if ($campaignIdentifier instanceof AdCampaign) {
+            return $campaignIdentifier;
+        }
+
         $campaign = AdCampaign::where('business_page_id', $businessPage->id)
             ->where(function ($q) use ($campaignIdentifier) {
                 if (is_numeric($campaignIdentifier)) {
@@ -913,7 +917,8 @@ class BusinessAdCampaignController extends Controller
                 'rewarded' => false,
                 'already_rewarded' => true,
                 'reward_amount_usd' => 0.00,
-                'member_reward_balance' => (float) ($member->reward_balance ?? 0.00),
+                'member_wallet' => (float) ($member->wallet ?? 0.00),
+                'member_reward_balance' => (float) ($member->wallet ?? 0.00),
             ], 422);
         }
 
@@ -1084,15 +1089,15 @@ class BusinessAdCampaignController extends Controller
                 throw $e;
             }
 
-            // 8. Credit Member's reward balance atomically
-            $lockedMember->reward_balance = round((float) ($lockedMember->reward_balance ?? 0.00) + $rewardAmount, 4);
+            // 8. Credit Member's wallet balance atomically
+            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 2);
             $lockedMember->save();
-            $newRewardBalance = (float) $lockedMember->reward_balance;
+            $newWalletBalance = (float) $lockedMember->wallet;
 
             return [
                 'success' => true,
                 'status_code' => 200,
-                'message' => "Qualifying visit confirmed. \${$rewardAmountExact} USD reward credited successfully to Reward Wallet.",
+                'message' => "Qualifying visit confirmed. \${$rewardAmountExact} USD reward credited successfully to Wallet.",
                 'rewarded' => true,
                 'reward_amount_usd' => $rewardAmount,
                 'reward_amount_exact' => $rewardAmountExact,
@@ -1102,8 +1107,9 @@ class BusinessAdCampaignController extends Controller
                 'spent_budget' => $newSpent,
                 'campaign_status' => $lockedCampaign->status,
                 'reward_id' => $reward->id,
-                'member_reward_balance' => $newRewardBalance,
-                'reward_wallet_balance' => $newRewardBalance,
+                'member_wallet' => $newWalletBalance,
+                'member_reward_balance' => $newWalletBalance,
+                'reward_wallet_balance' => $newWalletBalance,
             ];
         });
 
@@ -1474,7 +1480,8 @@ class BusinessAdCampaignController extends Controller
                 'already_rewarded' => true,
                 'reward_amount_usd' => 0.00,
                 'is_following' => true,
-                'member_reward_balance' => (float) ($member->reward_balance ?? 0.00),
+                'member_wallet' => (float) ($member->wallet ?? 0.00),
+                'member_reward_balance' => (float) ($member->wallet ?? 0.00),
             ]);
         }
 
@@ -1596,7 +1603,8 @@ class BusinessAdCampaignController extends Controller
                     'already_rewarded' => true,
                     'reward_amount_usd' => 0.00,
                     'is_following' => true,
-                    'member_reward_balance' => (float) ($lockedMember->reward_balance ?? 0.00),
+                    'member_wallet' => (float) ($lockedMember->wallet ?? 0.00),
+                    'member_reward_balance' => (float) ($lockedMember->wallet ?? 0.00),
                 ];
             }
 
@@ -1670,15 +1678,15 @@ class BusinessAdCampaignController extends Controller
                 throw $e;
             }
 
-            // Credit Member Reward Balance atomically
-            $lockedMember->reward_balance = round((float) ($lockedMember->reward_balance ?? 0.00) + $rewardAmount, 4);
+            // Credit Member Wallet Balance atomically
+            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 2);
             $lockedMember->save();
-            $newRewardBalance = (float) $lockedMember->reward_balance;
+            $newWalletBalance = (float) $lockedMember->wallet;
 
             return [
                 'success' => true,
                 'status_code' => 200,
-                'message' => "Page followed successfully! \${$rewardAmountExact} USD reward credited to your Reward Wallet.",
+                'message' => "Page followed successfully! \${$rewardAmountExact} USD reward credited to your Wallet.",
                 'rewarded' => true,
                 'reward_amount_usd' => $rewardAmount,
                 'reward_amount_exact' => $rewardAmountExact,
@@ -1687,8 +1695,9 @@ class BusinessAdCampaignController extends Controller
                 'campaign_status' => $lockedCampaign->status,
                 'reward_id' => $reward->id,
                 'is_following' => true,
-                'member_reward_balance' => $newRewardBalance,
-                'reward_wallet_balance' => $newRewardBalance,
+                'member_wallet' => $newWalletBalance,
+                'member_reward_balance' => $newWalletBalance,
+                'reward_wallet_balance' => $newWalletBalance,
             ];
         });
 

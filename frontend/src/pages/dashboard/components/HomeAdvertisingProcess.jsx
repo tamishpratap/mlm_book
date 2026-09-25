@@ -53,7 +53,7 @@ const ADVERTISING_STEPS = [
   {
     step: '08',
     title: 'Reward Credit',
-    description: 'Successfully issued rewards are added to the member’s Reward Wallet.',
+    description: 'Successfully issued rewards are added to the member’s Wallet.',
     icon: Wallet,
     color: 'green',
   },

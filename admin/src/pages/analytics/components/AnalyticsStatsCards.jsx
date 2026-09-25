@@ -47,12 +47,14 @@ export function AnalyticsStatsCards({ data = {}, loading = false }) {
       icon: MessageSquare,
       color: 'text-slate-900',
     },
+    /*
     {
       title: 'Events Scheduled',
       value: data.totalEvents ?? 0,
       icon: Calendar,
       color: 'text-slate-900',
     },
+    */
     {
       title: 'Platform Reports',
       value: data.totalReports ?? 0,

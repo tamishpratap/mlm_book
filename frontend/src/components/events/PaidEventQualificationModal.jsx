@@ -326,10 +326,10 @@ export default function PaidEventQualificationModal({
                 {successResult.already_rewarded ? 'Already Qualified!' : 'Reward Credited!'}
               </h4>
               <p style={{ margin: 0, fontSize: '13px', opacity: 0.95, maxWidth: '380px' }}>
-                {successResult.message || `You earned $${successResult.reward_amount_usd} USD credited to your Reward Wallet.`}
+                {successResult.message || `You earned $${successResult.reward_amount_usd} USD credited to your Wallet.`}
               </p>
               <span style={{ fontSize: '11.5px', opacity: 0.8, marginTop: '4px' }}>
-                Reward credited to your Reward Wallet.
+                Reward credited to your Wallet.
               </span>
             </div>
           ) : error ? (
@@ -534,7 +534,7 @@ export default function PaidEventQualificationModal({
                     'Reward is resolved dynamically based on current direct verified referrals.',
                     'Clicking "Interested" acts as the qualifying trigger for this event.',
                     'One reward per member per event campaign.',
-                    'Reward amount is credited directly to your Reward Wallet upon confirmation.',
+                    'Reward amount is credited directly to your Wallet upon confirmation.',
                   ].map((condition, idx) => (
                     <li
                       key={idx}

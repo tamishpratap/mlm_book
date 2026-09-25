@@ -115,6 +115,8 @@ export function ModuleSummaryCards({ data = {} }) {
               {(data.activeProducts || 0).toLocaleString()}
             </span>
           </div>
+          {/* Upcoming Events & Events This Month - Temporarily Disabled */}
+          {/*
           <div className="py-2 flex items-center justify-between">
             <span className="text-slate-500">Upcoming Events</span>
             <span className="bg-sky-50 text-sky-700 font-bold px-2 py-0.5 rounded-full border border-sky-200/60 text-[11px]">
@@ -127,6 +129,7 @@ export function ModuleSummaryCards({ data = {} }) {
               {(data.eventsThisMonthCount || 0).toLocaleString()}
             </span>
           </div>
+          */}
           <div className="py-2 flex items-center justify-between">
             <span className="text-slate-500">Pending Content Reports</span>
             {(data.pendingReports || 0) > 0 ? (
