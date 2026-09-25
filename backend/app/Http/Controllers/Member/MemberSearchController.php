@@ -294,7 +294,11 @@ class MemberSearchController extends Controller
     private function postQuery(string $search)
     {
         $query = Post::query()
-            ->with(['member', 'comments.member', 'likes', 'reactions'])
+            ->with(['member', 'likes', 'reactions'])
+            ->withCount([
+                'likes', 'reactions', 'shares', 'savedPosts',
+                'comments' => fn ($cq) => $cq->whereNull('parent_id'),
+            ])
             ->whereNull('group_id')
             ->whereNull('event_id');
 

@@ -198,14 +198,6 @@ class PostController extends Controller
             'originalPost.member',
             'originalPost.businessPage',
             'originalPost.community',
-            'comments' => fn ($query) => $query->whereNull('parent_id')
-                ->with([
-                    'member',
-                    'reactions',
-                    'replies' => fn ($rq) => $rq->with(['member', 'reactions'])->orderBy('created_at', 'asc'),
-                ])
-                ->withCount('replies')
-                ->orderBy('created_at', 'asc'),
         ])->loadCount([
             'likes',
             'reactions',
@@ -213,6 +205,22 @@ class PostController extends Controller
             'savedPosts',
             'comments' => fn ($query) => $query->whereNull('parent_id'),
         ]);
+
+        $latestComments = $post->comments()
+            ->whereNull('parent_id')
+            ->with([
+                'member',
+                'reactions',
+                'replies' => fn ($rq) => $rq->with(['member', 'reactions'])->orderBy('created_at', 'asc'),
+            ])
+            ->withCount('replies')
+            ->orderBy('created_at', 'desc')
+            ->take(4)
+            ->get()
+            ->reverse()
+            ->values();
+
+        $post->setRelation('comments', $latestComments);
 
         if ($post->originalPost) {
             $post->originalPost->loadCount([
@@ -530,7 +538,10 @@ class PostController extends Controller
         abort_unless($this->canMemberAccessPost($currentMemberId, $post), 403);
 
         $offset = (int) $request->input('offset', 0);
-        $limit = 10;
+        $limit = (int) $request->input('limit', (int) $request->input('per_page', 4));
+        if ($limit <= 0 || $limit > 50) {
+            $limit = 4;
+        }
 
         $commentsQuery = $post->comments()
             ->whereNull('parent_id')

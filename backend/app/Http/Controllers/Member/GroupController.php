@@ -136,14 +136,22 @@ class GroupController extends Controller
         $announcements = collect();
         if ($tab === 'feed' && ($group->privacy === 'public' || $isMember)) {
             $announcements = Post::query()
-                ->with(['member', 'comments.member', 'likes', 'reactions'])
+                ->with(['member', 'likes', 'reactions'])
+                ->withCount([
+                    'likes', 'reactions', 'shares', 'savedPosts',
+                    'comments' => fn ($cq) => $cq->whereNull('parent_id'),
+                ])
                 ->where('group_id', $group->id)
                 ->where('is_announcement', true)
                 ->latest('created_at')
                 ->get();
 
             $posts = Post::query()
-                ->with(['member', 'comments.member', 'likes', 'reactions'])
+                ->with(['member', 'likes', 'reactions'])
+                ->withCount([
+                    'likes', 'reactions', 'shares', 'savedPosts',
+                    'comments' => fn ($cq) => $cq->whereNull('parent_id'),
+                ])
                 ->where('group_id', $group->id)
                 ->latest('is_pinned')
                 ->latest('created_at')

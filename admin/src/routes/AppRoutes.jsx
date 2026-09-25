@@ -147,7 +147,6 @@ export function AppRoutes() {
         <Route path="funds/deposit-settings" element={<DepositSettingsPage />} />
         <Route path="funds/deposits" element={<DepositsListPage />} />
         <Route path="funds/withdrawals" element={<WithdrawalsListPage />} />
-        <Route path="funds" element={<Navigate to="/admin/funds/withdrawals" replace />} />
         <Route path="withdrawals" element={<Navigate to="/admin/funds/withdrawals" replace />} />
         <Route path="funds" element={<Navigate to="/admin/funds/deposits" replace />} />
 

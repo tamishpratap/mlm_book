@@ -91,8 +91,8 @@ export const postApi = {
   /**
    * Get post comments with offset pagination
    */
-  async getComments(postId, offset = 0) {
-    const response = await apiClient.get(`/posts/${postId}/comments?offset=${offset}`);
+  async getComments(postId, offset = 0, limit = 4) {
+    const response = await apiClient.get(`/posts/${postId}/comments?offset=${offset}&limit=${limit}`);
     return response.data;
   },
 

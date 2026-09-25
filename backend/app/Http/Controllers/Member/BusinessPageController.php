@@ -305,14 +305,22 @@ class BusinessPageController extends Controller
 
         if ($activeTab === 'home') {
             $pinnedPost = Post::query()
-                ->with(['member', 'businessPage', 'likes', 'reactions', 'comments.member'])
+                ->with(['member', 'businessPage', 'likes', 'reactions'])
+                ->withCount([
+                    'likes', 'reactions', 'shares', 'savedPosts',
+                    'comments' => fn ($cq) => $cq->whereNull('parent_id'),
+                ])
                 ->where('business_page_id', $businessPage->id)
                 ->where('is_pinned', true)
                 ->latest()
                 ->first();
 
             $query = Post::query()
-                ->with(['member', 'businessPage', 'likes', 'reactions', 'comments.member'])
+                ->with(['member', 'businessPage', 'likes', 'reactions'])
+                ->withCount([
+                    'likes', 'reactions', 'shares', 'savedPosts',
+                    'comments' => fn ($cq) => $cq->whereNull('parent_id'),
+                ])
                 ->where('business_page_id', $businessPage->id);
 
             if ($pinnedPost) {

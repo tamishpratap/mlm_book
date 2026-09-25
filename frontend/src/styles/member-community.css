@@ -63,7 +63,7 @@
     border: 4px solid #ffffff;
     background: #ffffff;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
-    overflow: hidden;
+    overflow: visible;
     display: grid;
     place-items: center;
 }
