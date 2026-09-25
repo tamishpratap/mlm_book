@@ -27,6 +27,7 @@ export { default as notificationsApi } from './notificationsApi';
 export { default as adCampaignsApi } from './adCampaignsApi';
 export { default as adRewardRulesApi } from './adRewardRulesApi';
 export { default as eventRewardRulesApi } from './eventRewardRulesApi';
+export { default as rewardManagementApi } from './rewardManagementApi';
 export { default as eventCampaignsApi } from './eventCampaignsApi';
 export { default as fundsApi } from './fundsApi';
 export { default as withdrawalsApi } from './withdrawalsApi';

@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\AdDepositSettingsController;
 use App\Http\Controllers\Admin\AdRewardRuleController;
 use App\Http\Controllers\Admin\EventRewardRuleController;
 use App\Http\Controllers\Admin\EventCampaignManagementController;
+use App\Http\Controllers\Admin\RewardManagementController;
 use App\Http\Controllers\Admin\WithdrawalManagementController;
 
 // Member Controllers
@@ -201,7 +202,23 @@ Route::prefix('admin')->group(function () {
             Route::post('/{adCampaign}/restart', [AdCampaignManagementController::class, 'restart']);
         });
 
-        // Ad Reward Rules Management
+        // Centralized Reward Management
+        Route::prefix('reward-rules')->group(function () {
+            Route::get('/', [RewardManagementController::class, 'indexRules']);
+            Route::get('/validate-active-set', [RewardManagementController::class, 'validateActiveSet']);
+            Route::post('/', [RewardManagementController::class, 'storeRule']);
+            Route::post('/preview', [RewardManagementController::class, 'previewRule']);
+            Route::put('/{rewardRankRule}', [RewardManagementController::class, 'updateRule']);
+            Route::post('/{rewardRankRule}/toggle-status', [RewardManagementController::class, 'toggleRuleStatus']);
+        });
+
+        Route::prefix('reward-history')->group(function () {
+            Route::get('/events', [RewardManagementController::class, 'eventRewardsHistory']);
+            Route::get('/ads', [RewardManagementController::class, 'adRewardsHistory']);
+            Route::get('/metrics', [RewardManagementController::class, 'historyMetrics']);
+        });
+
+        // Ad Reward Rules Management (Legacy compatibility)
         Route::prefix('ad-reward-rules')->group(function () {
             Route::get('/', [AdRewardRuleController::class, 'index']);
             Route::post('/', [AdRewardRuleController::class, 'store']);
@@ -777,6 +794,8 @@ Route::prefix('member')->name('api.member.')->group(function () {
             Route::post('/wallet/verify-otp', [RewardWalletController::class, 'verifyWalletOtp']);
             Route::get('/history', [RewardWalletController::class, 'history']);
             Route::get('/ad-eligibility', [MemberAdRewardEligibilityController::class, 'checkEligibility']);
+            Route::get('/rank', [MemberAdRewardEligibilityController::class, 'currentRank']);
+            Route::get('/current-rank', [MemberAdRewardEligibilityController::class, 'currentRank']);
         });
 
         Route::get('/ad-rewards/eligibility', [MemberAdRewardEligibilityController::class, 'checkEligibility']);

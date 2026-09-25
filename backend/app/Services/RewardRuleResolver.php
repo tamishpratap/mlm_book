@@ -4,9 +4,16 @@ namespace App\Services;
 
 use App\Models\AdRewardRule;
 use App\Models\Member;
+use App\Models\RewardRankRule;
 
 class RewardRuleResolver
 {
+    public function __construct(
+        protected ?RewardRankResolver $rankResolver = null
+    ) {
+        $this->rankResolver = $rankResolver ?? app(RewardRankResolver::class);
+    }
+
     /**
      * Get the authoritative DIRECT VERIFIED referral count for a member.
      * Strictly:
@@ -16,37 +23,145 @@ class RewardRuleResolver
      */
     public function getVerifiedDirectReferralCount(Member $member): int
     {
-        if (empty($member->user_id)) {
-            return 0;
-        }
+        return $this->rankResolver->getVerifiedDirectReferralCount($member);
+    }
 
-        return (int) Member::query()
-            ->where('introducer_id', $member->user_id)
-            ->whereNotNull('mobile_verified_at')
-            ->count();
+    /**
+     * Get the authoritative TOTAL VERIFIED DOWNLINE TEAM count for a member.
+     */
+    public function getVerifiedTeamCount(Member $member): int
+    {
+        return $this->rankResolver->getVerifiedTeamCount($member);
     }
 
     /**
      * Resolve the eligible reward rule and amount for an authenticated Member.
-     * Ignores any client-supplied referral count or reward parameters.
+     * Prioritizes the central dynamic rank-based reward engine.
      */
-    public function resolveForMember(Member $member, string $type = AdRewardRule::TYPE_BUSINESS_AD): array
+    public function resolveForMember(Member $member, string $type = AdRewardRule::TYPE_CENTRAL): array
     {
-        $verifiedCount = $this->getVerifiedDirectReferralCount($member);
+        // 1. Authoritative Rank-Based Resolution
+        if (RewardRankRule::active()->exists()) {
+            $rankResult = $this->rankResolver->resolveForMember($member);
 
+            if (!$rankResult['success'] || !$rankResult['eligible']) {
+                return array_merge($rankResult, [
+                    'direct_verified_referral_count' => $rankResult['user_referrals'] ?? 0,
+                    'team_count' => $rankResult['user_team'] ?? 0,
+                    'reward_amount_usd' => 0.00,
+                    'reward_amount_exact' => '0.0000',
+                    'rule_type' => 'rank',
+                    'matched_rule_id' => null,
+                ]);
+            }
+
+            return [
+                'success' => true,
+                'status' => 'resolved',
+                'rule_type' => 'rank',
+                'eligible' => true,
+                'rank' => $rankResult['rank'],
+                'rank_key' => $rankResult['rank_key'],
+                'priority' => $rankResult['priority'],
+                'referral_requirement' => $rankResult['referral_requirement'],
+                'team_requirement' => $rankResult['team_requirement'],
+                'user_referrals' => $rankResult['user_referrals'],
+                'user_team' => $rankResult['user_team'],
+                'direct_verified_referral_count' => $rankResult['user_referrals'],
+                'team_count' => $rankResult['user_team'],
+                'reward' => $rankResult['reward'],
+                'reward_amount_usd' => $rankResult['reward'],
+                'reward_amount_exact' => $rankResult['reward_amount_exact'],
+                'currency' => $rankResult['currency'] ?? 'USD',
+                'currency_symbol' => $rankResult['currency_symbol'] ?? '$',
+                'matched_rule_id' => $rankResult['rule_id'],
+                'snapshot' => [
+                    'rank' => $rankResult['rank'],
+                    'rank_key' => $rankResult['rank_key'],
+                    'priority' => $rankResult['priority'],
+                    'referral_requirement' => $rankResult['referral_requirement'],
+                    'team_requirement' => $rankResult['team_requirement'],
+                    'reward_amount' => $rankResult['reward'],
+                    'rule_id' => $rankResult['rule_id'],
+                    'user_referrals' => $rankResult['user_referrals'],
+                    'user_team' => $rankResult['user_team'],
+                ],
+            ];
+        }
+
+        // 2. Fallback to legacy referral-tier resolution if no rank rules exist
+        $verifiedCount = $this->getVerifiedDirectReferralCount($member);
         return $this->resolveForCount($verifiedCount, $member, $type);
     }
 
     /**
      * Resolve reward tier given a verified direct referral count against active Admin rules.
      */
-    public function resolveForCount(int $count, ?Member $member = null, string $type = AdRewardRule::TYPE_BUSINESS_AD): array
+    public function resolveForCount(int $count, ?Member $member = null, string $type = AdRewardRule::TYPE_CENTRAL): array
     {
+        // If member is provided and rank rules exist, use the full rank resolver
+        if ($member !== null && RewardRankRule::active()->exists()) {
+            return $this->resolveForMember($member, $type);
+        }
+
+        // If no member provided but rank rules exist, evaluate metrics with team = count as fallback
+        if (RewardRankRule::active()->exists()) {
+            $rankResult = $this->rankResolver->resolveForMetrics($count, $count);
+
+            if (!$rankResult['success'] || !$rankResult['eligible']) {
+                return array_merge($rankResult, [
+                    'direct_verified_referral_count' => $count,
+                    'reward_amount_usd' => 0.00,
+                    'reward_amount_exact' => '0.0000',
+                    'rule_type' => 'rank',
+                    'matched_rule_id' => null,
+                ]);
+            }
+
+            return [
+                'success' => true,
+                'status' => 'resolved',
+                'rule_type' => 'rank',
+                'eligible' => true,
+                'rank' => $rankResult['rank'],
+                'rank_key' => $rankResult['rank_key'],
+                'priority' => $rankResult['priority'],
+                'referral_requirement' => $rankResult['referral_requirement'],
+                'team_requirement' => $rankResult['team_requirement'],
+                'user_referrals' => $count,
+                'user_team' => $count,
+                'direct_verified_referral_count' => $count,
+                'reward' => $rankResult['reward'],
+                'reward_amount_usd' => $rankResult['reward'],
+                'reward_amount_exact' => $rankResult['reward_amount_exact'],
+                'currency' => $rankResult['currency'] ?? 'USD',
+                'currency_symbol' => $rankResult['currency_symbol'] ?? '$',
+                'matched_rule_id' => $rankResult['rule_id'],
+                'snapshot' => [
+                    'rank' => $rankResult['rank'],
+                    'rank_key' => $rankResult['rank_key'],
+                    'priority' => $rankResult['priority'],
+                    'referral_requirement' => $rankResult['referral_requirement'],
+                    'team_requirement' => $rankResult['team_requirement'],
+                    'reward_amount' => $rankResult['reward'],
+                    'rule_id' => $rankResult['rule_id'],
+                ],
+            ];
+        }
+
+        $targetType = $type;
+        if ($targetType === AdRewardRule::TYPE_CENTRAL) {
+            $hasCentral = AdRewardRule::ofType(AdRewardRule::TYPE_CENTRAL)->active()->exists();
+            if (!$hasCentral) {
+                $targetType = AdRewardRule::TYPE_BUSINESS_AD;
+            }
+        }
+
         if ($count < 0) {
             return [
                 'success' => false,
                 'status' => 'invalid_referral_count',
-                'rule_type' => $type,
+                'rule_type' => $targetType,
                 'message' => 'Direct verified referral count cannot be negative.',
                 'eligible' => false,
                 'direct_verified_referral_count' => $count,
@@ -54,14 +169,14 @@ class RewardRuleResolver
             ];
         }
 
-        $activeRules = AdRewardRule::getActiveRules($type);
+        $activeRules = AdRewardRule::getActiveRules($targetType);
 
         if ($activeRules->isEmpty()) {
             return [
                 'success' => false,
                 'status' => 'no_active_rules',
-                'rule_type' => $type,
-                'message' => "No active {$type} reward rules are configured in the system.",
+                'rule_type' => $targetType,
+                'message' => "No active {$targetType} reward rules are configured in the system.",
                 'eligible' => false,
                 'direct_verified_referral_count' => $count,
                 'reward_amount_usd' => 0.00,
@@ -81,7 +196,7 @@ class RewardRuleResolver
             return [
                 'success' => false,
                 'status' => 'ambiguous_overlapping_rules',
-                'rule_type' => $type,
+                'rule_type' => $targetType,
                 'message' => 'Configuration integrity error: multiple active reward rules overlap for this referral count.',
                 'eligible' => false,
                 'direct_verified_referral_count' => $count,
@@ -95,8 +210,8 @@ class RewardRuleResolver
             return [
                 'success' => false,
                 'status' => 'no_matching_rule',
-                'rule_type' => $type,
-                'message' => "No active {$type} reward rule matches direct verified referral count: {$count}.",
+                'rule_type' => $targetType,
+                'message' => "No active {$targetType} reward rule matches direct verified referral count: {$count}.",
                 'eligible' => false,
                 'direct_verified_referral_count' => $count,
                 'reward_amount_usd' => 0.00,
@@ -106,12 +221,11 @@ class RewardRuleResolver
         /** @var AdRewardRule $rule */
         $rule = $matchingRules->first();
 
-        // Check if the matched rule has unconfigured reward amount (e.g. 0-5 slab pending admin input)
         if ($rule->reward_amount === null || $rule->reward_amount === '' || (float) $rule->reward_amount <= 0.0) {
             return [
                 'success' => false,
                 'status' => 'reward_rule_not_configured',
-                'rule_type' => $type,
+                'rule_type' => $targetType,
                 'message' => "Reward rule for range {$rule->min_referrals}–" . ($rule->max_referrals ?? '+') . " requires admin configuration.",
                 'eligible' => false,
                 'matched_rule_id' => $rule->id,
@@ -121,41 +235,31 @@ class RewardRuleResolver
         }
 
         $rawAmount = (float) $rule->reward_amount;
-        // Enforce maximum permissible reward cap ($0.050 USD)
         $rewardAmount = min(AdRewardRule::MAX_PERMISSIBLE_REWARD_USD, max(0.00, $rawAmount));
         $exactRewardString = number_format($rewardAmount, 4, '.', '');
 
         return [
             'success' => true,
             'status' => 'resolved',
-            'rule_type' => $type,
+            'rule_type' => $targetType,
             'eligible' => true,
-            'member_id' => $member?->id,
-            'user_id' => $member?->user_id,
             'direct_verified_referral_count' => $count,
-            'matched_rule_id' => $rule->id,
-            'matched_range' => [
-                'min' => (int) $rule->min_referrals,
-                'max' => $rule->max_referrals !== null ? (int) $rule->max_referrals : null,
-                'label' => $rule->min_referrals . ($rule->max_referrals !== null ? '–' . $rule->max_referrals : '+'),
-                'is_unlimited' => $rule->max_referrals === null,
-            ],
             'reward_amount_usd' => $rewardAmount,
             'reward_amount_exact' => $exactRewardString,
             'currency' => 'USD',
             'currency_symbol' => '$',
-            // Snapshot payload ready for future financial attribution in later phases:
+            'matched_rule_id' => $rule->id,
+            'matched_range' => [
+                'min' => (int) $rule->min_referrals,
+                'max' => $rule->max_referrals !== null ? (int) $rule->max_referrals : null,
+                'is_unlimited' => $rule->max_referrals === null,
+            ],
             'snapshot' => [
-                'rule_type' => $type,
-                'ad_reward_rule_id' => $rule->id,
-                'rule_version' => $rule->updated_at?->timestamp ?? $rule->created_at?->timestamp ?? time(),
-                'direct_verified_referral_count' => $count,
+                'rule_id' => $rule->id,
                 'min_referrals' => (int) $rule->min_referrals,
                 'max_referrals' => $rule->max_referrals !== null ? (int) $rule->max_referrals : null,
-                'reward_amount_usd' => $rewardAmount,
-                'reward_amount_exact' => $exactRewardString,
-                'currency' => 'USD',
-                'resolved_at' => now()->toIso8601String(),
+                'reward_amount' => $rewardAmount,
+                'rule_type' => $targetType,
             ],
         ];
     }

@@ -19,15 +19,15 @@ class RewardRuleValidationService
      * @param string $type Scope: 'event' or 'business_ad'
      * @return array ['valid' => bool, 'errors' => string[], 'error_codes' => string[], 'details' => array]
      */
-    public function validateRuleDefinition(array $data, ?int $ignoreId = null, string $type = AdRewardRule::TYPE_EVENT): array
+    public function validateRuleDefinition(array $data, ?int $ignoreId = null, string $type = AdRewardRule::TYPE_CENTRAL): array
     {
         $errors = [];
         $errorCodes = [];
         $details = [];
 
         // 1. Rule Scope
-        if (!in_array($type, [AdRewardRule::TYPE_EVENT, AdRewardRule::TYPE_BUSINESS_AD], true)) {
-            $errors[] = "Invalid rule scope '{$type}'. Only 'event' and 'business_ad' are supported.";
+        if (!in_array($type, [AdRewardRule::TYPE_CENTRAL, AdRewardRule::TYPE_EVENT, AdRewardRule::TYPE_BUSINESS_AD], true)) {
+            $errors[] = "Invalid rule scope '{$type}'. Only 'central', 'event' and 'business_ad' are supported.";
             $errorCodes[] = 'invalid_rule_scope';
         }
 
@@ -144,11 +144,11 @@ class RewardRuleValidationService
      * @param string $type Scope: 'event' or 'business_ad'
      * @return array
      */
-    public function validateActiveSet(string $type = AdRewardRule::TYPE_EVENT): array
+    public function validateActiveSet(string $type = AdRewardRule::TYPE_CENTRAL): array
     {
         $errors = [];
         $errorCodes = [];
-        $rules = AdRewardRule::ofType($type)->active()->get();
+        $rules = AdRewardRule::getActiveRules($type);
         $activeCount = $rules->count();
 
         // 1. Non-empty check (fails closed, zero fallback)
@@ -368,9 +368,9 @@ class RewardRuleValidationService
      * @param int $sampleMax
      * @return array
      */
-    public function verifyDeterministicCoverage(string $type = AdRewardRule::TYPE_EVENT, int $sampleMax = 100): array
+    public function verifyDeterministicCoverage(string $type = AdRewardRule::TYPE_CENTRAL, int $sampleMax = 100): array
     {
-        $activeRules = AdRewardRule::ofType($type)->active()->get();
+        $activeRules = AdRewardRule::getActiveRules($type);
         $violations = [];
 
         if ($activeRules->isEmpty()) {
