@@ -423,7 +423,7 @@ export function DepositSettingsPage() {
             }`}>
               {parseFloat(serviceChargePercent) > 0 ? (
                 <div>
-                  <strong>⚡ Dynamic Service Charge Active (On Top):</strong> Service charge is added on top of the deposit amount. Example: If member deposits <strong>100.00 USD</strong> with <strong>{parseFloat(serviceChargePercent)}%</strong> fee, the total amount payable is <strong>{(100 * (1 + parseFloat(serviceChargePercent) / 100)).toFixed(2)} USDT</strong>. The member receives <strong>${( (100 * (1 + parseFloat(serviceChargePercent) / 100)) / (1 + parseFloat(serviceChargePercent) / 100) ).toFixed(2)} USD</strong> into their Fund Wallet (Formula: Received Amount / (100 + {parseFloat(serviceChargePercent)}%)).
+                  <strong>⚡ Dynamic Service Charge Active (On Top):</strong> Service charge is added on top of the deposit amount. Example: If member deposits <strong>100.00 USD</strong> with <strong>{parseFloat(serviceChargePercent)}%</strong> fee, the total amount payable is <strong>{(100 * (1 + parseFloat(serviceChargePercent) / 100)).toFixed(2)} USDT</strong>, and <strong>100.00 USD</strong> is credited into their Fund Wallet.
                 </div>
               ) : (
                 <div>

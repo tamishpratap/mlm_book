@@ -399,7 +399,7 @@ export function DepositsListPage() {
                   <th className="px-4 py-3.5">Deposit ID</th>
                   <th className="px-4 py-3.5">Member</th>
                   <th className="px-4 py-3.5">Business Page</th>
-                  <th className="px-4 py-3.5 text-right">Amount (USDT)</th>
+                  <th className="px-4 py-3.5">Financials (Gross / Fee / Net)</th>
                   <th className="px-4 py-3.5">Transaction Hash</th>
                   <th className="px-4 py-3.5 text-center">On-Chain Verification</th>
                   <th className="px-4 py-3.5 text-center">Submitted At</th>
@@ -408,21 +408,40 @@ export function DepositsListPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {deposits.map((dep) => {
-                  const usdtAmount = Number(dep.amount_usdt !== undefined ? dep.amount_usdt : (dep.submitted_amount || dep.expected_usd_amount || dep.amount_inr || 0));
                   const txHash = dep.transaction_hash || dep.transaction_reference || '';
                   const isVerified = dep.status === 'approved' || dep.verification_status === 'verified';
                   const explorerUrl = txHash ? `https://bscscan.com/tx/${txHash}` : null;
 
+                  // Financial calculations (Gross / Fee / Net) matching WithdrawalsListPage pattern
+                  const grossAmount = Number(
+                    dep.verified_amount > 0
+                      ? dep.verified_amount
+                      : (dep.submitted_amount || dep.amount_usdt || dep.amount_inr || dep.expected_usd_amount || 0)
+                  );
+                  const feePercent = Number(dep.fee_percent ?? 0);
+                  const feeAmount = Number(
+                    dep.fee_amount_inr !== undefined && dep.fee_amount_inr !== null
+                      ? dep.fee_amount_inr
+                      : (feePercent > 0 ? (grossAmount - (grossAmount / (1 + (feePercent / 100)))) : 0)
+                  );
+                  const netCredit = Number(
+                    dep.net_amount_inr !== undefined && dep.net_amount_inr !== null
+                      ? dep.net_amount_inr
+                      : (dep.expected_usd_amount !== undefined && dep.expected_usd_amount !== null
+                          ? dep.expected_usd_amount
+                          : (grossAmount - feeAmount))
+                  );
+
                   return (
-                    <tr key={dep.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3.5 font-mono text-xs font-bold text-slate-900">
+                    <tr key={dep.id} className="hover:bg-slate-50 transition-colors align-top">
+                      <td className="px-4 py-3.5 align-top font-mono text-xs font-bold text-slate-900">
                         {dep.deposit_id || `DEP-${dep.id}`}
                         <div className="text-[10px] text-slate-400 font-sans font-normal mt-0.5">
                           Network: {dep.network || 'BEP-20'}
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 align-top">
                         {dep.member ? (
                           <div>
                             <div className="text-xs font-semibold text-slate-800">
@@ -435,15 +454,35 @@ export function DepositsListPage() {
                         )}
                       </td>
 
-                      <td className="px-4 py-3.5 text-xs text-slate-700">
+                      <td className="px-4 py-3.5 align-top text-xs text-slate-700">
                         {dep.business_page?.page_name || 'N/A'}
                       </td>
 
-                      <td className="px-4 py-3.5 text-right font-bold text-slate-900">
-                        {usdtAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+                      {/* Financial Breakdown (Gross / Fee / Net) */}
+                      <td className="px-4 py-3.5 align-top space-y-1.5">
+                        <div>
+                          <span className="text-slate-400 text-[11px]">Net Credit:</span>
+                          <div className="text-base font-extrabold text-emerald-600">
+                            ${netCredit.toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="text-[11px] space-y-0.5 border-t border-slate-100 pt-1 text-slate-500 min-w-[155px]">
+                          <div className="flex justify-between gap-2">
+                            <span>Gross Requested:</span>
+                            <span className="font-semibold text-slate-800">
+                              ${grossAmount.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-2 text-rose-600">
+                            <span>Service Charge ({feePercent}%):</span>
+                            <span className="font-semibold">
+                              -${feeAmount.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
                       </td>
 
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 align-top">
                         <div className="flex items-center gap-1.5 font-mono text-xs text-slate-700">
                           <span className="max-w-[150px] truncate" title={txHash}>
                             {txHash || 'N/A'}
@@ -482,7 +521,7 @@ export function DepositsListPage() {
                         )}
                       </td>
 
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="px-4 py-3.5 align-top text-center">
                         <StatusBadge status={dep.status} verificationStatus={dep.verification_status} />
                         {dep.block_number && (
                           <div className="text-[10px] text-slate-400 font-mono mt-0.5">
@@ -491,11 +530,11 @@ export function DepositsListPage() {
                         )}
                       </td>
 
-                      <td className="px-4 py-3.5 text-center text-xs text-slate-500 font-mono">
+                      <td className="px-4 py-3.5 align-top text-center text-xs text-slate-500 font-mono">
                         {dep.submitted_at ? new Date(dep.submitted_at).toLocaleString() : 'N/A'}
                       </td>
 
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="px-4 py-3.5 align-top text-center">
                         {dep.status === 'pending' ? (
                           <div className="flex items-center justify-center gap-1.5 flex-wrap">
                             <button
@@ -580,51 +619,74 @@ export function DepositsListPage() {
                   {approveTarget.transaction_hash || approveTarget.transaction_reference}
                 </span>
               </div>
-              {(approveTarget.member?.p2p_wallet !== undefined || approveTarget.member?.ad_balance !== undefined) && (
+              {approveTarget.member?.p2p_wallet !== undefined && (
                 <div className="flex justify-between border-t border-slate-200 pt-1.5">
                   <span className="text-slate-500 font-semibold">Current Fund Wallet:</span>
                   <span className="font-bold text-slate-700">
-                    ${Number(approveTarget.member.p2p_wallet !== undefined ? approveTarget.member.p2p_wallet : approveTarget.member.ad_balance).toFixed(2)} USD
+                    ${Number(approveTarget.member.p2p_wallet || 0).toFixed(2)} USD
                   </span>
                 </div>
               )}
             </div>
 
             {/* Authoritative Financial Snapshot Calculation */}
-            <div className="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 space-y-2.5">
-              <div className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">
-                Authoritative Deposit Credit (100% Exact Credit to Fund Wallet)
-              </div>
+            {(() => {
+              const transferredUsdt = Number(approveTarget.verified_amount || approveTarget.submitted_amount || approveTarget.amount_inr || 0);
+              const feePercent = Number(approveTarget.fee_percent || 0);
+              const feeAmount = Number(approveTarget.fee_amount_inr || (feePercent > 0 ? (transferredUsdt - (transferredUsdt / (1 + feePercent / 100))) : 0));
+              const netUsdCredit = Number(approveTarget.net_amount_inr || approveTarget.expected_usd_amount || (feePercent > 0 ? (transferredUsdt - feeAmount) : (approveTarget.amount_usdt ?? transferredUsdt)));
 
-              <div className="text-xs space-y-1.5">
-                <div className="flex justify-between text-slate-700">
-                  <span>Deposit Amount:</span>
-                  <span className="font-bold">
-                    ${Number(approveTarget.amount_usdt !== undefined ? approveTarget.amount_usdt : (approveTarget.submitted_amount || approveTarget.expected_usd_amount || approveTarget.amount_inr || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
-                  </span>
-                </div>
-              </div>
-
-              {/* Exact Credited USD Highlight */}
-              <div className="mt-3 p-3 bg-white rounded-lg border border-emerald-300 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Authoritative USD Credit
-                  </span>
-                  <div className="text-2xl font-black text-emerald-600">
-                    +${Number(approveTarget.amount_usdt !== undefined ? approveTarget.amount_usdt : (approveTarget.submitted_amount || approveTarget.expected_usd_amount || approveTarget.amount_inr || 0)).toFixed(2)} USD
+              return (
+                <div className="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 space-y-2.5">
+                  <div className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">
+                    Authoritative Deposit Credit (Fund Wallet)
                   </div>
-                </div>
-                {(approveTarget.member?.p2p_wallet !== undefined || approveTarget.member?.ad_balance !== undefined) && (
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 uppercase">New Fund Wallet Balance</span>
-                    <div className="text-base font-bold text-indigo-600">
-                      ${(Number(approveTarget.member.p2p_wallet !== undefined ? approveTarget.member.p2p_wallet : approveTarget.member.ad_balance) + Number(approveTarget.amount_usdt !== undefined ? approveTarget.amount_usdt : (approveTarget.submitted_amount || approveTarget.expected_usd_amount || approveTarget.amount_inr || 0))).toFixed(2)} USD
+
+                  <div className="text-xs space-y-1.5">
+                    <div className="flex justify-between text-slate-700">
+                      <span>Transferred Amount:</span>
+                      <span className="font-bold">
+                        ${transferredUsdt.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+                      </span>
+                    </div>
+                    {feePercent > 0 && (
+                      <div className="flex justify-between text-amber-700">
+                        <span>Service Charge ({feePercent}% on top):</span>
+                        <span className="font-bold">
+                          -${feeAmount.toFixed(2)} USDT
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-emerald-800 font-semibold border-t border-emerald-200 pt-1">
+                      <span>Net Credit to Fund Wallet:</span>
+                      <span className="font-bold">
+                        +${netUsdCredit.toFixed(2)} USD
+                      </span>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
+
+                  {/* Exact Credited USD Highlight */}
+                  <div className="mt-3 p-3 bg-white rounded-lg border border-emerald-300 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Authoritative USD Credit
+                      </span>
+                      <div className="text-2xl font-black text-emerald-600">
+                        +${netUsdCredit.toFixed(2)} USD
+                      </div>
+                    </div>
+                    {approveTarget.member?.p2p_wallet !== undefined && (
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400 uppercase">New Fund Wallet Balance</span>
+                        <div className="text-base font-bold text-indigo-600">
+                          ${(Number(approveTarget.member.p2p_wallet || 0) + netUsdCredit).toFixed(2)} USD
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Optional Admin Notes */}
             <div>

@@ -54,11 +54,13 @@ class AdDepositSettingsController extends Controller
     public function updateSettings(Request $request): JsonResponse
     {
         $request->validate([
-            'deposit_crypto_wallet_address' => ['nullable', 'string', 'max:255'],
+            'deposit_crypto_wallet_address' => ['nullable', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
             'deposit_instructions' => ['nullable', 'string', 'max:5000'],
             'deposit_qr_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:5120'],
             'deposit_fee_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'service_charge_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ], [
+            'deposit_crypto_wallet_address.regex' => 'Destination crypto wallet address must be a valid 42-character BSC/EVM address starting with 0x.',
         ]);
 
         if ($request->hasFile('deposit_qr_image')) {
@@ -108,7 +110,7 @@ class AdDepositSettingsController extends Controller
      */
     public function getDeposits(Request $request): JsonResponse
     {
-        $query = AdDeposit::with(['member:id,name,user_id,email,phone,profile_photo,p2p_wallet,ad_balance', 'businessPage:id,page_name,slug,logo', 'verifiedBy:id,name,email']);
+        $query = AdDeposit::with(['member:id,name,user_id,email,phone,profile_photo,p2p_wallet', 'businessPage:id,page_name,slug,logo', 'verifiedBy:id,name,email']);
 
         // Filter by status
         if ($request->filled('status') && in_array($request->status, ['pending', 'approved', 'rejected'])) {
@@ -448,17 +450,27 @@ class AdDepositSettingsController extends Controller
             $lockedDeposit->verified_by = $admin ? $admin->id : null;
             $lockedDeposit->save();
 
+            $feePercent = (float) ($lockedDeposit->fee_percent ?? Setting::get('deposit_fee_percent', 0.00));
+            $netAmount = $feePercent > 0.00 ? round($verifiedAmount / (1 + ($feePercent / 100)), 2) : $verifiedAmount;
+            $feeAmount = round($verifiedAmount - $netAmount, 2);
+
+            $lockedDeposit->fee_percent = $feePercent;
+            $lockedDeposit->fee_amount_inr = $feeAmount;
+            $lockedDeposit->net_amount_inr = $netAmount;
+            $lockedDeposit->expected_usd_amount = $netAmount;
+            $lockedDeposit->save();
+
             if (!$previouslyApproved && $member) {
-                $member->p2p_wallet = round((float) ($member->p2p_wallet ?? 0.00) + $verifiedAmount, 2);
+                $member->p2p_wallet = round((float) ($member->p2p_wallet ?? 0.00) + $netAmount, 2);
                 $member->save();
             }
 
             return response()->json([
                 'success' => true,
                 'verified' => true,
-                'message' => "Deposit #{$lockedDeposit->deposit_id} successfully verified on-chain! \${$verifiedAmount} USD credited to {$member->name}'s Fund Wallet.",
+                'message' => "Deposit #{$lockedDeposit->deposit_id} successfully verified on-chain! \${$netAmount} USD credited to {$member->name}'s Fund Wallet.",
                 'deposit' => $lockedDeposit->fresh(['member:id,name,user_id,email,p2p_wallet', 'businessPage:id,page_name,slug', 'verifiedBy:id,name,email']),
-                'credited_amount' => $verifiedAmount,
+                'credited_amount' => $netAmount,
             ]);
         });
     }
