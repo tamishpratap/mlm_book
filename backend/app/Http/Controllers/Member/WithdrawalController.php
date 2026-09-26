@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\Member;
+use App\Models\Setting;
 use App\Models\WithdrawalRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class WithdrawalController extends Controller
@@ -206,4 +208,116 @@ class WithdrawalController extends Controller
             ],
         ], 201);
     }
+
+    /**
+     * Submit a full Fund Wallet (p2p_wallet) withdrawal request with zero service charge deduction.
+     * All conditions:
+     * - Validates authenticated member
+     * - Wallet address must not be null/empty
+     * - Balance must be positive (> 0) and not negative
+     * - Balance must meet minimum withdrawal condition
+     * - 0% Service charge / No deductions
+     * - Atomically debits full balance from p2p_wallet
+     * - Creates pending WithdrawalRequest record
+     */
+    public function storeFundWallet(Request $request): JsonResponse
+    {
+        /** @var Member|null $member */
+        $member = $request->user('member') ?? $request->user();
+
+        if (!$member) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        return DB::transaction(function () use ($member, $request) {
+            /** @var Member|null $lockedMember */
+            $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
+
+            if (!$lockedMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Member account not found.',
+                ], 404);
+            }
+
+            // 1. Condition: Wallet address null nahi hona chahiye
+            $walletAddress = trim((string) ($lockedMember->wallet_address ?? ''));
+            if (empty($walletAddress)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please set and verify your BEP-20 payout wallet address in your profile before requesting a withdrawal.',
+                ], 422);
+            }
+
+            // 2. Condition: Negative amount & zero amount check
+            $availableFund = round((float) ($lockedMember->p2p_wallet ?? 0.00), 2);
+
+            if ($availableFund <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient Fund Wallet balance. Balance must be greater than $0.00 to withdraw.',
+                ], 422);
+            }
+
+            // 3. Condition: Minimum withdrawal condition
+            $minWithdrawal = (float) Setting::get('minimum_withdrawal_amount', self::MINIMUM_WITHDRAWAL_AMOUNT);
+            if ($availableFund < $minWithdrawal) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Minimum withdrawal amount is $' . number_format($minWithdrawal, 2) . '. Your Fund Wallet balance is $' . number_format($availableFund, 2) . '.',
+                ], 422);
+            }
+
+            // 4. Zero Service Charge / No deduction
+            $grossAmount = $availableFund;
+            $serviceCharge = 0.00;
+            $netAmount = $grossAmount; // 100% net amount, no deduction
+
+            // Generate unique human-readable Request ID: e.g. WD20260926-XXXXXX
+            $requestId = 'WD' . date('Ymd') . '-' . strtoupper(Str::random(6));
+
+            // Atomically clear entire Fund Wallet balance
+            $lockedMember->p2p_wallet = 0.00;
+            $lockedMember->save();
+
+            // Create standard WithdrawalRequest record
+            $withdrawal = WithdrawalRequest::create([
+                'member_id' => $lockedMember->id,
+                'memberid' => $lockedMember->user_id ?? (string) $lockedMember->id,
+                'name' => $lockedMember->name,
+                'request_id' => $requestId,
+                'request_date' => now(),
+                'payment_date' => null,
+                'txnid' => null,
+                'wallet_address' => $walletAddress,
+                'gross_amount' => $grossAmount,
+                'service_charge' => $serviceCharge,
+                'net_amount' => $netAmount,
+                'remarks' => 'Fund Wallet (p2p_wallet) Full Withdrawal - 0% Fee',
+                'type' => WithdrawalRequest::TYPE_USER,
+                'status' => WithdrawalRequest::STATUS_PENDING,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Fund Wallet withdrawal request of $' . number_format($grossAmount, 2) . ' submitted successfully! Your request is pending admin approval.',
+                'withdrawal' => $withdrawal,
+                'details' => [
+                    'request_id' => $withdrawal->request_id,
+                    'gross_amount' => $withdrawal->gross_amount,
+                    'service_charge' => 0.00,
+                    'service_charge_percent' => '0.00%',
+                    'net_amount' => $withdrawal->net_amount,
+                    'wallet_address' => $withdrawal->wallet_address,
+                    'new_fund_wallet' => 0.00,
+                    'status' => $withdrawal->status,
+                    'request_date' => $withdrawal->request_date->toIso8601String(),
+                ],
+            ], 201);
+        });
+    }
 }
+

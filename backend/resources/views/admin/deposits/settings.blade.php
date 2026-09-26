@@ -62,7 +62,7 @@
                                 <span class="input-group-text fw-bold">%</span>
                             </div>
                             <div class="form-text small">
-                                Percentage added on top as service charge when members make USDT deposits. Total Payable = Deposit + Fee%. Fund Wallet Credit = Received Amount / (100 + Service Charge %). Set to 0 for Zero Fee mode (100% credited).
+                                Percentage added on top as service charge when members make USDT deposits. Set to 0 for Zero Fee mode (100% credited).
                             </div>
                         </div>
 

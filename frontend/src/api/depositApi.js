@@ -47,6 +47,14 @@ export const depositApi = {
     const response = await apiClient.get('/deposit/history', { params });
     return response.data;
   },
+
+  /**
+   * Request full withdrawal of Fund Wallet (p2p_wallet) balance to member payout wallet address with 0% fee
+   */
+  async withdrawFundWallet() {
+    const response = await apiClient.post('/deposit/withdraw-fund');
+    return response.data;
+  },
 };
 
 export default depositApi;

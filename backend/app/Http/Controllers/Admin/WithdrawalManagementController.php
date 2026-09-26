@@ -320,6 +320,7 @@ class WithdrawalManagementController extends Controller
             $refundedAmount = (float) $withdrawal->gross_amount;
             $previousBalance = 0.00;
             $newBalance = 0.00;
+            $isFundWallet = str_contains(strtolower((string) $withdrawal->remarks), 'fund wallet') || str_contains(strtolower((string) $withdrawal->remarks), 'p2p_wallet');
 
             if ($member) {
                 $previousBalance = (float) ($member->wallet ?? 0.00);
@@ -333,9 +334,11 @@ class WithdrawalManagementController extends Controller
             $withdrawal->admin_notes = trim($notes);
             $withdrawal->save();
 
+            $targetWalletName = $isFundWallet ? "member's Fund Wallet (p2p_wallet)" : "member's wallet";
+
             return response()->json([
                 'success' => true,
-                'message' => "Withdrawal request #{$withdrawal->request_id} has been rejected and \${$refundedAmount} was refunded to the member's wallet.",
+                'message' => "Withdrawal request #{$withdrawal->request_id} has been rejected and \${$refundedAmount} was refunded to the {$targetWalletName}.",
                 'refunded_amount' => $refundedAmount,
                 'previous_wallet_balance' => $previousBalance,
                 'new_wallet_balance' => $newBalance,

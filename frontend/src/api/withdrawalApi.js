@@ -20,6 +20,14 @@ export const withdrawalApi = {
     const response = await apiClient.post('/withdrawals', data);
     return response.data;
   },
+
+  /**
+   * Submit full Fund Wallet (p2p_wallet) withdrawal request with zero service fee
+   */
+  async submitFundWalletWithdrawal() {
+    const response = await apiClient.post('/withdrawals/fund-wallet');
+    return response.data;
+  },
 };
 
 export default withdrawalApi;

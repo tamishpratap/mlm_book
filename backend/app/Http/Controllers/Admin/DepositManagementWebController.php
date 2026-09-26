@@ -140,6 +140,8 @@ class DepositManagementWebController extends Controller
             $recipientWallet = '0x55d398326f99059fF775485246999027B3197955';
         }
 
+        $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
+
         // Run on-chain verification
         $verification = $verifier->verifyTransaction(
             $txHash,
@@ -149,6 +151,21 @@ class DepositManagementWebController extends Controller
             true, // require exact amount match
             $deposit->wallet_address
         );
+
+        if (!$verification['verified'] && $feePercent > 0.00) {
+            $altAmount = round($expectedAmount * (1 + ($feePercent / 100)), 2);
+            $altVerification = $verifier->verifyTransaction(
+                $txHash,
+                $altAmount,
+                $recipientWallet,
+                10.00,
+                true,
+                $deposit->wallet_address
+            );
+            if ($altVerification['verified']) {
+                $verification = $altVerification;
+            }
+        }
 
         // Update deposit verification status
         $newVerificationStatus = $verification['verified'] ? 'verified' : 'failed';
