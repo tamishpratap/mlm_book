@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Route;
 
 class MemberResetPasswordMail extends Mailable
 {
@@ -27,10 +28,8 @@ class MemberResetPasswordMail extends Mailable
 
     public function content(): Content
     {
-        $resetUrl = route('member.password.reset', [
-            'token' => $this->token,
-            'email' => $this->member->email,
-        ]);
+        $frontendUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url', 'https://mlmbookai.com')), '/');
+        $resetUrl = $frontendUrl . '/member/reset-password/' . $this->token . '?email=' . urlencode($this->member->email);
 
         return new Content(
             view: 'emails.member-reset-password',

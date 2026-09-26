@@ -81,6 +81,22 @@ Route::get('/sounds/{file}', function ($file) {
     abort(404);
 })->where('file', '[a-zA-Z0-9_\-\.]+');
 
+// Member Password Reset & Auth Navigation Routes
+Route::prefix('member')->name('member.')->group(function () {
+    Route::get('/forgot-password', [MemberPasswordResetController::class, 'showForgotPassword'])
+        ->name('forgot-password');
+    Route::post('/forgot-password', [MemberPasswordResetController::class, 'sendResetLink'])
+        ->name('forgot-password.send');
+    Route::get('/reset-password/{token}', [MemberPasswordResetController::class, 'showResetPassword'])
+        ->name('password.reset');
+    Route::post('/reset-password', [MemberPasswordResetController::class, 'resetPassword'])
+        ->name('password.update');
+    Route::get('/login', function () {
+        $frontendUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url', 'https://mlmbookai.com')), '/');
+        return redirect()->away($frontendUrl . '/member/login');
+    })->name('login');
+});
+
 // Route::prefix('member')
 //     ->name('member.')
 //     ->group(function () {
