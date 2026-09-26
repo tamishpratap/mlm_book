@@ -780,4 +780,12 @@ class Member extends Authenticatable
             return false;
         });
     }
+
+    /**
+     * Virtual accessor for legacy references to ad_balance. Maps directly to p2p_wallet (Fund Wallet).
+     */
+    public function getAdBalanceAttribute(): float
+    {
+        return (float) ($this->attributes['p2p_wallet'] ?? 0.00);
+    }
 }

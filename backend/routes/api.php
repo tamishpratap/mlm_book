@@ -785,6 +785,7 @@ Route::prefix('member')->name('api.member.')->group(function () {
             Route::post('/manual-request', [DepositVerificationController::class, 'submitManualRequest']);
             Route::post('/dapp', [DepositVerificationController::class, 'submitDappDeposit']);
             Route::get('/history', [DepositVerificationController::class, 'history']);
+            Route::post('/withdraw-fund', [WithdrawalController::class, 'storeFundWallet']);
         });
 
         // Reward Wallet & Dynamic Ad Reward Eligibility
@@ -810,6 +811,7 @@ Route::prefix('member')->name('api.member.')->group(function () {
         Route::prefix('withdrawals')->group(function () {
             Route::get('/', [WithdrawalController::class, 'index']);
             Route::post('/', [WithdrawalController::class, 'store']);
+            Route::post('/fund-wallet', [WithdrawalController::class, 'storeFundWallet']);
         });
     });
 });

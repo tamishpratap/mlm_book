@@ -65,6 +65,8 @@ class DepositVerificationController extends Controller
                 'member_fund_wallet' => $stats['fund_wallet'],
                 'member_p2p_wallet' => $stats['p2p_wallet'],
                 'member_ad_balance' => (float) ($stats['fund_wallet'] ?? 0.00),
+                'member_wallet_address' => $member ? ($member->wallet_address ?? '') : '',
+                'min_withdrawal_amount' => (float) Setting::get('minimum_withdrawal_amount', 5.00),
                 'todays_deposit' => $stats['todays_deposit'],
                 'total_deposit' => $stats['total_deposit'],
                 'pending_deposit' => $stats['pending_deposit'],
@@ -148,6 +150,8 @@ class DepositVerificationController extends Controller
             $recipientWallet = '0x55d398326f99059fF775485246999027B3197955'; // Fallback for testing
         }
 
+        $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
+
         $verification = $verifier->verifyTransaction(
             $txHash,
             $amount,
@@ -156,6 +160,32 @@ class DepositVerificationController extends Controller
             true, // require exact amount match
             $walletAddress
         );
+
+        // If not matched directly and feePercent > 0, check alternative matching
+        // (e.g. user entered desired base amount, on-chain was base * (1 + fee/100))
+        if (!$verification['verified'] && $feePercent > 0.00) {
+            $possibleTotals = [
+                round($amount * (1 + ($feePercent / 100)), 2),
+                round($amount / (1 + ($feePercent / 100)), 2),
+            ];
+
+            foreach ($possibleTotals as $altAmount) {
+                if ($altAmount >= 10.00 && abs($altAmount - $amount) > 0.01) {
+                    $altVerification = $verifier->verifyTransaction(
+                        $txHash,
+                        $altAmount,
+                        $recipientWallet,
+                        10.00,
+                        true,
+                        $walletAddress
+                    );
+                    if ($altVerification['verified']) {
+                        $verification = $altVerification;
+                        break;
+                    }
+                }
+            }
+        }
 
         if (!$verification['verified']) {
             return response()->json([
@@ -170,13 +200,32 @@ class DepositVerificationController extends Controller
         $network = Setting::get('bsc_network', config('blockchain.bsc.network', 'mainnet'));
         $explorerUrl = config("blockchain.bsc.explorer_tx_url.{$network}", 'https://bscscan.com/tx/') . $txHash;
 
+        $verifiedAmount = (float) $verification['transferred_amount'];
+
+        // Internal calculation formula: Net Amount = Received Amount / (1 + service_charge / 100)
+        // Equivalent to: (Received Amount / (100 + service charge)) * 100
+        if ($feePercent > 0.00) {
+            $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 2);
+            $feeAmount = round($verifiedAmount - $netAmount, 2);
+        } else {
+            $netAmount = $verifiedAmount;
+            $feeAmount = 0.00;
+        }
+
         return response()->json([
             'success' => true,
             'verified' => true,
             'status' => 'verified',
             'message' => 'Transaction Verified Successfully. You can now submit your deposit request to the admin.',
             'data' => [
-                'amount' => (float) $verification['transferred_amount'],
+                'amount' => $verifiedAmount,
+                'transferred_amount' => $verifiedAmount,
+                'base_amount' => $netAmount,
+                'net_amount' => $netAmount,
+                'net_credit' => $netAmount,
+                'fee_amount' => $feeAmount,
+                'fee_percent' => $feePercent,
+                'service_charge_percent' => $feePercent,
                 'transaction_hash' => $txHash,
                 'wallet_address' => $verification['from_address'],
                 'recipient_address' => $verification['to_address'],
@@ -206,6 +255,10 @@ class DepositVerificationController extends Controller
             'amount' => ['required', 'numeric', 'min:10', 'max:10000000'],
             'transaction_hash' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{64}$/'],
             'wallet_address' => ['nullable', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+        ], [
+            'amount.min' => 'Minimum deposit amount is $10 USD equivalent.',
+            'transaction_hash.regex' => 'Invalid transaction hash format. Must be a 66-character hexadecimal hash starting with 0x.',
+            'wallet_address.regex' => 'Invalid wallet address format. Must be a valid 42-character BSC (BEP-20) address starting with 0x.',
         ]);
 
         $amount = round((float) $request->input('amount'), 2);
@@ -217,6 +270,8 @@ class DepositVerificationController extends Controller
             $recipientWallet = '0x55d398326f99059fF775485246999027B3197955';
         }
 
+        $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
+
         // Re-verify on-chain (zero-trust backend rule)
         $verification = $verifier->verifyTransaction(
             $txHash,
@@ -226,6 +281,30 @@ class DepositVerificationController extends Controller
             true,
             $walletAddress
         );
+
+        if (!$verification['verified'] && $feePercent > 0.00) {
+            $possibleTotals = [
+                round($amount * (1 + ($feePercent / 100)), 2),
+                round($amount / (1 + ($feePercent / 100)), 2),
+            ];
+
+            foreach ($possibleTotals as $altAmount) {
+                if ($altAmount >= 10.00 && abs($altAmount - $amount) > 0.01) {
+                    $altVerification = $verifier->verifyTransaction(
+                        $txHash,
+                        $altAmount,
+                        $recipientWallet,
+                        10.00,
+                        true,
+                        $walletAddress
+                    );
+                    if ($altVerification['verified']) {
+                        $verification = $altVerification;
+                        break;
+                    }
+                }
+            }
+        }
 
         if (!$verification['verified']) {
             return response()->json([
@@ -384,10 +463,64 @@ class DepositVerificationController extends Controller
         );
 
         if (!$verification['verified']) {
+            $rejectionReason = $verification['message'] ?? 'Blockchain on-chain verification failed.';
+
+            // Record rejected attempt in import_funds & ad_deposits for admin audit log
+            try {
+                ImportFund::create([
+                    'memberid' => substr($member->user_id, 0, 20),
+                    'user_id' => $member->user_id,
+                    'member_id' => $member->id,
+                    'txnid' => substr($txHash, 0, 100),
+                    'transaction_hash' => $txHash,
+                    'amount' => $amount,
+                    'type' => 'Add',
+                    'wallet_type' => 'USDT',
+                    'wallet_address' => $walletAddress,
+                    'network' => 'BEP-20',
+                    'token' => 'USDT',
+                    'added_by' => 'User',
+                    'status' => ImportFund::LEGACY_REJECTED,
+                    'verification_status' => 'failed',
+                    'deposit_status' => ImportFund::STATUS_REJECTED,
+                    'verification_payload' => $verification,
+                    'rejection_reason' => $rejectionReason,
+                    'admin_notes' => "Web3 DApp Instant Deposit rejected on-chain: {$rejectionReason}",
+                    'mode' => 'Online',
+                ]);
+
+                AdDeposit::create([
+                    'member_id' => $member->id,
+                    'amount_inr' => $amount,
+                    'submitted_amount' => $amount,
+                    'verified_amount' => 0.00,
+                    'currency_in' => 'USDT',
+                    'currency_out' => 'USDT',
+                    'network' => 'BEP-20',
+                    'token' => 'USDT',
+                    'wallet_address' => $recipientWallet,
+                    'sender_address' => $walletAddress,
+                    'exchange_rate' => 1.00,
+                    'expected_usd_amount' => $amount,
+                    'transaction_reference' => $txHash,
+                    'transaction_hash' => $txHash,
+                    'status' => AdDeposit::STATUS_REJECTED,
+                    'verification_status' => 'failed',
+                    'verification_source' => $verification['verification_source'] ?? 'bsc_rpc',
+                    'verification_error' => $rejectionReason,
+                    'verification_payload' => $verification,
+                    'rejection_reason' => $rejectionReason,
+                    'submitted_at' => now(),
+                    'admin_notes' => "Web3 DApp Instant Deposit rejected on-chain: {$rejectionReason}",
+                ]);
+            } catch (\Throwable $e) {
+                // Ignore duplicate error on rejected attempt logging
+            }
+
             return response()->json([
                 'success' => false,
-                'status' => $verification['status'] ?? 'verification_failed',
-                'message' => $verification['message'] ?? 'Blockchain verification failed.',
+                'status' => 'rejected',
+                'message' => $rejectionReason,
             ], 422);
         }
 
@@ -411,7 +544,7 @@ class DepositVerificationController extends Controller
             $verifiedAmount = (float) $verification['transferred_amount'];
 
             // Calculate dynamic Service Charge / Platform Fee on top:
-            // Formula requested: Net Amount = Received Amount / (1 + feePercent / 100)
+            // Formula: Net Amount = Received Amount / (1 + feePercent / 100)
             $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
             if ($feePercent > 0.00) {
                 $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 2);
@@ -421,7 +554,14 @@ class DepositVerificationController extends Controller
                 $feeAmount = 0.00;
             }
 
-            // 1. Record in import_funds table
+            // 1. Atomically Credit Member's Fund Wallet (p2p_wallet) immediately!
+            $lockedMember = \App\Models\Member::where('id', $member->id)->lockForUpdate()->first();
+            $previousP2pBalance = (float) ($lockedMember->p2p_wallet ?? 0.00);
+            $newP2pBalance = round($previousP2pBalance + $netAmount, 2);
+            $lockedMember->p2p_wallet = $newP2pBalance;
+            $lockedMember->save();
+
+            // 2. Record in import_funds table as APPROVED
             $importFund = ImportFund::create([
                 'memberid' => substr($member->user_id, 0, 20),
                 'user_id' => $member->user_id,
@@ -436,17 +576,17 @@ class DepositVerificationController extends Controller
                 'token' => $verification['token'] ?? 'USDT',
                 'contract_address' => $verification['contract_address'] ?? null,
                 'added_by' => 'User',
-                'status' => ImportFund::LEGACY_PENDING,
+                'status' => ImportFund::LEGACY_APPROVED, // 'Approved'
                 'verification_status' => 'verified',
-                'deposit_status' => ImportFund::STATUS_VERIFIED,
+                'deposit_status' => ImportFund::STATUS_APPROVED, // 'approved'
                 'verification_payload' => $verification,
-                'admin_notes' => "DApp deposit: {$verifiedAmount} USDT from {$fromAddress}. Service Charge ({$feePercent}%): {$feeAmount} USDT. Net: {$netAmount} USD.",
+                'admin_notes' => "Web3 DApp Instant Deposit: Auto-approved on-chain. {$verifiedAmount} USDT from {$fromAddress}. Net: \${$netAmount} USD credited directly to Fund Wallet.",
                 'mode' => 'Online',
                 'verified_at' => now(),
             ]);
 
-            // 2. Also register in ad_deposits for unified admin review & tracking
-            AdDeposit::create([
+            // 3. Register in ad_deposits table as APPROVED (No pending approval needed by admin)
+            $adDeposit = AdDeposit::create([
                 'member_id' => $member->id,
                 'amount_inr' => $verifiedAmount,
                 'fee_percent' => $feePercent,
@@ -465,12 +605,13 @@ class DepositVerificationController extends Controller
                 'expected_usd_amount' => $netAmount,
                 'transaction_reference' => $txHash,
                 'transaction_hash' => $txHash,
-                'status' => AdDeposit::STATUS_PENDING,
+                'status' => AdDeposit::STATUS_APPROVED, // 'approved'
                 'verification_status' => 'verified',
                 'verification_source' => $verification['verification_source'] ?? 'bsc_rpc',
                 'verification_payload' => $verification,
                 'submitted_at' => now(),
-                'admin_notes' => "DApp deposit verified on-chain: {$verifiedAmount} USDT from {$fromAddress}. Fee: {$feeAmount} ({$feePercent}%). Net: {$netAmount} USD. Awaiting Admin Approval.",
+                'verified_at' => now(),
+                'admin_notes' => "Web3 DApp Instant Deposit: Auto-approved on-chain. Received: {$verifiedAmount} USDT. Net credited: \${$netAmount} USD to Member Fund Wallet.",
             ]);
 
             $network = Setting::get('bsc_network', config('blockchain.bsc.network', 'mainnet'));
@@ -478,8 +619,8 @@ class DepositVerificationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'status' => 'verified',
-                'message' => "DApp deposit of \${$verifiedAmount} USDT successfully completed and recorded! (Net Credit: \${$netAmount} USD). Awaiting Admin Approval.",
+                'status' => 'approved',
+                'message' => "Web3 DApp deposit of \${$verifiedAmount} USDT successfully completed and auto-approved! \${$netAmount} USD has been credited directly to your Fund Wallet.",
                 'deposit' => [
                     'id' => $importFund->id,
                     'orderid' => $importFund->orderid,
@@ -491,11 +632,13 @@ class DepositVerificationController extends Controller
                     'wallet_address' => $fromAddress,
                     'network' => 'BEP-20',
                     'token' => 'USDT',
-                    'deposit_status' => ImportFund::STATUS_VERIFIED,
-                    'status_label' => 'Verified — Awaiting Admin Approval',
+                    'deposit_status' => ImportFund::STATUS_APPROVED,
+                    'status_label' => 'Approved & Credited',
                     'explorer_url' => $explorerUrl,
                     'created_at' => $importFund->created_at->toISOString(),
                 ],
+                'new_fund_wallet' => $newP2pBalance,
+                'previous_fund_wallet' => $previousP2pBalance,
             ], 201);
         });
     }
