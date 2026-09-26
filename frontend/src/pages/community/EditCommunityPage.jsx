@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, Trash2 } from 'lucide-react';
 import communityApi from '../../api/communityApi';
 import DeleteConfirmModal from '../../components/posts/modals/DeleteConfirmModal';
+import { ImageAdjustmentModal } from '../../components/posts/modals/ImageAdjustmentModal';
+import { getCoverUrl, getAvatarUrl } from '../../utils/assetHelper';
 
 
 export function EditCommunityPage() {
@@ -20,13 +22,34 @@ export function EditCommunityPage() {
   const [existingCover, setExistingCover] = useState(null);
   const [existingLogo, setExistingLogo] = useState(null);
   const [newCover, setNewCover] = useState(null);
+  const [newCoverPreview, setNewCoverPreview] = useState(null);
+  const [pendingCoverFile, setPendingCoverFile] = useState(null);
+  const [isCoverAdjustModalOpen, setIsCoverAdjustModalOpen] = useState(false);
+
   const [newLogo, setNewLogo] = useState(null);
+  const [newLogoPreview, setNewLogoPreview] = useState(null);
+  const [pendingLogoFile, setPendingLogoFile] = useState(null);
+  const [isLogoAdjustModalOpen, setIsLogoAdjustModalOpen] = useState(false);
+
+  const coverInputRef = useRef(null);
+  const logoInputRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (newCoverPreview && newCoverPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(newCoverPreview);
+      }
+      if (newLogoPreview && newLogoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(newLogoPreview);
+      }
+    };
+  }, [newCoverPreview, newLogoPreview]);
 
 
 
@@ -106,6 +129,82 @@ export function EditCommunityPage() {
       // Handle error
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleCoverSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Cover photo must not exceed 5 MB.');
+        if (coverInputRef.current) coverInputRef.current.value = '';
+        return;
+      }
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setError('Cover photo must be a JPG, PNG, or WEBP image.');
+        if (coverInputRef.current) coverInputRef.current.value = '';
+        return;
+      }
+      setError(null);
+      setPendingCoverFile(file);
+      setIsCoverAdjustModalOpen(true);
+    }
+  };
+
+  const handleApplyCoverAdjustment = ({ file: adjustedFile, previewUrl }) => {
+    if (newCoverPreview && newCoverPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(newCoverPreview);
+    }
+    setNewCover(adjustedFile);
+    setNewCoverPreview(previewUrl);
+    setIsCoverAdjustModalOpen(false);
+    setPendingCoverFile(null);
+  };
+
+  const handleCancelCoverAdjustment = () => {
+    setIsCoverAdjustModalOpen(false);
+    setPendingCoverFile(null);
+    if (!newCover && coverInputRef.current) {
+      coverInputRef.current.value = '';
+    }
+  };
+
+  const handleLogoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setError('Community logo must not exceed 2 MB.');
+        if (logoInputRef.current) logoInputRef.current.value = '';
+        return;
+      }
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setError('Community logo must be a JPG, PNG, or WEBP image.');
+        if (logoInputRef.current) logoInputRef.current.value = '';
+        return;
+      }
+      setError(null);
+      setPendingLogoFile(file);
+      setIsLogoAdjustModalOpen(true);
+    }
+  };
+
+  const handleApplyLogoAdjustment = ({ file: adjustedFile, previewUrl }) => {
+    if (newLogoPreview && newLogoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(newLogoPreview);
+    }
+    setNewLogo(adjustedFile);
+    setNewLogoPreview(previewUrl);
+    setIsLogoAdjustModalOpen(false);
+    setPendingLogoFile(null);
+  };
+
+  const handleCancelLogoAdjustment = () => {
+    setIsLogoAdjustModalOpen(false);
+    setPendingLogoFile(null);
+    if (!newLogo && logoInputRef.current) {
+      logoInputRef.current.value = '';
     }
   };
 
@@ -282,13 +381,24 @@ export function EditCommunityPage() {
                 >
                   <Upload size={16} />
                   <span style={{ fontSize: '13px' }}>{newCover ? newCover.name : 'Choose New Cover'}</span>
-                  <input id="edit-cover-input" type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => setNewCover(e.target.files?.[0] || null)} style={{ display: 'none' }} />
+                  <input
+                    ref={coverInputRef}
+                    id="edit-cover-input"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    onChange={handleCoverSelect}
+                    style={{ display: 'none' }}
+                  />
                 </label>
-                {existingCover && !newCover && (
+                {newCoverPreview ? (
                   <div style={{ marginTop: '8px', height: '60px', borderRadius: '8px', overflow: 'hidden' }}>
-                    <img src={`/${existingCover}`} alt="Current Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={newCoverPreview} alt="New Cover Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
-                )}
+                ) : existingCover ? (
+                  <div style={{ marginTop: '8px', height: '60px', borderRadius: '8px', overflow: 'hidden' }}>
+                    <img src={getCoverUrl(existingCover)} alt="Current Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -314,13 +424,24 @@ export function EditCommunityPage() {
                 >
                   <Upload size={16} />
                   <span style={{ fontSize: '13px' }}>{newLogo ? newLogo.name : 'Choose New Logo'}</span>
-                  <input id="edit-logo-input" type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => setNewLogo(e.target.files?.[0] || null)} style={{ display: 'none' }} />
+                  <input
+                    ref={logoInputRef}
+                    id="edit-logo-input"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    onChange={handleLogoSelect}
+                    style={{ display: 'none' }}
+                  />
                 </label>
-                {existingLogo && !newLogo && (
+                {newLogoPreview ? (
                   <div style={{ marginTop: '8px', width: '44px', height: '44px', borderRadius: '50%', overflow: 'hidden' }}>
-                    <img src={`/${existingLogo}`} alt="Current Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={newLogoPreview} alt="New Logo Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
-                )}
+                ) : existingLogo ? (
+                  <div style={{ marginTop: '8px', width: '44px', height: '44px', borderRadius: '50%', overflow: 'hidden' }}>
+                    <img src={getAvatarUrl(existingLogo)} alt="Current Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -360,6 +481,38 @@ export function EditCommunityPage() {
           title="Delete Community?"
           message="Are you sure you want to permanently delete this community? All member associations, discussions, and settings will be permanently removed. This action cannot be undone."
           isDeleting={isDeleting}
+        />
+      )}
+
+      {/* Community Logo Adjust & Frame Modal */}
+      {isLogoAdjustModalOpen && (pendingLogoFile || newLogo) && (
+        <ImageAdjustmentModal
+          isOpen={isLogoAdjustModalOpen}
+          file={pendingLogoFile || newLogo}
+          onApply={handleApplyLogoAdjustment}
+          onCancel={handleCancelLogoAdjustment}
+          previewMode="community_logo"
+          defaultAspectRatioId="1:1"
+          communityData={{
+            name,
+            category,
+          }}
+        />
+      )}
+
+      {/* Community Cover Adjust & Frame Modal */}
+      {isCoverAdjustModalOpen && (pendingCoverFile || newCover) && (
+        <ImageAdjustmentModal
+          isOpen={isCoverAdjustModalOpen}
+          file={pendingCoverFile || newCover}
+          onApply={handleApplyCoverAdjustment}
+          onCancel={handleCancelCoverAdjustment}
+          previewMode="community_cover"
+          defaultAspectRatioId="16:9"
+          communityData={{
+            name,
+            category,
+          }}
         />
       )}
 

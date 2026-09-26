@@ -17,7 +17,7 @@ use Intervention\Gif\GifDataStream;
 class GifDataStreamDecoder extends AbstractDecoder
 {
     /**
-     * Decode current source to GifDataStream.
+     * Decode current source to GifDataStream
      *
      * @throws DecoderException
      */
@@ -26,29 +26,29 @@ class GifDataStreamDecoder extends AbstractDecoder
         $gif = new GifDataStream();
 
         $gif->setHeader(
-            Header::decode($this->stream),
+            Header::decode($this->handle),
         );
 
         $gif->setLogicalScreenDescriptor(
-            LogicalScreenDescriptor::decode($this->stream),
+            LogicalScreenDescriptor::decode($this->handle),
         );
 
-        if ($gif->logicalScreenDescriptor()->hasGlobalColorTable()) {
-            $length = $gif->logicalScreenDescriptor()->globalColorTableByteSize();
+        if ($gif->getLogicalScreenDescriptor()->hasGlobalColorTable()) {
+            $length = $gif->getLogicalScreenDescriptor()->getGlobalColorTableByteSize();
             $gif->setGlobalColorTable(
-                ColorTable::decode($this->stream, $length)
+                ColorTable::decode($this->handle, $length)
             );
         }
 
         while ($this->viewNextByteOrFail() !== Trailer::MARKER) {
             match ($this->viewNextBytesOrFail(2)) {
-                // handle trailing "global" comment blocks which are not part of "FrameBlock"
+                // trailing "global" comment blocks which are not part of "FrameBlock"
                 AbstractExtension::MARKER . CommentExtension::LABEL
                 => $gif->addComment(
-                    CommentExtension::decode($this->stream)
+                    CommentExtension::decode($this->handle)
                 ),
                 default => $gif->addFrame(
-                    FrameBlock::decode($this->stream)
+                    FrameBlock::decode($this->handle)
                 ),
             };
         }

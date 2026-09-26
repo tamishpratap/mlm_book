@@ -10,32 +10,32 @@ use Intervention\Gif\Exceptions\DecoderException;
 trait CanDecode
 {
     /**
-     * Decode current instance.
+     * Decode current instance
      *
      * @throws DecoderException
      */
     public static function decode(mixed $source, ?int $length = null): mixed
     {
-        return self::decoder($source, $length)->decode();
+        return self::getDecoder($source, $length)->decode();
     }
 
     /**
-     * Get decoder for current instance.
+     * Get decoder for current instance
      *
      * @throws DecoderException
      */
-    protected static function decoder(mixed $source, ?int $length = null): AbstractDecoder
+    protected static function getDecoder(mixed $source, ?int $length = null): AbstractDecoder
     {
-        $classname = sprintf('Intervention\Gif\Decoders\%sDecoder', self::shortClassname());
+        $classname = sprintf('Intervention\Gif\Decoders\%sDecoder', self::getShortClassname());
 
         if (!class_exists($classname)) {
-            throw new DecoderException('Decoder for "' . static::class . '" not found');
+            throw new DecoderException("Decoder for '" . static::class . "' not found.");
         }
 
         $decoder = new $classname($source, $length);
 
         if (!($decoder instanceof AbstractDecoder)) {
-            throw new DecoderException('Decoder for "' . static::class . '" not found');
+            throw new DecoderException("Decoder for '" . static::class . "' not found.");
         }
 
         return $decoder;

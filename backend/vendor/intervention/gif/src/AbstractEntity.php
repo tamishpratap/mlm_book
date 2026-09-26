@@ -8,7 +8,6 @@ use Intervention\Gif\Exceptions\EncoderException;
 use Intervention\Gif\Traits\CanDecode;
 use Intervention\Gif\Traits\CanEncode;
 use ReflectionClass;
-use ReflectionException;
 use Stringable;
 
 abstract class AbstractEntity implements Stringable
@@ -19,19 +18,15 @@ abstract class AbstractEntity implements Stringable
     public const TERMINATOR = "\x00";
 
     /**
-     * Get short classname of current instance.
+     * Get short classname of current instance
      */
-    public static function shortClassname(): ?string
+    public static function getShortClassname(): string
     {
-        try {
-            return (new ReflectionClass(static::class))->getShortName();
-        } catch (ReflectionException) {
-            return null;
-        }
+        return (new ReflectionClass(static::class))->getShortName();
     }
 
     /**
-     * Cast object to string.
+     * Cast object to string
      *
      * @throws EncoderException
      */

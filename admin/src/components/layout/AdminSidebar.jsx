@@ -19,6 +19,7 @@ import {
   Wallet,
   MessageSquare,
   Gift,
+  ArrowUpRight,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useBranding } from '../../hooks/useBranding';
@@ -111,6 +112,16 @@ const NAV_GROUPS = [
         ],
       },
       {
+        label: 'Withdrawal Request',
+        icon: ArrowUpRight,
+        to: '/admin/funds/withdrawals',
+        basePath: '/admin/funds/withdrawals',
+        ownerKey: '/admin/funds/withdrawals',
+        children: [
+          { label: 'Withdrawal Requests', to: '/admin/funds/withdrawals' },
+        ],
+      },
+      {
         label: 'Deposit Requests',
         icon: Wallet,
         basePath: '/admin/funds',
@@ -118,7 +129,6 @@ const NAV_GROUPS = [
         children: [
           { label: 'All Deposit Requests', to: '/admin/funds/deposits' },
           { label: 'Deposit Settings', to: '/admin/funds/deposit-settings' },
-          { label: 'Withdrawal Requests', to: '/admin/funds/withdrawals' },
         ],
       },
       {
@@ -218,7 +228,8 @@ function getCanonicalRouteOwner(pathname) {
   if (cleanPath.startsWith('/admin/business-pages')) return '/admin/business-pages';
   if (cleanPath.startsWith('/admin/ad-campaigns')) return '/admin/ad-campaigns';
   if (cleanPath.startsWith('/admin/rewards')) return '/admin/rewards';
-  if (cleanPath.startsWith('/admin/funds') || cleanPath.startsWith('/admin/withdrawals')) return '/admin/funds';
+  if (cleanPath.startsWith('/admin/funds/withdrawals') || cleanPath.startsWith('/admin/withdrawals')) return '/admin/funds/withdrawals';
+  if (cleanPath.startsWith('/admin/funds')) return '/admin/funds';
   if (cleanPath.startsWith('/admin/communities')) return '/admin/communities';
   if (cleanPath.startsWith('/admin/marketplace')) return '/admin/marketplace';
   if (cleanPath.startsWith('/admin/events')) return '/admin/events';
@@ -427,6 +438,9 @@ export function AdminSidebar({
                               if (target) navigate(target);
                             } else {
                               toggleGroup(item.label, groupOpen);
+                              if (item.to) {
+                                navigate(item.to);
+                              }
                             }
                           }}
                           className={`w-full flex items-center ${

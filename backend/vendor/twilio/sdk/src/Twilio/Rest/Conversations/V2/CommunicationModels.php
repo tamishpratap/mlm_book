@@ -20,7 +20,7 @@ abstract class CommunicationModels
 {
     /**
      * @property string $address
-     * @property string $channel
+     * @property string $channel Channel type for a Communication address.
      * @property string $participantId
     */
     public static function createCreateCommunicationInConversationRequestAuthor(array $payload = []): CreateCommunicationInConversationRequestAuthor
@@ -49,10 +49,21 @@ abstract class CommunicationModels
     }
 
     /**
+     * @property string $address
+     * @property string $channel Channel type for a Communication address.
+     * @property string $participantId
+    */
+    public static function createCreateCommunicationInConversationRequestRecipients(array $payload = []): CreateCommunicationInConversationRequestRecipients
+    {
+        return new CreateCommunicationInConversationRequestRecipients($payload);
+    }
+
+    /**
      * @property CreateCommunicationInConversationRequestAuthor $author
      * @property CreateCommunicationInConversationRequestContent $content
      * @property string $channelId
-     * @property CreateCommunicationInConversationRequestAuthor[] $recipients
+     * @property CreateCommunicationInConversationRequestRecipients[] $recipients
+     * @property \DateTime $occurredAt Timestamp when this Communication occurred. If omitted, the server uses the current time.
     */
     public static function createCreateCommunicationInConversationRequest(array $payload = []): CreateCommunicationInConversationRequest
     {
@@ -61,7 +72,7 @@ abstract class CommunicationModels
 
     /**
      * @property string $address The address value formatted according to channel type: - SMS/VOICE: E.164 phone number (such as \"+18005550100\") - WHATSAPP: Phone number with whatsapp prefix (such as \"whatsapp:+18005550100\") - RCS: Sender ID or phone number with rcs prefix (such as \"rcs:brand_acme_agent\" or \"rcs:+18005550100\") - CHAT: Customer-defined string identifier
-     * @property string $channel Channel type for the Participant address.
+     * @property ConversationsV2Channel $channel
      * @property string $participantId Participant ID associated with this address.
     */
     public static function createConversationsV2ParticipantAddress(array $payload = []): ConversationsV2ParticipantAddress
@@ -96,7 +107,7 @@ class CreateCommunicationInConversationRequestAuthor implements \JsonSerializabl
 {
     /**
      * @property string $address
-     * @property string $channel
+     * @property string $channel Channel type for a Communication address.
      * @property string $participantId
     */
         protected $address;
@@ -116,9 +127,13 @@ class CreateCommunicationInConversationRequestAuthor implements \JsonSerializabl
     public function jsonSerialize(): array
     {
         $jsonString = [
-            'address' => $this->address,
-            'channel' => $this->channel
         ];
+        if (isset($this->address)) {
+            $jsonString['address'] = $this->address;
+        }
+        if (isset($this->channel)) {
+            $jsonString['channel'] = $this->channel;
+        }
         if (isset($this->participantId)) {
             $jsonString['participantId'] = $this->participantId;
         }
@@ -188,11 +203,53 @@ class CreateCommunicationInConversationRequestContent implements \JsonSerializab
     public function jsonSerialize(): array
     {
         $jsonString = [
-            'type' => $this->type,
-            'text' => $this->text
         ];
+        if (isset($this->type)) {
+            $jsonString['type'] = $this->type;
+        }
+        if (isset($this->text)) {
+            $jsonString['text'] = $this->text;
+        }
         if (isset($this->transcription)) {
             $jsonString['transcription'] = $this->transcription;
+        }
+        return $jsonString;
+    }
+}
+
+class CreateCommunicationInConversationRequestRecipients implements \JsonSerializable
+{
+    /**
+     * @property string $address
+     * @property string $channel Channel type for a Communication address.
+     * @property string $participantId
+    */
+        protected $address;
+        protected $channel;
+        protected $participantId;
+    public function __construct(array $payload = []) {
+        $this->address = Values::array_get($payload, 'address');
+        $this->channel = Values::array_get($payload, 'channel');
+        $this->participantId = Values::array_get($payload, 'participantId');
+    }
+
+    public function toArray(): array
+    {
+        return $this->jsonSerialize();
+    }
+
+    public function jsonSerialize(): array
+    {
+        $jsonString = [
+        ];
+        if (isset($this->address)) {
+            $jsonString['address'] = $this->address;
+        }
+        if (isset($this->channel)) {
+            $jsonString['channel'] = $this->channel;
+        }
+        if (isset($this->participantId)) {
+            $jsonString['participantId'] = $this->participantId;
         }
         return $jsonString;
     }
@@ -204,17 +261,20 @@ class CreateCommunicationInConversationRequest implements \JsonSerializable
      * @property CreateCommunicationInConversationRequestAuthor $author
      * @property CreateCommunicationInConversationRequestContent $content
      * @property string $channelId
-     * @property CreateCommunicationInConversationRequestAuthor[] $recipients
+     * @property CreateCommunicationInConversationRequestRecipients[] $recipients
+     * @property \DateTime $occurredAt Timestamp when this Communication occurred. If omitted, the server uses the current time.
     */
         protected $author;
         protected $content;
         protected $channelId;
         protected $recipients;
+        protected $occurredAt;
     public function __construct(array $payload = []) {
         $this->author = Values::array_get($payload, 'author');
         $this->content = Values::array_get($payload, 'content');
         $this->channelId = Values::array_get($payload, 'channelId');
         $this->recipients = Values::array_get($payload, 'recipients');
+        $this->occurredAt = Values::array_get($payload, 'occurredAt');
     }
 
     public function toArray(): array
@@ -225,12 +285,21 @@ class CreateCommunicationInConversationRequest implements \JsonSerializable
     public function jsonSerialize(): array
     {
         $jsonString = [
-            'author' => $this->author,
-            'content' => $this->content,
-            'recipients' => $this->recipients
         ];
+        if (isset($this->author)) {
+            $jsonString['author'] = $this->author;
+        }
+        if (isset($this->content)) {
+            $jsonString['content'] = $this->content;
+        }
+        if (isset($this->recipients)) {
+            $jsonString['recipients'] = $this->recipients;
+        }
         if (isset($this->channelId)) {
             $jsonString['channelId'] = $this->channelId;
+        }
+        if (isset($this->occurredAt)) {
+            $jsonString['occurredAt'] = $this->occurredAt;
         }
         return $jsonString;
     }
@@ -240,7 +309,7 @@ class ConversationsV2ParticipantAddress implements \JsonSerializable
 {
     /**
      * @property string $address The address value formatted according to channel type: - SMS/VOICE: E.164 phone number (such as \"+18005550100\") - WHATSAPP: Phone number with whatsapp prefix (such as \"whatsapp:+18005550100\") - RCS: Sender ID or phone number with rcs prefix (such as \"rcs:brand_acme_agent\" or \"rcs:+18005550100\") - CHAT: Customer-defined string identifier
-     * @property string $channel Channel type for the Participant address.
+     * @property ConversationsV2Channel $channel
      * @property string $participantId Participant ID associated with this address.
     */
         protected $address;
@@ -260,9 +329,13 @@ class ConversationsV2ParticipantAddress implements \JsonSerializable
     public function jsonSerialize(): array
     {
         $jsonString = [
-            'address' => $this->address,
-            'channel' => $this->channel
         ];
+        if (isset($this->address)) {
+            $jsonString['address'] = $this->address;
+        }
+        if (isset($this->channel)) {
+            $jsonString['channel'] = $this->channel;
+        }
         if (isset($this->participantId)) {
             $jsonString['participantId'] = $this->participantId;
         }
@@ -338,9 +411,13 @@ class ListCommunicationByConversation200ResponseCommunicationsContent implements
     public function jsonSerialize(): array
     {
         $jsonString = [
-            'type' => $this->type,
-            'text' => $this->text
         ];
+        if (isset($this->type)) {
+            $jsonString['type'] = $this->type;
+        }
+        if (isset($this->text)) {
+            $jsonString['text'] = $this->text;
+        }
         if (isset($this->transcription)) {
             $jsonString['transcription'] = $this->transcription;
         }

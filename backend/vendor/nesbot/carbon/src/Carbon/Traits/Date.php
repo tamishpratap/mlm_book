@@ -1382,7 +1382,7 @@ trait Date
      */
     public function __set($name, $value)
     {
-        if ($this->constructedObjectId === spl_object_hash($this)) {
+        if ($this->constructedObjectId === spl_object_id($this)) {
             if ($this->isImmutable()) {
                 throw ImmutableException::fromClass(static::class);
             }
@@ -2127,15 +2127,9 @@ trait Date
             'SSSSSSSSS' => static fn (CarbonInterface $date) => self::floorZeroPad($date->micro * 1000, 9),
             'M' => 'month',
             'MM' => ['rawFormat', ['m']],
-            'MMM' => static function (CarbonInterface $date, $originalFormat = null) {
-                $month = $date->getTranslatedShortMonthName($originalFormat);
-                $suffix = $date->getTranslationMessage('mmm_suffix');
-                if ($suffix && $month !== $date->monthName) {
-                    $month .= $suffix;
-                }
-
-                return $month;
-            },
+            'MMM' => static fn (CarbonInterface $date, $originalFormat = null) => $date->getTranslatedShortMonthName(
+                $originalFormat,
+            ),
             'MMMM' => static fn (CarbonInterface $date, $originalFormat = null) => $date->getTranslatedMonthName(
                 $originalFormat,
             ),
@@ -2367,6 +2361,8 @@ trait Date
             't' => true,
             'L' => true,
             'o' => true,
+            'X' => true,
+            'x' => true,
             'Y' => true,
             'y' => true,
             'a' => 'a',
@@ -2381,9 +2377,11 @@ trait Date
             'u' => true,
             'v' => true,
             'E' => true,
+            'e' => true,
             'I' => true,
             'O' => true,
             'P' => true,
+            'p' => true,
             'Z' => true,
             'c' => true,
             'r' => true,

@@ -296,7 +296,7 @@ export function WithdrawalsListPage() {
         title="Withdrawal Requests"
         subtitle="Review, verify, and process member withdrawal requests with automated fee calculations and instant wallet reconciliation."
         breadcrumbs={[
-          { label: 'Funds Management', to: '/admin/funds/deposits' },
+          { label: 'Withdrawal Request', to: '/admin/funds/withdrawals' },
           { label: 'Withdrawal Requests' },
         ]}
         actions={

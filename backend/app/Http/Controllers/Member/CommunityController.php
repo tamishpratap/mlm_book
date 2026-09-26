@@ -229,21 +229,33 @@ class CommunityController extends Controller
 
         if ($activeTab === 'feed' && ($community->isPublic() || $isMember)) {
             $announcements = Post::query()
-                ->with(['member', 'comments.member', 'likes', 'reactions'])
+                ->with(['member', 'likes', 'reactions'])
+                ->withCount([
+                    'likes', 'reactions', 'shares', 'savedPosts',
+                    'comments' => fn ($cq) => $cq->whereNull('parent_id'),
+                ])
                 ->where('community_id', $community->id)
                 ->where('is_announcement', true)
                 ->latest()
                 ->get();
 
             $pinnedPost = Post::query()
-                ->with(['member', 'comments.member', 'likes', 'reactions'])
+                ->with(['member', 'likes', 'reactions'])
+                ->withCount([
+                    'likes', 'reactions', 'shares', 'savedPosts',
+                    'comments' => fn ($cq) => $cq->whereNull('parent_id'),
+                ])
                 ->where('community_id', $community->id)
                 ->where('is_pinned', true)
                 ->latest()
                 ->first();
 
             $feedQuery = Post::query()
-                ->with(['member', 'comments.member', 'likes', 'reactions'])
+                ->with(['member', 'likes', 'reactions'])
+                ->withCount([
+                    'likes', 'reactions', 'shares', 'savedPosts',
+                    'comments' => fn ($cq) => $cq->whereNull('parent_id'),
+                ])
                 ->where('community_id', $community->id)
                 ->where('is_announcement', false);
 

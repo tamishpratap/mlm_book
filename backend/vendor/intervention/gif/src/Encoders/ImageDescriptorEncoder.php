@@ -9,15 +9,15 @@ use Intervention\Gif\Blocks\ImageDescriptor;
 class ImageDescriptorEncoder extends AbstractEncoder
 {
     /**
-     * Create new instance.
+     * Create new instance
      */
-    public function __construct(ImageDescriptor $entity)
+    public function __construct(ImageDescriptor $source)
     {
-        parent::__construct($entity);
+        $this->source = $source;
     }
 
     /**
-     * Encode current entity.
+     * Encode current source
      */
     public function encode(): string
     {
@@ -32,62 +32,62 @@ class ImageDescriptorEncoder extends AbstractEncoder
     }
 
     /**
-     * Encode left value.
+     * Encode left value
      */
-    private function encodeLeft(): string
+    protected function encodeLeft(): string
     {
-        return pack('v*', $this->entity->left());
+        return pack('v*', $this->source->getLeft());
     }
 
     /**
-     * Encode top value.
+     * Encode top value
      */
-    private function encodeTop(): string
+    protected function encodeTop(): string
     {
-        return pack('v*', $this->entity->top());
+        return pack('v*', $this->source->getTop());
     }
 
     /**
-     * Encode width value.
+     * Encode width value
      */
-    private function encodeWidth(): string
+    protected function encodeWidth(): string
     {
-        return pack('v*', $this->entity->width());
+        return pack('v*', $this->source->getWidth());
     }
 
     /**
-     * Encode height value.
+     * Encode height value
      */
-    private function encodeHeight(): string
+    protected function encodeHeight(): string
     {
-        return pack('v*', $this->entity->height());
+        return pack('v*', $this->source->getHeight());
     }
 
     /**
-     * Encode size of local color table.
+     * Encode size of local color table
      */
-    private function encodeLocalColorTableSize(): string
+    protected function encodeLocalColorTableSize(): string
     {
-        return str_pad(decbin($this->entity->localColorTableSize()), 3, '0', STR_PAD_LEFT);
+        return str_pad(decbin($this->source->getLocalColorTableSize()), 3, '0', STR_PAD_LEFT);
     }
 
     /**
-     * Encode reserved field.
+     * Encode reserved field
      */
-    private function encodeReservedField(): string
+    protected function encodeReservedField(): string
     {
         return str_pad('0', 2, '0', STR_PAD_LEFT);
     }
 
     /**
-     * Encode packed field.
+     * Encode packed field
      */
-    private function encodePackedField(): string
+    protected function encodePackedField(): string
     {
         return pack('C', bindec(implode('', [
-            (int) $this->entity->localColorTableExistance(),
-            (int) $this->entity->isInterlaced(),
-            (int) $this->entity->localColorTableSorted(),
+            (int) $this->source->getLocalColorTableExistance(),
+            (int) $this->source->isInterlaced(),
+            (int) $this->source->getLocalColorTableSorted(),
             $this->encodeReservedField(),
             $this->encodeLocalColorTableSize(),
         ])));

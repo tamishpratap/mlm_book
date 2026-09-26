@@ -11,15 +11,15 @@ use Intervention\Gif\Exceptions\EncoderException;
 class ApplicationExtensionEncoder extends AbstractEncoder
 {
     /**
-     * Create new decoder instance.
+     * Create new decoder instance
      */
-    public function __construct(ApplicationExtension $entity)
+    public function __construct(ApplicationExtension $source)
     {
-        parent::__construct($entity);
+        $this->source = $source;
     }
 
     /**
-     * Encode current entity.
+     * Encode current source
      *
      * @throws EncoderException
      */
@@ -28,9 +28,9 @@ class ApplicationExtensionEncoder extends AbstractEncoder
         return implode('', [
             ApplicationExtension::MARKER,
             ApplicationExtension::LABEL,
-            pack('C', $this->entity->blockSize()),
-            $this->entity->application(),
-            implode('', array_map(fn(DataSubBlock $block): string => $block->encode(), $this->entity->blocks())),
+            pack('C', $this->source->getBlockSize()),
+            $this->source->getApplication(),
+            implode('', array_map(fn(DataSubBlock $block): string => $block->encode(), $this->source->getBlocks())),
             ApplicationExtension::TERMINATOR,
         ]);
     }

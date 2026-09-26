@@ -9,15 +9,15 @@ use Intervention\Gif\Blocks\CommentExtension;
 class CommentExtensionEncoder extends AbstractEncoder
 {
     /**
-     * Create new decoder instance.
+     * Create new decoder instance
      */
-    public function __construct(CommentExtension $entity)
+    public function __construct(CommentExtension $source)
     {
-        parent::__construct($entity);
+        $this->source = $source;
     }
 
     /**
-     * Encode current entity.
+     * Encode current source
      */
     public function encode(): string
     {
@@ -30,12 +30,12 @@ class CommentExtensionEncoder extends AbstractEncoder
     }
 
     /**
-     * Encode comment blocks.
+     * Encode comment blocks
      */
-    private function encodeComments(): string
+    protected function encodeComments(): string
     {
         return implode('', array_map(function (string $comment): string {
             return pack('C', strlen($comment)) . $comment;
-        }, $this->entity->comments()));
+        }, $this->source->getComments()));
     }
 }

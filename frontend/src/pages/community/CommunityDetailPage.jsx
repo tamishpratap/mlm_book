@@ -31,6 +31,7 @@ import VerifiedBadge from '../../components/common/VerifiedBadge';
 import MemberAvatar from '../../components/common/MemberAvatar';
 import { ModalPortal } from '../../components/common/ModalPortal';
 import { getCoverUrl, getAvatarUrl } from '../../utils/assetHelper';
+import { ImageAdjustmentModal } from '../../components/posts/modals/ImageAdjustmentModal';
 
 
 function getInitials(name) {
@@ -71,6 +72,12 @@ export function CommunityDetailPage() {
   // Media upload refs
   const coverInputRef = useRef(null);
   const logoInputRef = useRef(null);
+
+  // Logo & Cover adjustment states
+  const [pendingLogoFile, setPendingLogoFile] = useState(null);
+  const [isLogoAdjustModalOpen, setIsLogoAdjustModalOpen] = useState(false);
+  const [pendingCoverFile, setPendingCoverFile] = useState(null);
+  const [isCoverAdjustModalOpen, setIsCoverAdjustModalOpen] = useState(false);
 
 
 
@@ -141,42 +148,72 @@ export function CommunityDetailPage() {
     setActiveTab(tabName);
   };
 
-  const handleCoverUpload = async (e) => {
+  const handleCoverSelect = (e) => {
     const file = e.target.files?.[0];
-    if (!file || !slug) return;
+    if (file) {
+      setPendingCoverFile(file);
+      setIsCoverAdjustModalOpen(true);
+    }
+  };
+
+  const handleApplyCoverAdjustment = async ({ file: adjustedFile }) => {
+    setIsCoverAdjustModalOpen(false);
+    setPendingCoverFile(null);
+    if (!adjustedFile || !slug) return;
 
     const formData = new FormData();
-    formData.append('cover_photo', file);
+    formData.append('cover_photo', adjustedFile);
 
     try {
       const res = await communityApi.updateCover(slug, formData);
       if (res && res.success) {
         handleRefresh();
       }
-    } catch {
-      // Handle error
+    } catch (err) {
+      console.error('Failed to update community cover photo', err);
     } finally {
       if (coverInputRef.current) coverInputRef.current.value = '';
     }
   };
 
-  const handleLogoUpload = async (e) => {
+  const handleCancelCoverAdjustment = () => {
+    setIsCoverAdjustModalOpen(false);
+    setPendingCoverFile(null);
+    if (coverInputRef.current) coverInputRef.current.value = '';
+  };
+
+  const handleLogoSelect = (e) => {
     const file = e.target.files?.[0];
-    if (!file || !slug) return;
+    if (file) {
+      setPendingLogoFile(file);
+      setIsLogoAdjustModalOpen(true);
+    }
+  };
+
+  const handleApplyLogoAdjustment = async ({ file: adjustedFile }) => {
+    setIsLogoAdjustModalOpen(false);
+    setPendingLogoFile(null);
+    if (!adjustedFile || !slug) return;
 
     const formData = new FormData();
-    formData.append('logo', file);
+    formData.append('logo', adjustedFile);
 
     try {
       const res = await communityApi.updateLogo(slug, formData);
       if (res && res.success) {
         handleRefresh();
       }
-    } catch {
-      // Handle error
+    } catch (err) {
+      console.error('Failed to update community logo', err);
     } finally {
       if (logoInputRef.current) logoInputRef.current.value = '';
     }
+  };
+
+  const handleCancelLogoAdjustment = () => {
+    setIsLogoAdjustModalOpen(false);
+    setPendingLogoFile(null);
+    if (logoInputRef.current) logoInputRef.current.value = '';
   };
 
   const handleShareInvite = () => {
@@ -289,7 +326,7 @@ export function CommunityDetailPage() {
                 ref={coverInputRef}
                 type="file"
                 accept=".jpg,.jpeg,.png,.webp"
-                onChange={handleCoverUpload}
+                onChange={handleCoverSelect}
                 style={{ display: 'none' }}
               />
             </>
@@ -328,6 +365,8 @@ export function CommunityDetailPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
+                    zIndex: 20,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
                   }}
                 >
                   <Camera size={14} />
@@ -336,7 +375,7 @@ export function CommunityDetailPage() {
                   ref={logoInputRef}
                   type="file"
                   accept=".jpg,.jpeg,.png,.webp"
-                  onChange={handleLogoUpload}
+                  onChange={handleLogoSelect}
                   style={{ display: 'none' }}
                 />
               </>
@@ -746,6 +785,40 @@ export function CommunityDetailPage() {
             </form>
           </div>
         </ModalPortal>
+      )}
+
+      {/* Community Logo Adjustment Modal */}
+      {isLogoAdjustModalOpen && pendingLogoFile && (
+        <ImageAdjustmentModal
+          isOpen={isLogoAdjustModalOpen}
+          file={pendingLogoFile}
+          onApply={handleApplyLogoAdjustment}
+          onCancel={handleCancelLogoAdjustment}
+          currentUser={user}
+          previewMode="community_logo"
+          defaultAspectRatioId="1:1"
+          communityData={{
+            name: community?.name,
+            category: community?.category,
+          }}
+        />
+      )}
+
+      {/* Community Cover Adjustment Modal */}
+      {isCoverAdjustModalOpen && pendingCoverFile && (
+        <ImageAdjustmentModal
+          isOpen={isCoverAdjustModalOpen}
+          file={pendingCoverFile}
+          onApply={handleApplyCoverAdjustment}
+          onCancel={handleCancelCoverAdjustment}
+          currentUser={user}
+          previewMode="community_cover"
+          defaultAspectRatioId="16:9"
+          communityData={{
+            name: community?.name,
+            category: community?.category,
+          }}
+        />
       )}
 
     </div>

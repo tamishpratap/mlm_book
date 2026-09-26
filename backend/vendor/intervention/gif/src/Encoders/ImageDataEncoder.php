@@ -6,37 +6,35 @@ namespace Intervention\Gif\Encoders;
 
 use Intervention\Gif\AbstractEntity;
 use Intervention\Gif\Blocks\DataSubBlock;
-use Intervention\Gif\Blocks\ImageData;
 use Intervention\Gif\Exceptions\EncoderException;
-use Intervention\Gif\Exceptions\StateException;
+use Intervention\Gif\Blocks\ImageData;
 
 class ImageDataEncoder extends AbstractEncoder
 {
     /**
-     * Create new instance.
+     * Create new instance
      */
-    public function __construct(ImageData $entity)
+    public function __construct(ImageData $source)
     {
-        parent::__construct($entity);
+        $this->source = $source;
     }
 
     /**
-     * Encode current entity.
+     * Encode current source
      *
      * @throws EncoderException
-     * @throws StateException
      */
     public function encode(): string
     {
-        if (!$this->entity->hasBlocks()) {
-            throw new StateException('No data blocks in image data');
+        if (!$this->source->hasBlocks()) {
+            throw new EncoderException("No data blocks in ImageData.");
         }
 
         return implode('', [
-            pack('C', $this->entity->lzwMinCodeSize()),
+            pack('C', $this->source->getLzwMinCodeSize()),
             implode('', array_map(
                 fn(DataSubBlock $block): string => $block->encode(),
-                $this->entity->blocks(),
+                $this->source->getBlocks(),
             )),
             AbstractEntity::TERMINATOR,
         ]);

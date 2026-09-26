@@ -703,15 +703,41 @@
     }
 
     .member-result-card {
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+            "avatar content"
+            "actions actions";
+        align-items: start;
         padding: 14px;
         gap: 12px;
     }
 
     .member-result-card__avatar {
+        grid-area: avatar;
         width: 64px;
         height: 64px;
         flex-basis: 64px;
+    }
+
+    .member-result-card__content {
+        grid-area: content;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .member-result-card__actions {
+        grid-area: actions;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 10px;
+        margin-top: 4px;
+        padding-top: 10px;
+        border-top: 1px solid var(--color-border-soft, #edf1f7);
     }
 
     .member-search-skeleton__card {
