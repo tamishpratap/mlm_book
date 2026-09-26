@@ -16,6 +16,7 @@ class Member extends Authenticatable
         'name',
         'user_id',
         'introducer_id',
+        'reward_rank',
         'direct_referral_count',
         'referral_counted_at',
         'email',
