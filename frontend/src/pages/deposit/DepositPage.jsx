@@ -17,6 +17,7 @@ import {
   Sparkles,
   QrCode,
   TrendingUp,
+  Percent,
 } from 'lucide-react';
 import depositApi from '../../api/depositApi';
 import useAuth from '../../hooks/useAuth';
@@ -198,8 +199,8 @@ export function DepositPage() {
     setDappError('');
     setDappSuccessData(null);
 
-    const amount = parseFloat(dappAmount);
-    if (isNaN(amount) || amount < 10) {
+    const baseAmount = parseFloat(dappAmount);
+    if (isNaN(baseAmount) || baseAmount < 10) {
       setDappError('Minimum deposit amount is $10.00 USD equivalent.');
       return;
     }
@@ -227,13 +228,19 @@ export function DepositPage() {
     const isTestnet = config?.network_name?.includes('Testnet');
     const tokenContract = config?.usdt_contract;
 
+    // Service charge added on top: Total Payable = Base * (1 + scPercent / 100)
+    // Formula: Net Credit = Total Received / (1 + scPercent / 100)
+    const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
+    const totalToPay = scPercent > 0 ? Number((baseAmount * (1 + scPercent / 100)).toFixed(2)) : baseAmount;
+    const feeAmount = scPercent > 0 ? Number((totalToPay - baseAmount).toFixed(2)) : 0;
+
     try {
       setDappStep('signing');
 
-      // 1. Submit on-chain via Web3 wallet
+      // 1. Submit on-chain via Web3 wallet (Transfers totalToPay USDT including on-top fee)
       const txResult = await sendBscUsdtTransfer({
         recipientAddress,
-        amountUsdt: amount,
+        amountUsdt: totalToPay,
         tokenContractAddress: tokenContract,
         isTestnet,
       });
@@ -247,8 +254,9 @@ export function DepositPage() {
       setDappStep('verifying');
 
       // 3. Submit to backend for on-chain verification and database storage
+      // Backend verifies totalToPay was transferred and credits Net Amount = totalToPay / (1 + scPercent/100)
       const serverRes = await depositApi.submitDappDeposit({
-        amount,
+        amount: totalToPay,
         transaction_hash: txHash,
         wallet_address: txResult.fromAddress,
       });
@@ -256,7 +264,11 @@ export function DepositPage() {
       if (serverRes && serverRes.success) {
         setDappStep('success');
         setDappSuccessData({
-          amount,
+          amount: totalToPay,
+          baseAmount,
+          feeAmount,
+          feePercent: scPercent,
+          netCredit: baseAmount,
           txHash,
           status: serverRes.deposit?.status_label || 'Verified — Awaiting Admin Approval',
           explorerUrl: serverRes.deposit?.explorer_url || (config?.explorer_url ? config.explorer_url + txHash : null),
@@ -284,11 +296,15 @@ export function DepositPage() {
   // Local Testing Mode: Simulate DApp deposit without gas fees or real tokens
   const handleSimulateDappDeposit = async () => {
     setDappError('');
-    const amount = parseFloat(dappAmount);
-    if (isNaN(amount) || amount < 10) {
+    const baseAmount = parseFloat(dappAmount);
+    if (isNaN(baseAmount) || baseAmount < 10) {
       setDappError('Minimum deposit amount is $10.00 USD equivalent.');
       return;
     }
+
+    const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
+    const totalToPay = scPercent > 0 ? Number((baseAmount * (1 + scPercent / 100)).toFixed(2)) : baseAmount;
+    const feeAmount = scPercent > 0 ? Number((totalToPay - baseAmount).toFixed(2)) : 0;
 
     const testTxHash = generateTestTxHash();
     const testWallet = walletAddress || '0x7e57333333333333333333333333333333333333';
@@ -301,7 +317,7 @@ export function DepositPage() {
       setDappStep('verifying');
 
       const serverRes = await depositApi.submitDappDeposit({
-        amount,
+        amount: totalToPay,
         transaction_hash: testTxHash,
         wallet_address: testWallet,
       });
@@ -309,7 +325,11 @@ export function DepositPage() {
       if (serverRes && serverRes.success) {
         setDappStep('success');
         setDappSuccessData({
-          amount,
+          amount: totalToPay,
+          baseAmount,
+          feeAmount,
+          feePercent: scPercent,
+          netCredit: baseAmount,
           txHash: testTxHash,
           status: serverRes.deposit?.status_label || 'Verified — Awaiting Admin Approval',
           explorerUrl: serverRes.deposit?.explorer_url || (config?.explorer_url ? config.explorer_url + testTxHash : null),
@@ -747,10 +767,10 @@ export function DepositPage() {
               <div style={{ marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                   <label htmlFor="dapp-amount" style={{ fontSize: '0.88rem', fontWeight: 600, color: '#374151' }}>
-                    Deposit Amount (USD / USDT)
+                    Desired Deposit Amount (USD)
                   </label>
                   <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>
-                    Minimum: $10.00
+                    Minimum Credit: $10.00 USD
                   </span>
                 </div>
 
@@ -777,7 +797,7 @@ export function DepositPage() {
                     }}
                   />
                   <span style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#6b7280', fontSize: '0.9rem' }}>
-                    USDT
+                    USD
                   </span>
                 </div>
 
@@ -804,27 +824,90 @@ export function DepositPage() {
                   ))}
                 </div>
 
-                {/* Live Deposit Preview into Fund Wallet */}
-                <div style={{
-                  background: '#ecfdf5',
-                  border: '1px solid #a7f3d0',
-                  borderRadius: '10px',
-                  padding: '0.6rem 0.85rem',
-                  fontSize: '0.82rem',
-                  color: '#065f46',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: '0.85rem',
-                  fontWeight: 600,
-                  flexWrap: 'wrap',
-                  gap: '0.35rem'
-                }}>
-                  <span>Target Credit: <strong>Fund Wallet</strong></span>
-                  <span>
-                    Current: <strong>${depositStats.fund_wallet.toFixed(2)}</strong> + Deposit: <strong>${(parseFloat(dappAmount) || 0).toFixed(2)}</strong> = <strong>${(depositStats.fund_wallet + (parseFloat(dappAmount) || 0)).toFixed(2)} USD</strong>
-                  </span>
-                </div>
+                {/* Live Deposit Preview into Fund Wallet with On-Top Service Charge */}
+                {(() => {
+                  const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
+                  const base = parseFloat(dappAmount) || 0;
+                  const total = scPercent > 0 ? Number((base * (1 + scPercent / 100)).toFixed(2)) : base;
+                  const fee = scPercent > 0 ? Number((total - base).toFixed(2)) : 0;
+
+                  return (
+                    <div style={{
+                      background: scPercent > 0 ? '#f0fdf4' : '#ecfdf5',
+                      border: scPercent > 0 ? '1px solid #bbf7d0' : '1px solid #a7f3d0',
+                      borderRadius: '12px',
+                      padding: '0.85rem 1rem',
+                      fontSize: '0.82rem',
+                      marginTop: '0.85rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+                        <span style={{ color: '#374151', fontWeight: 600 }}>Credit Target: <strong>Fund Wallet</strong></span>
+                        {scPercent > 0 ? (
+                          <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}>
+                            ⚡ Service Charge: +{scPercent}% on top (+${fee.toFixed(2)} USDT)
+                          </span>
+                        ) : (
+                          <span style={{ background: '#d1fae5', color: '#065f46', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}>
+                            ✨ 0% Service Charge (100% Credit)
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Calculation Breakdown Grid */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                        gap: '0.5rem',
+                        background: '#ffffff',
+                        padding: '0.65rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid #dcfce7',
+                        fontSize: '0.8rem',
+                      }}>
+                        <div>
+                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Deposit Base:</span>
+                          <strong style={{ color: '#111827' }}>${base.toFixed(2)} USD</strong>
+                        </div>
+                        {scPercent > 0 && (
+                          <div>
+                            <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Fee ({scPercent}% on top):</span>
+                            <strong style={{ color: '#d97706' }}>+${fee.toFixed(2)} USDT</strong>
+                          </div>
+                        )}
+                        <div>
+                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Total To Pay (on-chain):</span>
+                          <strong style={{ color: '#176bff', fontSize: '0.92rem' }}>${total.toFixed(2)} USDT</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Credit Formula:</span>
+                          <strong style={{ color: '#059669' }}>${total.toFixed(2)} / {1 + (scPercent / 100)} = ${base.toFixed(2)} USD</strong>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '0.4rem',
+                        paddingTop: '0.4rem',
+                        borderTop: '1px dashed #d1fae5',
+                        color: '#065f46',
+                        fontWeight: 600,
+                      }}>
+                        <span>
+                          Fund Wallet Credit: <strong style={{ color: '#059669' }}>+${base.toFixed(2)} USD</strong>
+                        </span>
+                        <span>
+                          New Balance: <strong>${(depositStats.fund_wallet + base).toFixed(2)} USD</strong>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Status or Error Notifications */}
@@ -836,73 +919,87 @@ export function DepositPage() {
               )}
 
               {/* Action Button */}
-              <button
-                type="submit"
-                disabled={dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying'}
-                style={{
-                  width: '100%',
-                  padding: '0.85rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #176bff, #7146ed)',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  cursor: (dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying') ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  boxShadow: '0 4px 12px rgba(23, 107, 255, 0.25)',
-                  transition: 'opacity 0.2s ease',
-                  opacity: (dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying') ? 0.75 : 1,
-                }}
-              >
-                {dappStep === 'signing' && <><RefreshCw size={18} className="animate-spin" /> Confirm in your wallet...</>}
-                {dappStep === 'confirming' && <><RefreshCw size={18} className="animate-spin" /> Confirming on BNB Smart Chain...</>}
-                {dappStep === 'verifying' && <><RefreshCw size={18} className="animate-spin" /> Verifying on backend...</>}
-                {dappStep === 'idle' && <><Send size={18} /> Deposit ${parseFloat(dappAmount) || 10} USDT (BEP-20)</>}
-                {dappStep === 'error' && <><Send size={18} /> Retry Deposit</>}
-                {dappStep === 'success' && <><CheckCircle2 size={18} /> Deposit More</>}
-              </button>
+              {(() => {
+                const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
+                const base = parseFloat(dappAmount) || 10;
+                const total = scPercent > 0 ? (base * (1 + scPercent / 100)).toFixed(2) : base.toFixed(2);
 
-              {/* Local Dev Test Mode Simulation Action */}
-              {config?.is_test_mode && (
-                <div style={{ marginTop: '1.25rem', padding: '1rem', background: '#f0fdf4', border: '1px dashed #86efac', borderRadius: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#166534' }}>
-                      🧪 Local Testing Action (Simulation):
-                    </span>
-                    <span style={{ fontSize: '0.74rem', color: '#15803d', fontWeight: 500 }}>
-                      No wallet connection or gas needed
-                    </span>
-                  </div>
+                return (
                   <button
-                    type="button"
-                    onClick={handleSimulateDappDeposit}
+                    type="submit"
                     disabled={dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying'}
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '10px',
+                      padding: '0.85rem',
+                      borderRadius: '12px',
                       border: 'none',
-                      background: '#059669',
+                      background: 'linear-gradient(135deg, #176bff, #7146ed)',
                       color: '#fff',
                       fontWeight: 700,
-                      fontSize: '0.9rem',
+                      fontSize: '1rem',
                       cursor: (dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying') ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.5rem',
-                      boxShadow: '0 2px 5px rgba(5, 150, 105, 0.25)',
+                      boxShadow: '0 4px 12px rgba(23, 107, 255, 0.25)',
+                      transition: 'opacity 0.2s ease',
+                      opacity: (dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying') ? 0.75 : 1,
                     }}
                   >
-                    <Sparkles size={16} />
-                    <span>⚡ One-Click Simulate DApp Transfer (${parseFloat(dappAmount) || 10} USDT)</span>
+                    {dappStep === 'signing' && <><RefreshCw size={18} className="animate-spin" /> Confirm ${total} USDT in wallet...</>}
+                    {dappStep === 'confirming' && <><RefreshCw size={18} className="animate-spin" /> Confirming on BNB Smart Chain...</>}
+                    {dappStep === 'verifying' && <><RefreshCw size={18} className="animate-spin" /> Verifying on backend...</>}
+                    {dappStep === 'idle' && <><Send size={18} /> Pay ${total} USDT (Net Credit: ${base.toFixed(2)} USD)</>}
+                    {dappStep === 'error' && <><Send size={18} /> Retry Deposit</>}
+                    {dappStep === 'success' && <><CheckCircle2 size={18} /> Deposit More</>}
                   </button>
-                </div>
-              )}
+                );
+              })()}
+
+              {/* Local Dev Test Mode Simulation Action */}
+              {config?.is_test_mode && (() => {
+                const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
+                const base = parseFloat(dappAmount) || 10;
+                const total = scPercent > 0 ? (base * (1 + scPercent / 100)).toFixed(2) : base.toFixed(2);
+
+                return (
+                  <div style={{ marginTop: '1.25rem', padding: '1rem', background: '#f0fdf4', border: '1px dashed #86efac', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#166534' }}>
+                        🧪 Local Testing Action (Simulation):
+                      </span>
+                      <span style={{ fontSize: '0.74rem', color: '#15803d', fontWeight: 500 }}>
+                        No wallet connection or gas needed
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSimulateDappDeposit}
+                      disabled={dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying'}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: '#059669',
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: '0.9rem',
+                        cursor: (dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying') ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        boxShadow: '0 2px 5px rgba(5, 150, 105, 0.25)',
+                      }}
+                    >
+                      <Sparkles size={16} />
+                      <span>⚡ One-Click Simulate DApp Transfer (${total} USDT → ${base.toFixed(2)} USD Net)</span>
+                    </button>
+                  </div>
+                );
+              })()}
             </form>
 
             {/* DApp Success Card */}
@@ -913,7 +1010,11 @@ export function DepositPage() {
                   <span>DApp Deposit Successfully Submitted!</span>
                 </div>
                 <p style={{ color: '#166534', fontSize: '0.88rem', margin: '0 0 0.75rem 0' }}>
-                  Your transfer of <strong>${dappSuccessData.amount} USDT</strong> has been verified on the blockchain and recorded.
+                  Your transfer of <strong>${dappSuccessData.amount} USDT</strong> has been verified on the blockchain. 
+                  {dappSuccessData.feePercent > 0 && (
+                    <span> (${dappSuccessData.baseAmount?.toFixed(2) || dappSuccessData.netCredit?.toFixed(2)} USD base + ${dappSuccessData.feeAmount?.toFixed(2)} USDT {dappSuccessData.feePercent}% service charge).</span>
+                  )}
+                  {" "}<strong>${dappSuccessData.netCredit?.toFixed(2) || dappSuccessData.baseAmount?.toFixed(2) || dappSuccessData.amount} USD</strong> will be credited to your Fund Wallet upon approval.
                 </p>
                 <div style={{ fontSize: '0.82rem', background: '#fff', padding: '0.65rem', borderRadius: '8px', border: '1px solid #dcfce7' }}>
                   <div style={{ color: '#6b7280', marginBottom: '0.25rem' }}>Transaction Hash:</div>
@@ -966,6 +1067,25 @@ export function DepositPage() {
                   <strong>Gas Fees:</strong> You need a small amount of <strong>BNB</strong> in your wallet to cover the minimal BSC blockchain gas fees.
                 </div>
               </li>
+              {Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0) > 0 ? (
+                <li style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.88rem', color: '#4b5563' }}>
+                  <div style={{ background: '#fef3c7', color: '#d97706', padding: '0.25rem', borderRadius: '6px', flexShrink: 0 }}>
+                    <Percent size={16} />
+                  </div>
+                  <div>
+                    <strong>Service Charge ({Number(config?.deposit_fee_percent ?? config?.service_charge_percent)}% on top):</strong> Platform fee is added on top of your deposit amount. E.g. for a $100 deposit, total transfer is 100 + {Number(config?.deposit_fee_percent ?? config?.service_charge_percent)}% = ${(100 * (1 + Number(config?.deposit_fee_percent ?? config?.service_charge_percent)/100)).toFixed(2)} USDT. Net Fund Wallet Credit = Received Amount / (100 + {Number(config?.deposit_fee_percent ?? config?.service_charge_percent)}%) = $100.00 USD.
+                  </div>
+                </li>
+              ) : (
+                <li style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.88rem', color: '#4b5563' }}>
+                  <div style={{ background: '#ecfdf5', color: '#059669', padding: '0.25rem', borderRadius: '6px', flexShrink: 0 }}>
+                    <ShieldCheck size={16} />
+                  </div>
+                  <div>
+                    <strong>0% Platform Fee:</strong> Zero service charge. 100% of deposited USDT is credited to your Fund Wallet.
+                  </div>
+                </li>
+              )}
             </ul>
 
             <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px' }}>
@@ -1073,29 +1193,101 @@ export function DepositPage() {
                     USDT
                   </span>
                 </div>
-                <small style={{ color: '#6b7280', fontSize: '0.78rem' }}>Minimum $10.00 USD equivalent.</small>
-
-                {/* Live Deposit Preview into Fund Wallet */}
-                <div style={{
-                  background: '#ecfdf5',
-                  border: '1px solid #a7f3d0',
-                  borderRadius: '10px',
-                  padding: '0.55rem 0.85rem',
-                  fontSize: '0.82rem',
-                  color: '#065f46',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: '0.65rem',
-                  fontWeight: 600,
-                  flexWrap: 'wrap',
-                  gap: '0.35rem'
-                }}>
-                  <span>Target Credit: <strong>Fund Wallet</strong></span>
-                  <span>
-                    Current: <strong>${depositStats.fund_wallet.toFixed(2)}</strong> + Deposit: <strong>${(parseFloat(manualAmount) || 0).toFixed(2)}</strong> = <strong>${(depositStats.fund_wallet + (parseFloat(manualAmount) || 0)).toFixed(2)} USD</strong>
-                  </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.35rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  <small style={{ color: '#6b7280', fontSize: '0.78rem' }}>Minimum $10.00 USD equivalent.</small>
+                  {Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0) > 0 && (
+                    <span style={{ fontSize: '0.76rem', color: '#b45309', fontWeight: 600 }}>
+                      💡 Tip: Service charge is +{Number(config?.deposit_fee_percent ?? config?.service_charge_percent)}% on top. (Transfer ${(100 * (1 + Number(config?.deposit_fee_percent ?? config?.service_charge_percent)/100)).toFixed(2)} USDT for $100.00 net credit).
+                    </span>
+                  )}
                 </div>
+
+                {/* Live Deposit Preview into Fund Wallet with On-Top Service Charge */}
+                {(() => {
+                  const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
+                  const amt = parseFloat(manualAmount) || 0;
+                  const net = scPercent > 0 ? Number((amt / (1 + scPercent / 100)).toFixed(2)) : amt;
+                  const fee = scPercent > 0 ? Number((amt - net).toFixed(2)) : 0;
+
+                  return (
+                    <div style={{
+                      background: scPercent > 0 ? '#f0fdf4' : '#ecfdf5',
+                      border: scPercent > 0 ? '1px solid #bbf7d0' : '1px solid #a7f3d0',
+                      borderRadius: '12px',
+                      padding: '0.85rem 1rem',
+                      fontSize: '0.82rem',
+                      marginTop: '0.65rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+                        <span style={{ color: '#374151', fontWeight: 600 }}>Target: <strong>Fund Wallet</strong></span>
+                        {scPercent > 0 ? (
+                          <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}>
+                            ⚡ Service Charge: +{scPercent}% on top (-${fee.toFixed(2)} USDT)
+                          </span>
+                        ) : (
+                          <span style={{ background: '#d1fae5', color: '#065f46', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}>
+                            ✨ 0% Service Charge (100% Credit)
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Calculation Breakdown Grid */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                        gap: '0.5rem',
+                        background: '#ffffff',
+                        padding: '0.65rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid #dcfce7',
+                        fontSize: '0.8rem',
+                      }}>
+                        <div>
+                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Transferred Amount:</span>
+                          <strong style={{ color: '#111827' }}>${amt.toFixed(2)} USDT</strong>
+                        </div>
+                        {scPercent > 0 && (
+                          <div>
+                            <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Fee ({scPercent}%):</span>
+                            <strong style={{ color: '#d97706' }}>-${fee.toFixed(2)} USDT</strong>
+                          </div>
+                        )}
+                        <div>
+                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Net Wallet Credit:</span>
+                          <strong style={{ color: '#059669', fontSize: '0.92rem' }}>+${net.toFixed(2)} USD</strong>
+                        </div>
+                        {scPercent > 0 && (
+                          <div>
+                            <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Formula:</span>
+                            <strong style={{ color: '#047857' }}>${amt.toFixed(2)} / {1 + (scPercent / 100)} = ${net.toFixed(2)}</strong>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '0.4rem',
+                        paddingTop: '0.4rem',
+                        borderTop: '1px dashed #d1fae5',
+                        color: '#065f46',
+                        fontWeight: 600,
+                      }}>
+                        <span>
+                          Fund Wallet Credit: <strong style={{ color: '#059669' }}>+${net.toFixed(2)} USD</strong>
+                        </span>
+                        <span>
+                          New Balance: <strong>${(depositStats.fund_wallet + net).toFixed(2)} USD</strong>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Transaction Hash */}
@@ -1111,7 +1303,9 @@ export function DepositPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          setManualAmount('25');
+                          const sc = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
+                          const amt = sc > 0 ? (100 * (1 + sc / 100)).toFixed(2) : '100.00';
+                          setManualAmount(amt);
                           setManualTxHash(generateTestTxHash());
                           setManualVerificationResult(null);
                           setManualVerificationError('');
@@ -1126,9 +1320,9 @@ export function DepositPage() {
                           fontWeight: 700,
                           cursor: 'pointer',
                         }}
-                        title="Auto-fill a valid mock 66-character test hash"
+                        title="Auto-fill test hash with $100 + fee (Net $100 USD credit)"
                       >
-                        ⚡ Fill Valid Test Hash ($25)
+                        ⚡ Fill Test Hash ($100 Net)
                       </button>
                       <button
                         type="button"
@@ -1223,80 +1417,104 @@ export function DepositPage() {
             </form>
 
             {/* VERIFICATION SUCCESS CARD */}
-            {manualVerificationResult && (
-              <div style={{ marginTop: '1.5rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '16px', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#15803d', fontWeight: 800, fontSize: '1rem', marginBottom: '0.75rem' }}>
-                  <CheckCircle2 size={22} />
-                  <span>Transaction Verified Successfully</span>
-                </div>
+            {manualVerificationResult && (() => {
+              const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
+              const verifiedAmt = parseFloat(manualVerificationResult.amount) || 0;
+              const netCredit = scPercent > 0 ? Number((verifiedAmt / (1 + scPercent / 100)).toFixed(2)) : verifiedAmt;
+              const feeAmt = scPercent > 0 ? Number((verifiedAmt - netCredit).toFixed(2)) : 0;
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', background: '#fff', padding: '0.85rem', borderRadius: '10px', border: '1px solid #dcfce7', fontSize: '0.84rem', marginBottom: '1rem' }}>
-                  <div>
-                    <span style={{ color: '#6b7280', display: 'block' }}>Verified Amount</span>
-                    <strong style={{ color: '#059669', fontSize: '1.05rem' }}>${manualVerificationResult.amount} USDT</strong>
+              return (
+                <div style={{ marginTop: '1.5rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '16px', padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#15803d', fontWeight: 800, fontSize: '1rem', marginBottom: '0.75rem' }}>
+                    <CheckCircle2 size={22} />
+                    <span>Transaction Verified Successfully</span>
                   </div>
-                  <div>
-                    <span style={{ color: '#6b7280', display: 'block' }}>Network</span>
-                    <strong>{manualVerificationResult.network} ({manualVerificationResult.token})</strong>
-                  </div>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <span style={{ color: '#6b7280', display: 'block' }}>Sender Wallet</span>
-                    <code style={{ fontSize: '0.78rem', wordBreak: 'break-all' }}>{manualVerificationResult.wallet_address}</code>
-                  </div>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <span style={{ color: '#6b7280', display: 'block' }}>Transaction Hash</span>
-                    <code style={{ fontSize: '0.78rem', wordBreak: 'break-all' }}>{manualVerificationResult.transaction_hash}</code>
-                  </div>
-                  <div style={{ gridColumn: 'span 2', background: '#ecfdf5', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#065f46', fontWeight: 600 }}>Credit Destination:</div>
-                    <div style={{ fontSize: '0.88rem', color: '#047857', fontWeight: 700, marginTop: '0.15rem' }}>
-                      Fund Wallet (Current: ${depositStats.fund_wallet.toFixed(2)} → After Approval: ${(depositStats.fund_wallet + parseFloat(manualVerificationResult.amount)).toFixed(2)} USD)
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', background: '#fff', padding: '0.85rem', borderRadius: '10px', border: '1px solid #dcfce7', fontSize: '0.84rem', marginBottom: '1rem' }}>
+                    <div>
+                      <span style={{ color: '#6b7280', display: 'block' }}>Transferred Amount</span>
+                      <strong style={{ color: '#111827', fontSize: '1.05rem' }}>${verifiedAmt.toFixed(2)} USDT</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#6b7280', display: 'block' }}>Network &amp; Token</span>
+                      <strong>{manualVerificationResult.network} ({manualVerificationResult.token})</strong>
+                    </div>
+
+                    {scPercent > 0 && (
+                      <>
+                        <div>
+                          <span style={{ color: '#6b7280', display: 'block' }}>Service Charge ({scPercent}% On Top)</span>
+                          <strong style={{ color: '#d97706', fontSize: '0.95rem' }}>-${feeAmt.toFixed(2)} USDT</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: '#6b7280', display: 'block' }}>Net Fund Wallet Credit</span>
+                          <strong style={{ color: '#059669', fontSize: '1.05rem' }}>+${netCredit.toFixed(2)} USD</strong>
+                          <span style={{ fontSize: '0.72rem', color: '#047857', display: 'block' }}>
+                            (${verifiedAmt.toFixed(2)} / {1 + (scPercent / 100)})
+                          </span>
+                        </div>
+                      </>
+                    )}
+
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <span style={{ color: '#6b7280', display: 'block' }}>Sender Wallet</span>
+                      <code style={{ fontSize: '0.78rem', wordBreak: 'break-all' }}>{manualVerificationResult.wallet_address}</code>
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <span style={{ color: '#6b7280', display: 'block' }}>Transaction Hash</span>
+                      <code style={{ fontSize: '0.78rem', wordBreak: 'break-all' }}>{manualVerificationResult.transaction_hash}</code>
+                    </div>
+                    <div style={{ gridColumn: 'span 2', background: '#ecfdf5', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#065f46', fontWeight: 600 }}>Credit Destination:</div>
+                      <div style={{ fontSize: '0.88rem', color: '#047857', fontWeight: 700, marginTop: '0.15rem' }}>
+                        Fund Wallet (Current: ${depositStats.fund_wallet.toFixed(2)} USD → After Approval: ${(depositStats.fund_wallet + netCredit).toFixed(2)} USD)
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {manualSubmitError && (
-                  <div style={{ color: '#b91c1c', fontSize: '0.84rem', marginBottom: '0.75rem' }}>
-                    {manualSubmitError}
-                  </div>
-                )}
-
-                {/* Submit Deposit Request Button */}
-                <button
-                  type="button"
-                  onClick={handleSubmitManualRequest}
-                  disabled={isSubmittingManual}
-                  style={{
-                    width: '100%',
-                    padding: '0.85rem',
-                    borderRadius: '12px',
-                    border: 'none',
-                    background: '#059669',
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '1rem',
-                    cursor: isSubmittingManual ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
-                  }}
-                >
-                  {isSubmittingManual ? (
-                    <>
-                      <RefreshCw size={18} className="animate-spin" />
-                      <span>Submitting Request to Admin...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send size={18} />
-                      <span>Submit Deposit Request</span>
-                    </>
+                  {manualSubmitError && (
+                    <div style={{ color: '#b91c1c', fontSize: '0.84rem', marginBottom: '0.75rem' }}>
+                      {manualSubmitError}
+                    </div>
                   )}
-                </button>
-              </div>
-            )}
+
+                  {/* Submit Deposit Request Button */}
+                  <button
+                    type="button"
+                    onClick={handleSubmitManualRequest}
+                    disabled={isSubmittingManual}
+                    style={{
+                      width: '100%',
+                      padding: '0.85rem',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: '#059669',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '1rem',
+                      cursor: isSubmittingManual ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                    }}
+                  >
+                    {isSubmittingManual ? (
+                      <>
+                        <RefreshCw size={18} className="animate-spin" />
+                        <span>Submitting Request to Admin...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={18} />
+                        <span>Submit Deposit Request (${netCredit.toFixed(2)} USD Net Credit)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              );
+            })()}
 
             {/* Submission Complete Feedback */}
             {manualSubmitSuccess && (
@@ -1489,7 +1707,7 @@ export function DepositPage() {
                     1
                   </div>
                   <div style={{ fontSize: '0.82rem', color: '#4b5563' }}>
-                    <strong style={{ color: '#111827' }}>Send USDT:</strong> Scan the QR code or transfer BEP-20 USDT directly to the destination address above.
+                    <strong style={{ color: '#111827' }}>Send USDT:</strong> Scan QR or transfer BEP-20 USDT to the address above. Remember service charge is added on top (e.g. transfer $105 USDT for $100.00 Fund Wallet credit).
                   </div>
                 </div>
 

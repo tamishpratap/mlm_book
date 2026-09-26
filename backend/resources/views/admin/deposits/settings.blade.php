@@ -52,6 +52,20 @@
                             </div>
                         </div>
 
+                        <!-- Deposit Service Charge / Platform Fee -->
+                        <div class="mb-4">
+                            <label for="deposit_fee_percent" class="form-label fw-bold text-dark">
+                                Deposit Service Charge (%) <span class="badge bg-primary ms-1">Dynamic</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" min="0" max="100" name="deposit_fee_percent" id="deposit_fee_percent" class="form-control fw-bold" placeholder="0.00" value="{{ old('deposit_fee_percent', number_format($depositFeePercent ?? 0.00, 2, '.', '')) }}">
+                                <span class="input-group-text fw-bold">%</span>
+                            </div>
+                            <div class="form-text small">
+                                Percentage added on top as service charge when members make USDT deposits. Total Payable = Deposit + Fee%. Fund Wallet Credit = Received Amount / (100 + Service Charge %). Set to 0 for Zero Fee mode (100% credited).
+                            </div>
+                        </div>
+
                         <!-- Token Contract & Decimals Information -->
                         <div class="mb-4 p-3 bg-light rounded border">
                             <div class="row g-2 small">

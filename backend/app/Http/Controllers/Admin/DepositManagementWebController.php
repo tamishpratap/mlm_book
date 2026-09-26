@@ -301,6 +301,7 @@ class DepositManagementWebController extends Controller
         $instructions = Setting::get('deposit_instructions', 'Transfer payment in USDT (BEP-20) to the crypto wallet address.');
         $qrImage = Setting::get('deposit_qr_image', '');
         $minDeposit = 10.00;
+        $depositFeePercent = (float) Setting::get('deposit_fee_percent', 0.00);
 
         return view('admin.deposits.settings', compact(
             'cryptoWallet',
@@ -308,7 +309,8 @@ class DepositManagementWebController extends Controller
             'usdtContract',
             'instructions',
             'qrImage',
-            'minDeposit'
+            'minDeposit',
+            'depositFeePercent'
         ));
     }
 
@@ -322,6 +324,8 @@ class DepositManagementWebController extends Controller
             'bsc_network' => ['required', 'in:mainnet,testnet'],
             'deposit_instructions' => ['nullable', 'string', 'max:1000'],
             'qr_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'deposit_fee_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'service_charge_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
         if ($request->filled('crypto_wallet_address')) {
@@ -329,6 +333,12 @@ class DepositManagementWebController extends Controller
         }
 
         Setting::set('bsc_network', $request->input('bsc_network'));
+
+        if ($request->has('deposit_fee_percent') || $request->has('service_charge_percent')) {
+            $feeVal = $request->input('deposit_fee_percent', $request->input('service_charge_percent'));
+            $feePercent = round(max(0.00, min(100.00, (float) $feeVal)), 2);
+            Setting::set('deposit_fee_percent', number_format($feePercent, 2, '.', ''));
+        }
 
         if ($request->has('deposit_instructions')) {
             Setting::set('deposit_instructions', trim($request->input('deposit_instructions')));

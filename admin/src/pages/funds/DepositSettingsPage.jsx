@@ -10,6 +10,7 @@ import {
   Copy,
   Check,
   ShieldCheck,
+  Percent,
 } from 'lucide-react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
@@ -50,8 +51,9 @@ export function DepositSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  // Form State (USD + Crypto Wallet + Zero Fee)
+  // Form State (USD + Crypto Wallet + Dynamic Service Charge)
   const [cryptoWalletAddress, setCryptoWalletAddress] = useState('');
+  const [serviceChargePercent, setServiceChargePercent] = useState('0.00');
   const [instructions, setInstructions] = useState('');
   const [currentQrUrl, setCurrentQrUrl] = useState(null);
   const [copiedWallet, setCopiedWallet] = useState(false);
@@ -69,6 +71,11 @@ export function DepositSettingsPage() {
       .then((res) => {
         const s = res.settings || {};
         setCryptoWalletAddress(s.deposit_crypto_wallet_address || '');
+        setServiceChargePercent(
+          s.deposit_fee_percent !== undefined
+            ? String(s.deposit_fee_percent)
+            : (s.service_charge_percent !== undefined ? String(s.service_charge_percent) : '0.00')
+        );
         setInstructions(s.deposit_instructions || '');
         setCurrentQrUrl(s.deposit_qr_url || null);
       })
@@ -88,6 +95,11 @@ export function DepositSettingsPage() {
         if (!isMounted) return;
         const s = res.settings || {};
         setCryptoWalletAddress(s.deposit_crypto_wallet_address || '');
+        setServiceChargePercent(
+          s.deposit_fee_percent !== undefined
+            ? String(s.deposit_fee_percent)
+            : (s.service_charge_percent !== undefined ? String(s.service_charge_percent) : '0.00')
+        );
         setInstructions(s.deposit_instructions || '');
         setCurrentQrUrl(s.deposit_qr_url || null);
       })
@@ -138,6 +150,8 @@ export function DepositSettingsPage() {
       const payload = {
         deposit_crypto_wallet_address: cryptoWalletAddress.trim(),
         deposit_instructions: instructions.trim(),
+        deposit_fee_percent: parseFloat(serviceChargePercent) || 0,
+        service_charge_percent: parseFloat(serviceChargePercent) || 0,
       };
 
       const files = {};
@@ -148,6 +162,11 @@ export function DepositSettingsPage() {
       const res = await fundsApi.updateSettings(payload, files);
       const s = res.settings || {};
       setCryptoWalletAddress(s.deposit_crypto_wallet_address || '');
+      setServiceChargePercent(
+        s.deposit_fee_percent !== undefined
+          ? String(s.deposit_fee_percent)
+          : (s.service_charge_percent !== undefined ? String(s.service_charge_percent) : '0.00')
+      );
       setInstructions(s.deposit_instructions || '');
       setCurrentQrUrl(s.deposit_qr_url || null);
       setSelectedFile(null);
@@ -156,7 +175,7 @@ export function DepositSettingsPage() {
       toast.current?.show({
         severity: 'success',
         summary: 'Settings Saved',
-        detail: 'Payment QR Code, Crypto Wallet Address, and USDT (BEP-20) deposit settings updated successfully.',
+        detail: 'Deposit Service Charge, Crypto Wallet Address, and Payment QR settings updated successfully.',
         life: 4000,
       });
     } catch (err) {
@@ -320,23 +339,101 @@ export function DepositSettingsPage() {
           </div>
         </div>
 
-        {/* Card 3: Payment Currency & Zero Fee Policy */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-indigo-100 text-indigo-600">
-              <DollarSign className="w-5 h-5" />
+        {/* Card 3: Payment Currency & Dynamic Service Charge */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-100 text-indigo-600">
+                <Percent className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Deposit Service Charge & Fee Policy
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Configure dynamic service charge / platform fee percentage deducted on Member USDT deposits.
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Payment Currency & Fee Policy
-              </h3>
-              <p className="text-xs text-slate-500">
-                Active parameters governing Member advertising fund deposits.
-              </p>
+
+            <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600">
+              <span>Active Status:</span>
+              <span className={`px-2 py-0.5 rounded-md font-bold text-xs ${
+                parseFloat(serviceChargePercent) > 0 
+                  ? 'bg-amber-100 text-amber-800' 
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}>
+                {parseFloat(serviceChargePercent) > 0 ? `${parseFloat(serviceChargePercent)}% Service Charge` : '0% (Zero Fee)'}
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Service Charge Input & Presets */}
+          <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-4 space-y-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+              Service Charge Percentage (%)
+            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative max-w-xs w-full">
+                <InputText
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={serviceChargePercent}
+                  onChange={(e) => setServiceChargePercent(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full text-base font-bold border border-slate-300 rounded-lg pl-3.5 pr-10 py-2.5 bg-white text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                />
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">
+                  %
+                </span>
+              </div>
+
+              {/* Preset Buttons */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { label: '0% (Free)', val: '0.00' },
+                  { label: '2%', val: '2.00' },
+                  { label: '5%', val: '5.00' },
+                  { label: '10%', val: '10.00' },
+                  { label: '15%', val: '15.00' },
+                ].map((preset) => (
+                  <button
+                    key={preset.val}
+                    type="button"
+                    onClick={() => setServiceChargePercent(preset.val)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      parseFloat(serviceChargePercent) === parseFloat(preset.val)
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Calculation Simulation Box */}
+            <div className={`p-3 rounded-lg border text-xs leading-relaxed ${
+              parseFloat(serviceChargePercent) > 0
+                ? 'bg-amber-50/80 border-amber-200 text-amber-900'
+                : 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+            }`}>
+              {parseFloat(serviceChargePercent) > 0 ? (
+                <div>
+                  <strong>⚡ Dynamic Service Charge Active (On Top):</strong> Service charge is added on top of the deposit amount. Example: If member deposits <strong>100.00 USD</strong> with <strong>{parseFloat(serviceChargePercent)}%</strong> fee, the total amount payable is <strong>{(100 * (1 + parseFloat(serviceChargePercent) / 100)).toFixed(2)} USDT</strong>. The member receives <strong>${( (100 * (1 + parseFloat(serviceChargePercent) / 100)) / (1 + parseFloat(serviceChargePercent) / 100) ).toFixed(2)} USD</strong> into their Fund Wallet (Formula: Received Amount / (100 + {parseFloat(serviceChargePercent)}%)).
+                </div>
+              ) : (
+                <div>
+                  <strong>✨ Zero Fee Mode Active:</strong> 100% of deposited USDT will be credited to member accounts without any deductions (1 USDT = 1 USD).
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             {/* Currency Card */}
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
               <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
@@ -364,15 +461,25 @@ export function DepositSettingsPage() {
             </div>
 
             {/* Credit Policy Card */}
-            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-1">
+            <div className={`p-4 rounded-xl border ${
+              parseFloat(serviceChargePercent) > 0
+                ? 'bg-amber-50/60 border-amber-200'
+                : 'bg-emerald-50/60 border-emerald-200'
+            }`}>
+              <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${
+                parseFloat(serviceChargePercent) > 0 ? 'text-amber-800' : 'text-emerald-800'
+              }`}>
                 Deposit Fee
               </div>
-              <div className="text-2xl font-black text-emerald-600">
-                0% (Zero Fee)
+              <div className={`text-2xl font-black ${
+                parseFloat(serviceChargePercent) > 0 ? 'text-amber-600' : 'text-emerald-600'
+              }`}>
+                {parseFloat(serviceChargePercent) > 0 ? `${parseFloat(serviceChargePercent)}% Fee` : '0% (Free)'}
               </div>
               <span className="text-[11px] text-slate-400 mt-1 block">
-                1 USDT = 1 USDT ad credit
+                {parseFloat(serviceChargePercent) > 0
+                  ? `Net Credit: ${(100 - parseFloat(serviceChargePercent)).toFixed(2)}%`
+                  : '1 USDT = 1 USDT ad credit'}
               </span>
             </div>
           </div>
@@ -380,7 +487,7 @@ export function DepositSettingsPage() {
           <div className="p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-200/80 flex items-center gap-2.5 text-xs text-indigo-800">
             <ShieldCheck className="w-5 h-5 text-indigo-600 flex-shrink-0" />
             <span>
-              <strong>USDT (BEP-20) Rule:</strong> Deposits are accepted exclusively in <strong>USDT (BEP-20)</strong>. 100% of deposited USDT is credited without platform fees or conversion deductions.
+              <strong>USDT (BEP-20) Rule:</strong> Deposits are accepted exclusively in <strong>USDT (BEP-20)</strong>. Changes to the service charge take effect immediately for all subsequent deposits.
             </span>
           </div>
         </div>

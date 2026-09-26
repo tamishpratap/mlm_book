@@ -37,6 +37,7 @@ class DepositVerificationController extends Controller
         $isTestMode = (bool) config('blockchain.bsc.test_mode', env('APP_ENV') === 'local');
         $isLocal = app()->environment('local', 'testing');
         $activeTestMode = $isTestMode && $isLocal;
+        $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
         $stats = $this->getMemberDepositStats($member);
 
         return response()->json([
@@ -53,6 +54,8 @@ class DepositVerificationController extends Controller
                 'qr_code_url' => $qrUrl,
                 'qr_url' => $qrUrl,
                 'deposit_instructions' => $instructions,
+                'deposit_fee_percent' => $feePercent,
+                'service_charge_percent' => $feePercent,
                 'min_deposit' => $minDeposit,
                 'min_deposit_label' => '$10.00 USD equivalent',
                 'is_test_mode' => $activeTestMode,
@@ -251,6 +254,17 @@ class DepositVerificationController extends Controller
             $fromAddress = $verification['from_address'] ?? null;
             $verifiedAmount = (float) $verification['transferred_amount'];
 
+            // Calculate dynamic Service Charge / Platform Fee on top:
+            // Formula requested: Net Amount = Received Amount / (1 + feePercent / 100)
+            $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
+            if ($feePercent > 0.00) {
+                $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 2);
+                $feeAmount = round($verifiedAmount - $netAmount, 2);
+            } else {
+                $netAmount = $verifiedAmount;
+                $feeAmount = 0.00;
+            }
+
             // 1. Create record in import_funds
             $importFund = ImportFund::create([
                 'memberid' => substr($member->user_id, 0, 20),
@@ -258,7 +272,7 @@ class DepositVerificationController extends Controller
                 'member_id' => $member->id,
                 'txnid' => substr($txHash, 0, 100),
                 'transaction_hash' => $txHash,
-                'amount' => $verifiedAmount,
+                'amount' => $netAmount,
                 'type' => 'Add',
                 'wallet_type' => 'USDT',
                 'wallet_address' => $fromAddress,
@@ -270,7 +284,7 @@ class DepositVerificationController extends Controller
                 'verification_status' => 'verified',
                 'deposit_status' => ImportFund::STATUS_VERIFIED, // Verified — Awaiting Admin Approval
                 'verification_payload' => $verification,
-                'admin_notes' => "Manual request submitted after verified on-chain transfer of {$verifiedAmount} USDT.",
+                'admin_notes' => "Manual request verified on-chain: {$verifiedAmount} USDT. Service Charge ({$feePercent}%): {$feeAmount} USDT. Net: {$netAmount} USD.",
                 'mode' => 'Mannual',
                 'verified_at' => now(),
             ]);
@@ -279,9 +293,9 @@ class DepositVerificationController extends Controller
             $adDeposit = AdDeposit::create([
                 'member_id' => $member->id,
                 'amount_inr' => $verifiedAmount,
-                'fee_percent' => 0.00,
-                'fee_amount_inr' => 0.00,
-                'net_amount_inr' => $verifiedAmount,
+                'fee_percent' => $feePercent,
+                'fee_amount_inr' => $feeAmount,
+                'net_amount_inr' => $netAmount,
                 'submitted_amount' => $amount,
                 'verified_amount' => $verifiedAmount,
                 'currency_in' => 'USDT',
@@ -292,7 +306,7 @@ class DepositVerificationController extends Controller
                 'sender_address' => $fromAddress,
                 'block_number' => $verification['block_number'] ?? null,
                 'exchange_rate' => 1.00,
-                'expected_usd_amount' => $verifiedAmount,
+                'expected_usd_amount' => $netAmount,
                 'transaction_reference' => $txHash,
                 'transaction_hash' => $txHash,
                 'status' => AdDeposit::STATUS_PENDING,
@@ -300,7 +314,7 @@ class DepositVerificationController extends Controller
                 'verification_source' => $verification['verification_source'] ?? 'bsc_rpc',
                 'verification_payload' => $verification,
                 'submitted_at' => now(),
-                'admin_notes' => "Manual request verified on-chain: {$verifiedAmount} USDT transferred to {$recipientWallet}. Awaiting Admin Approval.",
+                'admin_notes' => "Manual request verified on-chain: {$verifiedAmount} USDT to {$recipientWallet}. Service Charge ({$feePercent}%): {$feeAmount} USDT. Net: {$netAmount} USD. Awaiting Admin Approval.",
             ]);
 
             $network = Setting::get('bsc_network', config('blockchain.bsc.network', 'mainnet'));
@@ -309,11 +323,14 @@ class DepositVerificationController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 'verified',
-                'message' => 'Your deposit request has been submitted to the Admin Panel. Status: Verified — Awaiting Admin Approval.',
+                'message' => "Your deposit request has been submitted to the Admin Panel. Status: Verified — Awaiting Admin Approval (Net Credit: \${$netAmount} USD).",
                 'deposit' => [
                     'id' => $importFund->id,
                     'orderid' => $importFund->orderid,
                     'amount' => $verifiedAmount,
+                    'net_amount' => $netAmount,
+                    'fee_amount' => $feeAmount,
+                    'fee_percent' => $feePercent,
                     'transaction_hash' => $txHash,
                     'wallet_address' => $fromAddress,
                     'network' => 'BEP-20',
@@ -393,6 +410,17 @@ class DepositVerificationController extends Controller
             $fromAddress = $verification['from_address'] ?? null;
             $verifiedAmount = (float) $verification['transferred_amount'];
 
+            // Calculate dynamic Service Charge / Platform Fee on top:
+            // Formula requested: Net Amount = Received Amount / (1 + feePercent / 100)
+            $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
+            if ($feePercent > 0.00) {
+                $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 2);
+                $feeAmount = round($verifiedAmount - $netAmount, 2);
+            } else {
+                $netAmount = $verifiedAmount;
+                $feeAmount = 0.00;
+            }
+
             // 1. Record in import_funds table
             $importFund = ImportFund::create([
                 'memberid' => substr($member->user_id, 0, 20),
@@ -400,7 +428,7 @@ class DepositVerificationController extends Controller
                 'member_id' => $member->id,
                 'txnid' => substr($txHash, 0, 100),
                 'transaction_hash' => $txHash,
-                'amount' => $verifiedAmount,
+                'amount' => $netAmount,
                 'type' => 'Add',
                 'wallet_type' => 'USDT',
                 'wallet_address' => $fromAddress,
@@ -412,7 +440,7 @@ class DepositVerificationController extends Controller
                 'verification_status' => 'verified',
                 'deposit_status' => ImportFund::STATUS_VERIFIED,
                 'verification_payload' => $verification,
-                'admin_notes' => "DApp deposit: {$verifiedAmount} USDT transferred from {$fromAddress} on BNB Smart Chain.",
+                'admin_notes' => "DApp deposit: {$verifiedAmount} USDT from {$fromAddress}. Service Charge ({$feePercent}%): {$feeAmount} USDT. Net: {$netAmount} USD.",
                 'mode' => 'Online',
                 'verified_at' => now(),
             ]);
@@ -421,9 +449,9 @@ class DepositVerificationController extends Controller
             AdDeposit::create([
                 'member_id' => $member->id,
                 'amount_inr' => $verifiedAmount,
-                'fee_percent' => 0.00,
-                'fee_amount_inr' => 0.00,
-                'net_amount_inr' => $verifiedAmount,
+                'fee_percent' => $feePercent,
+                'fee_amount_inr' => $feeAmount,
+                'net_amount_inr' => $netAmount,
                 'submitted_amount' => $amount,
                 'verified_amount' => $verifiedAmount,
                 'currency_in' => 'USDT',
@@ -434,7 +462,7 @@ class DepositVerificationController extends Controller
                 'sender_address' => $fromAddress,
                 'block_number' => $verification['block_number'] ?? null,
                 'exchange_rate' => 1.00,
-                'expected_usd_amount' => $verifiedAmount,
+                'expected_usd_amount' => $netAmount,
                 'transaction_reference' => $txHash,
                 'transaction_hash' => $txHash,
                 'status' => AdDeposit::STATUS_PENDING,
@@ -442,7 +470,7 @@ class DepositVerificationController extends Controller
                 'verification_source' => $verification['verification_source'] ?? 'bsc_rpc',
                 'verification_payload' => $verification,
                 'submitted_at' => now(),
-                'admin_notes' => "DApp deposit verified on-chain: {$verifiedAmount} USDT from {$fromAddress}. Awaiting Admin Approval.",
+                'admin_notes' => "DApp deposit verified on-chain: {$verifiedAmount} USDT from {$fromAddress}. Fee: {$feeAmount} ({$feePercent}%). Net: {$netAmount} USD. Awaiting Admin Approval.",
             ]);
 
             $network = Setting::get('bsc_network', config('blockchain.bsc.network', 'mainnet'));
@@ -451,11 +479,14 @@ class DepositVerificationController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 'verified',
-                'message' => "DApp deposit of \${$verifiedAmount} USDT successfully completed and recorded! Awaiting Admin Approval.",
+                'message' => "DApp deposit of \${$verifiedAmount} USDT successfully completed and recorded! (Net Credit: \${$netAmount} USD). Awaiting Admin Approval.",
                 'deposit' => [
                     'id' => $importFund->id,
                     'orderid' => $importFund->orderid,
                     'amount' => $verifiedAmount,
+                    'net_amount' => $netAmount,
+                    'fee_amount' => $feeAmount,
+                    'fee_percent' => $feePercent,
                     'transaction_hash' => $txHash,
                     'wallet_address' => $fromAddress,
                     'network' => 'BEP-20',

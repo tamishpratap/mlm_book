@@ -37,6 +37,7 @@ class AdDepositSettingsController extends Controller
                 'deposit_currency_label' => 'USDT (BEP-20)',
                 'deposit_currency_symbol' => 'USDT',
                 'deposit_fee_percent' => (float) Setting::get('deposit_fee_percent', 0.00),
+                'service_charge_percent' => (float) Setting::get('deposit_fee_percent', 0.00),
                 'deposit_instructions' => Setting::get('deposit_instructions', 'Transfer payment in USDT (BEP-20) using the configured crypto wallet address or QR code. Enter your transaction hash after completing payment.'),
                 'deposit_disclaimer' => 'IMPORTANT: Deposits are accepted exclusively in USDT (BEP-20). Any other token or network is not supported and will not be credited.',
                 // Legacy preserved keys
@@ -48,7 +49,7 @@ class AdDepositSettingsController extends Controller
     }
 
     /**
-     * Update deposit settings (Crypto Wallet Address, QR image, Instructions).
+     * Update deposit settings (Crypto Wallet Address, QR image, Instructions, Service Charge / Fee).
      */
     public function updateSettings(Request $request): JsonResponse
     {
@@ -56,6 +57,8 @@ class AdDepositSettingsController extends Controller
             'deposit_crypto_wallet_address' => ['nullable', 'string', 'max:255'],
             'deposit_instructions' => ['nullable', 'string', 'max:5000'],
             'deposit_qr_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:5120'],
+            'deposit_fee_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'service_charge_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
         if ($request->hasFile('deposit_qr_image')) {
@@ -81,11 +84,17 @@ class AdDepositSettingsController extends Controller
             Setting::set('deposit_crypto_wallet_address', trim($request->input('deposit_crypto_wallet_address')), 'funds');
         }
 
-        // Canonical active configuration: USDT BEP-20 token, 0% platform fee
+        // Canonical active configuration: USDT BEP-20 token
         Setting::set('deposit_currency', 'USDT', 'funds');
         Setting::set('deposit_network', 'BEP-20', 'funds');
         Setting::set('deposit_token', 'USDT', 'funds');
-        Setting::set('deposit_fee_percent', '0.00', 'funds');
+
+        // Dynamic Service Charge / Deposit Fee Percent
+        if ($request->has('deposit_fee_percent') || $request->has('service_charge_percent')) {
+            $feeVal = $request->input('deposit_fee_percent', $request->input('service_charge_percent'));
+            $feePercent = round(max(0.00, min(100.00, (float) $feeVal)), 2);
+            Setting::set('deposit_fee_percent', number_format($feePercent, 2, '.', ''), 'funds');
+        }
 
         if ($request->has('deposit_instructions')) {
             Setting::set('deposit_instructions', trim($request->input('deposit_instructions', '')), 'funds');
@@ -201,9 +210,16 @@ class AdDepositSettingsController extends Controller
             }
 
             // Determine authoritative USD credit
-            if ($deposit->currency_in === 'USD' || (float) $deposit->exchange_rate === 1.00 || (float) ($deposit->fee_percent ?? 0.00) === 0.00) {
-                // Exact Credit Rule for USD: Deposited USD = Credited USD (Zero Deduction)
-                $usdCredit = (float) ($deposit->expected_usd_amount > 0 ? $deposit->expected_usd_amount : $deposit->amount_inr);
+            $grossAmount = (float) ($deposit->verified_amount > 0 ? $deposit->verified_amount : ($deposit->submitted_amount > 0 ? $deposit->submitted_amount : $deposit->amount_inr));
+            $feePercent = (float) ($deposit->fee_percent ?? Setting::get('deposit_fee_percent', 0.00));
+            if ($feePercent > 0.00) {
+                $netAmount = (float) ($deposit->net_amount_inr > 0 ? $deposit->net_amount_inr : round($grossAmount / (1 + ($feePercent / 100)), 2));
+                $feeAmount = (float) ($deposit->fee_amount_inr > 0 ? $deposit->fee_amount_inr : round($grossAmount - $netAmount, 2));
+                // Deduct service charge: Member receives Net Amount (gross / (1 + feePercent/100))
+                $usdCredit = $netAmount;
+            } elseif ($deposit->currency_in === 'USD' || (float) $deposit->exchange_rate === 1.00) {
+                // Exact credit when zero fee
+                $usdCredit = (float) ($deposit->expected_usd_amount > 0 ? $deposit->expected_usd_amount : $grossAmount);
             } else {
                 // Legacy INR deposit snapshot calculation
                 $storedGrossInr = (float) $deposit->amount_inr;
@@ -221,6 +237,12 @@ class AdDepositSettingsController extends Controller
                     'message' => 'Calculated USD credit amount is invalid ($0.00).',
                 ], 422);
             }
+
+            // Sync deposit fee columns
+            $deposit->fee_percent = $feePercent;
+            $deposit->fee_amount_inr = $feeAmount;
+            $deposit->net_amount_inr = $usdCredit;
+            $deposit->expected_usd_amount = $usdCredit;
 
             // 1. Credit Member's Fund Wallet (p2p_wallet)
             $previousP2pBalance = (float) ($member->p2p_wallet ?? 0.00);
