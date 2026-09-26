@@ -10,6 +10,7 @@ import {
   PauseCircle,
   PlayCircle,
   StopCircle,
+  XCircle,
   ShieldCheck,
   Clock,
   Send,
@@ -64,6 +65,7 @@ export function AdCampaignDetailModal({
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   // Search & Filtering state
   const [searchInputValue, setSearchInputValue] = useState('');
@@ -670,16 +672,32 @@ export function AdCampaignDetailModal({
 
       if (actionType === 'submit') {
         res = await businessApi.submitAdCampaign(page.slug, cId);
-        setSuccessMsg('Campaign submitted for review successfully!');
+        setSuccessMsg(res?.message || 'Campaign submitted for review successfully!');
       } else if (actionType === 'pause') {
         res = await businessApi.pauseAdCampaign(page.slug, cId);
-        setSuccessMsg('Campaign paused.');
+        setSuccessMsg(res?.message || 'Campaign paused.');
       } else if (actionType === 'resume') {
         res = await businessApi.resumeAdCampaign(page.slug, cId);
-        setSuccessMsg('Campaign resumed successfully.');
+        setSuccessMsg(res?.message || 'Campaign resumed successfully.');
       } else if (actionType === 'stop') {
         res = await businessApi.stopAdCampaign(page.slug, cId);
-        setSuccessMsg('Campaign stopped.');
+        setSuccessMsg(res?.message || 'Campaign stopped successfully. You can restart it anytime.');
+      } else if (actionType === 'start') {
+        res = await businessApi.restartAdCampaign(page.slug, cId);
+        setSuccessMsg(res?.message || 'Campaign started successfully!');
+      } else if (actionType === 'close') {
+        res = await businessApi.closeAdCampaign(page.slug, cId);
+        setSuccessMsg(res?.message || 'Campaign closed successfully. Remaining funds refunded to your P2P Wallet.');
+        if (res?.campaign) {
+          setCurrentCampaign(res.campaign);
+          if (onCampaignUpdated) {
+            onCampaignUpdated(res.campaign);
+          }
+        }
+        setShowCloseConfirm(false);
+        // Auto-close modal after 2 seconds
+        setTimeout(() => { onClose(); }, 2000);
+        return;
       }
 
       if (res?.campaign) {
@@ -690,11 +708,17 @@ export function AdCampaignDetailModal({
       }
     } catch (err) {
       console.error(`Failed to ${actionType} campaign:`, err);
-      setErrorMsg(err.response?.data?.message || `Failed to perform action. Please try again.`);
+      const errData = err.response?.data;
+      if (errData?.needs_funds) {
+        setErrorMsg(`${errData.message} Click "Add Funds" below to top up your campaign budget.`);
+      } else {
+        setErrorMsg(errData?.message || `Failed to perform action. Please try again.`);
+      }
     } finally {
       setIsActionLoading(false);
     }
   };
+
 
   const status = currentCampaign.status;
   const approvalStatus = currentCampaign.approval_status;
@@ -3486,6 +3510,58 @@ export function AdCampaignDetailModal({
                     <span>Stop Campaign</span>
                   </button>
                 )}
+
+                {/* Stopped -> Start */}
+                {status === 'stopped' && (
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => handleAction('start')}
+                    disabled={isActionLoading}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      backgroundColor: '#f0fdf4',
+                      color: '#15803d',
+                      border: '1px solid #bbf7d0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <PlayCircle size={15} />
+                    <span>Start Campaign</span>
+                  </button>
+                )}
+
+                {/* Close Ads Button - available for any non-final status */}
+                {!['cancelled', 'completed'].includes(status) && (
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => setShowCloseConfirm(true)}
+                    disabled={isActionLoading}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      backgroundColor: '#1e293b',
+                      color: '#f8fafc',
+                      border: '1px solid #334155',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 6px rgba(15, 23, 42, 0.25)',
+                    }}
+                    title="Permanently close this ad and refund remaining balance to your P2P Fund Wallet"
+                  >
+                    <XCircle size={15} />
+                    <span>Close Ads</span>
+                  </button>
+                )}
               </>
             )}
 
@@ -3508,9 +3584,188 @@ export function AdCampaignDetailModal({
       </div>
 
       {/* ========================================================= */}
+      {/* CLOSE ADS CONFIRMATION MODAL                             */}
+      {/* ========================================================= */}
+      {showCloseConfirm && (
+        <ModalPortal
+          isOpen={showCloseConfirm}
+          onClose={() => !isActionLoading && setShowCloseConfirm(false)}
+          depth={1}
+        >
+          <div
+            className="card"
+            role="dialog"
+            aria-modal="true"
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              backgroundColor: '#ffffff',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '18px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                color: '#ffffff',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <XCircle size={20} color="#ef4444" />
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#ffffff' }}>
+                  Close Ad Campaign
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="mini-button"
+                onClick={() => setShowCloseConfirm(false)}
+                disabled={isActionLoading}
+                style={{
+                  borderRadius: '50%',
+                  padding: '6px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '24px' }}>
+              <div
+                style={{
+                  padding: '16px',
+                  borderRadius: '14px',
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  marginBottom: '18px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                }}
+              >
+                <AlertTriangle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <p style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: 700, color: '#991b1b' }}>
+                    This action is permanent and cannot be undone.
+                  </p>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#b91c1c', lineHeight: 1.5 }}>
+                    The ad campaign will be permanently closed and removed from all member feeds.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: '12px',
+                  backgroundColor: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <Gift size={18} color="#16a34a" />
+                <div>
+                  <div style={{ fontSize: '12px', color: '#166534', fontWeight: 600 }}>Refund to P2P Fund Wallet</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#15803d' }}>
+                    ${remaining.toFixed(2)} USD
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#166534' }}>
+                    will be returned to your P2P Fund Wallet immediately.
+                  </div>
+                </div>
+              </div>
+
+              {errorMsg && (
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    backgroundColor: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#b91c1c',
+                    fontSize: '13px',
+                    marginBottom: '14px',
+                  }}
+                >
+                  {errorMsg}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCloseConfirm(false)}
+                  disabled={isActionLoading}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: '10px',
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    backgroundColor: '#f1f5f9',
+                    color: '#475569',
+                    border: '1px solid #e2e8f0',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAction('close')}
+                  disabled={isActionLoading}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: '10px',
+                    fontSize: '13.5px',
+                    fontWeight: 700,
+                    backgroundColor: isActionLoading ? '#94a3b8' : '#dc2626',
+                    color: '#ffffff',
+                    border: 'none',
+                    cursor: isActionLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    boxShadow: isActionLoading ? 'none' : '0 4px 10px rgba(220, 38, 38, 0.35)',
+                  }}
+                >
+                  {isActionLoading ? (
+                    <RefreshCw size={15} className="animate-spin" />
+                  ) : (
+                    <XCircle size={15} />
+                  )}
+                  <span>{isActionLoading ? 'Closing...' : 'Yes, Close & Refund'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* ========================================================= */}
       {/* BULK CONTACT OUTREACH CONFIRMATION MODAL                  */}
       {/* ========================================================= */}
       {bulkContactModalOpen && (
+
         <ModalPortal
           isOpen={bulkContactModalOpen}
           onClose={() => !isValidatingContact && setBulkContactModalOpen(false)}

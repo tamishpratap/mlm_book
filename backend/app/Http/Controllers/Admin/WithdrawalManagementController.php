@@ -323,15 +323,9 @@ class WithdrawalManagementController extends Controller
             $isFundWallet = str_contains(strtolower((string) $withdrawal->remarks), 'fund wallet') || str_contains(strtolower((string) $withdrawal->remarks), 'p2p_wallet');
 
             if ($member) {
-                if ($isFundWallet) {
-                    $previousBalance = (float) ($member->p2p_wallet ?? 0.00);
-                    $newBalance = round($previousBalance + $refundedAmount, 2);
-                    $member->p2p_wallet = $newBalance;
-                } else {
-                    $previousBalance = (float) ($member->wallet ?? 0.00);
-                    $newBalance = round($previousBalance + $refundedAmount, 2);
-                    $member->wallet = $newBalance;
-                }
+                $previousBalance = (float) ($member->wallet ?? 0.00);
+                $newBalance = round($previousBalance + $refundedAmount, 4);
+                $member->wallet = $newBalance;
                 $member->save();
             }
 

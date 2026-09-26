@@ -35,9 +35,9 @@ class MobileWalletController extends Controller
             'success' => true,
             'wallet' => [
                 'wallet' => (float) ($member->wallet ?? 0.00),
-                'wallet_formatted' => '$' . number_format((float) ($member->wallet ?? 0.00), 2) . ' USD',
+                'wallet_formatted' => '$' . number_format((float) ($member->wallet ?? 0.00), 4) . ' USD',
                 'reward_balance' => (float) ($member->wallet ?? 0.00),
-                'reward_balance_formatted' => '$' . number_format((float) ($member->wallet ?? 0.00), 2) . ' USD',
+                'reward_balance_formatted' => '$' . number_format((float) ($member->wallet ?? 0.00), 4) . ' USD',
                 'ad_balance' => (float) ($member->p2p_wallet ?? 0.00),
                 'ad_balance_formatted' => '$' . number_format((float) ($member->p2p_wallet ?? 0.00), 2) . ' USDT',
                 'total_earned' => round($totalEarned, 4),

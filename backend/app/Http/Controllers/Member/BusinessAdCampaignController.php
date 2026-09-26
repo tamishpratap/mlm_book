@@ -46,7 +46,12 @@ class BusinessAdCampaignController extends Controller
             ->withCount(['impressions', 'clicks']);
 
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $statuses = explode(',', $request->input('status'));
+            if (count($statuses) > 1) {
+                $query->whereIn('status', $statuses);
+            } else {
+                $query->where('status', $request->input('status'));
+            }
         }
 
         if ($request->filled('approval_status')) {
@@ -162,12 +167,14 @@ class BusinessAdCampaignController extends Controller
                 ]);
             }
 
-            // ONE POST = ONE CAMPAIGN RULE
-            $existingCampaign = AdCampaign::where('post_id', $validated['post_id'])->first();
+            // ONE POST = ONE ACTIVE CAMPAIGN RULE
+            $existingCampaign = AdCampaign::where('post_id', $validated['post_id'])
+                ->whereNotIn('status', [AdCampaign::STATUS_CANCELLED, AdCampaign::STATUS_COMPLETED])
+                ->first();
             if ($existingCampaign) {
                 throw ValidationException::withMessages([
                     'post_id' => [
-                        "This post already has an ad campaign ('{$existingCampaign->campaign_name}'). Add funds to the existing campaign instead of creating a new one."
+                        "This post already has an active ad campaign ('{$existingCampaign->campaign_name}'). Add funds to the existing campaign instead of creating a new one."
                     ],
                 ]);
             }
@@ -182,11 +189,13 @@ class BusinessAdCampaignController extends Controller
         $campaign = DB::transaction(function () use ($member, $businessPage, $validated, $campaignBudget, $feePercent, $feeAmount, $totalWalletDebit) {
             // Re-check concurrency inside transaction with lock
             if (!empty($validated['post_id'])) {
-                $existingCampaignInTx = AdCampaign::where('post_id', $validated['post_id'])->lockForUpdate()->first();
+                $existingCampaignInTx = AdCampaign::where('post_id', $validated['post_id'])
+                    ->whereNotIn('status', [AdCampaign::STATUS_CANCELLED, AdCampaign::STATUS_COMPLETED])
+                    ->lockForUpdate()->first();
                 if ($existingCampaignInTx) {
                     throw ValidationException::withMessages([
                         'post_id' => [
-                            "This post already has an ad campaign ('{$existingCampaignInTx->campaign_name}'). Add funds to the existing campaign instead of creating a new one."
+                            "This post already has an active ad campaign ('{$existingCampaignInTx->campaign_name}'). Add funds to the existing campaign instead of creating a new one."
                         ],
                     ]);
                 }
@@ -357,7 +366,9 @@ class BusinessAdCampaignController extends Controller
      */
     public function checkPostCampaign(Request $request, BusinessPage $businessPage, Post $post)
     {
-        $campaign = AdCampaign::where('post_id', $post->id)->first();
+        $campaign = AdCampaign::where('post_id', $post->id)
+            ->whereNotIn('status', [AdCampaign::STATUS_CANCELLED, AdCampaign::STATUS_COMPLETED])
+            ->first();
 
         return response()->json([
             'success' => true,
@@ -626,31 +637,139 @@ class BusinessAdCampaignController extends Controller
             ], 403);
         }
 
-        $refundedAmount = 0.00;
-        DB::transaction(function () use ($campaign, $member, &$refundedAmount) {
-            if (!$campaign->stop()) {
-                throw new \RuntimeException('Campaign is already stopped or finished.');
-            }
+        DB::transaction(function () use ($campaign) {
+            /** @var AdCampaign $lockedCampaign */
+            $lockedCampaign = AdCampaign::where('id', $campaign->id)->lockForUpdate()->first();
 
-            $unspent = (float) ($campaign->remaining_amount ?? 0.00);
-            if ($unspent > 0) {
-                /** @var Member $lockedMember */
-                $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
-                if ($lockedMember) {
-                    $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $unspent, 2);
-                    $lockedMember->save();
-                    $refundedAmount = $unspent;
-                }
+            if (!$lockedCampaign->stop()) {
+                throw new \RuntimeException('Campaign is already stopped or finished.');
             }
         });
 
+        $freshCampaign = $campaign->fresh(['post', 'owner:id,name,user_id,email']);
+
         return response()->json([
             'success' => true,
-            'message' => $refundedAmount > 0
-                ? "Campaign stopped successfully. Unspent \${$refundedAmount} USD refunded to your advertising funds."
-                : 'Campaign stopped successfully.',
-            'refunded_amount' => $refundedAmount,
+            'message' => 'Campaign stopped successfully. Your remaining budget of $' . number_format((float)($freshCampaign->remaining_amount ?? 0), 2) . ' USD is preserved. You can restart the campaign anytime.',
+            'refunded_amount' => 0.00,
+            'campaign' => $freshCampaign,
+        ]);
+    }
+
+    /**
+     * Restart a stopped campaign.
+     */
+    public function restart(Request $request, BusinessPage $businessPage, $campaignIdentifier)
+    {
+        $member = auth('member')->user();
+        $campaign = $this->resolveCampaign($businessPage, $campaignIdentifier);
+
+        if (!$businessPage->isOwner($member->id) && !$businessPage->isTeamAdmin($member->id) && (int) $campaign->member_id !== (int) $member->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to restart this ad campaign.',
+            ], 403);
+        }
+
+        // Validate prerequisites before calling restart()
+        if ($campaign->status !== AdCampaign::STATUS_STOPPED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only stopped campaigns can be started. Current status: ' . $campaign->status,
+            ], 422);
+        }
+
+        if ($campaign->approval_status !== AdCampaign::APPROVAL_APPROVED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Campaign must be approved before it can be started. Current approval status: ' . $campaign->approval_status,
+            ], 422);
+        }
+
+        $minReward = AdRewardRule::getMinimumActiveRewardAmount(
+            $campaign->campaign_type === AdCampaign::TYPE_EVENT ? AdRewardRule::TYPE_EVENT : AdRewardRule::TYPE_BUSINESS_AD
+        ) ?? AdRewardRule::getMinimumActiveRewardAmount() ?? 0.0250;
+
+        $remaining = (float) ($campaign->remaining_amount ?? 0.00);
+        if ($remaining < $minReward || $remaining <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient campaign budget to start. Remaining: $' . number_format($remaining, 2) . ' USD. Minimum required: $' . number_format($minReward, 4) . ' USD. Please add funds to this campaign first.',
+                'remaining_amount' => $remaining,
+                'min_required' => $minReward,
+                'needs_funds' => true,
+            ], 422);
+        }
+
+        if ($campaign->end_at && $campaign->end_at->isPast()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Campaign end date has passed. Please update the campaign end date before restarting.',
+            ], 422);
+        }
+
+        $campaign->update(['status' => AdCampaign::STATUS_ACTIVE]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Campaign started successfully! It is now active and running.',
             'campaign' => $campaign->fresh(['post', 'owner:id,name,user_id,email']),
+        ]);
+    }
+
+    /**
+     * Close a campaign and refund remaining balance to p2p fund wallet.
+     */
+    public function close(Request $request, BusinessPage $businessPage, $campaignIdentifier)
+    {
+        $member = auth('member')->user();
+        $campaign = $this->resolveCampaign($businessPage, $campaignIdentifier);
+
+        if (!$businessPage->isOwner($member->id) && !$businessPage->isTeamAdmin($member->id) && (int) $campaign->member_id !== (int) $member->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to close this ad campaign.',
+            ], 403);
+        }
+
+        $refundedAmount = 0.00;
+
+        try {
+            DB::transaction(function () use ($campaign, $member, &$refundedAmount) {
+                /** @var AdCampaign $lockedCampaign */
+                $lockedCampaign = AdCampaign::where('id', $campaign->id)->lockForUpdate()->first();
+                /** @var \App\Models\Member $lockedMember */
+                $lockedMember = \App\Models\Member::where('id', $member->id)->lockForUpdate()->first();
+
+                if (in_array($lockedCampaign->status, [AdCampaign::STATUS_COMPLETED, AdCampaign::STATUS_CANCELLED])) {
+                    throw new \RuntimeException('Campaign is already closed.');
+                }
+                
+                $refundedAmount = (float) ($lockedCampaign->remaining_amount ?? 0.00);
+
+                $lockedCampaign->status = AdCampaign::STATUS_CANCELLED;
+                $lockedCampaign->remaining_amount = 0.00;
+                $lockedCampaign->save();
+                
+                if ($refundedAmount > 0) {
+                    $lockedMember->creditP2pWallet($refundedAmount);
+                    $lockedMember->save();
+                }
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
+
+        $freshCampaign = $campaign->fresh(['post', 'owner:id,name,user_id,email']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Campaign closed successfully. $' . number_format($refundedAmount, 2) . ' USD refunded to your P2P Fund Wallet.',
+            'refunded_amount' => $refundedAmount,
+            'campaign' => $freshCampaign,
         ]);
     }
 
@@ -1090,7 +1209,7 @@ class BusinessAdCampaignController extends Controller
             }
 
             // 8. Credit Member's wallet balance atomically
-            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 2);
+            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 4);
             $lockedMember->save();
             $newWalletBalance = (float) $lockedMember->wallet;
 
@@ -1679,7 +1798,7 @@ class BusinessAdCampaignController extends Controller
             }
 
             // Credit Member Wallet Balance atomically
-            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 2);
+            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 4);
             $lockedMember->save();
             $newWalletBalance = (float) $lockedMember->wallet;
 

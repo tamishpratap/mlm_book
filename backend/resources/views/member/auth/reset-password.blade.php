@@ -26,7 +26,7 @@
                 <span class="member-auth-dot-grid member-auth-dot-grid--visual" aria-hidden="true"></span>
 
                 <div class="member-auth-visual-content">
-                    <a class="member-auth-logo" href="{{ route('member.login') }}" aria-label="MLM Book Member Login">
+                    <a class="member-auth-logo" href="/member/login" aria-label="MLM Book Member Login">
                         <img class="mlm-book-logo mlm-book-auth-logo" src="{{ asset('logo/logo.png') }}" alt="MLM Book">
                     </a>
 
@@ -198,7 +198,7 @@
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3v8Z"></path><path d="m9 12 2 2 4-4"></path></svg>
                         <span>Your data is protected and secure with us.</span>
                     </p>
-                    <p class="member-auth-switch"><a href="{{ route('member.login') }}">&larr; Back to Login</a></p>
+                    <p class="member-auth-switch"><a href="/member/login">&larr; Back to Login</a></p>
                 </div>
             </div>
         </section>
