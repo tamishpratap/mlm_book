@@ -20,11 +20,8 @@ class MemberPasswordResetController extends Controller
 {
     public function showForgotPassword()
     {
-        if (Auth::guard('member')->check()) {
-            return redirect()->route('member.dashboard');
-        }
-
-        return view('member.auth.forgot-password');
+        $frontendUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url', 'https://mlmbookai.com')), '/');
+        return redirect()->away($frontendUrl . '/member/forgot-password');
     }
 
     public function sendResetLink(Request $request)
@@ -125,16 +122,11 @@ class MemberPasswordResetController extends Controller
 
     public function showResetPassword(Request $request, string $token)
     {
-        if (Auth::guard('member')->check()) {
-            return redirect()->route('member.dashboard');
-        }
+        $frontendUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url', 'https://mlmbookai.com')), '/');
+        $query = $request->getQueryString();
+        $target = $frontendUrl . '/member/reset-password/' . $token . ($query ? '?' . $query : '');
 
-        $email = (string) $request->query('email', '');
-
-        return view('member.auth.reset-password', [
-            'token' => $token,
-            'email' => $email,
-        ]);
+        return redirect()->away($target);
     }
 
     public function resetPassword(Request $request)
@@ -247,7 +239,8 @@ class MemberPasswordResetController extends Controller
             ]);
         }
 
-        return redirect()->route('member.login')
+        $frontendUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url', 'https://mlmbookai.com')), '/');
+        return redirect()->away($frontendUrl . '/member/login')
             ->with('success', 'Your password has been changed successfully.');
     }
 }
