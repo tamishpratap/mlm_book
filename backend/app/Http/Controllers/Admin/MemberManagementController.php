@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class MemberManagementController extends Controller
@@ -922,5 +923,164 @@ class MemberManagementController extends Controller
         }
 
         return redirect()->back()->with('success', "Member {$member->name} ({$member->user_id}) has been removed from community '{$community->name}'.");
+    }
+
+    /**
+     * Search/lookup members for Security and Wallet Address management.
+     */
+    public function search(Request $request)
+    {
+        $search = trim((string) $request->input('q'));
+        $memberId = $request->input('member_id') ?? $request->input('id');
+
+        $query = Member::query();
+
+        if (!empty($memberId)) {
+            $query->where('id', $memberId);
+        } elseif ($search !== '') {
+            $cleanUser = ltrim($search, '@');
+            $query->where(function ($q) use ($search, $cleanUser) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('user_id', 'like', "%{$cleanUser}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('wallet_address', 'like', "%{$search}%");
+                if (is_numeric($search)) {
+                    $q->orWhere('id', (int) $search);
+                }
+            });
+        }
+
+        $members = $query->select([
+            'id',
+            'name',
+            'user_id',
+            'email',
+            'phone',
+            'profile_photo',
+            'wallet_address',
+            'mobile_verified_at',
+            'blocked_at',
+            'created_at',
+        ])
+        ->latest('created_at')
+        ->limit(25)
+        ->get();
+
+        return response()->json([
+            'success' => true,
+            'members' => $members,
+        ]);
+    }
+
+    /**
+     * Display Security management page.
+     */
+    public function securityView(Request $request)
+    {
+        $selectedMember = null;
+        $memberId = $request->input('member_id') ?? $request->input('id');
+        if ($memberId) {
+            $selectedMember = Member::find($memberId);
+        }
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'selected_member' => $selectedMember,
+            ]);
+        }
+
+        return view('admin.members.security', compact('selectedMember'));
+    }
+
+    /**
+     * Display Wallet Address management page.
+     */
+    public function walletAddressView(Request $request)
+    {
+        $selectedMember = null;
+        $memberId = $request->input('member_id') ?? $request->input('id');
+        if ($memberId) {
+            $selectedMember = Member::find($memberId);
+        }
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'selected_member' => $selectedMember,
+            ]);
+        }
+
+        return view('admin.members.wallet-address', compact('selectedMember'));
+    }
+
+    /**
+     * Update/reset the selected member's password.
+     */
+    public function updatePassword(Request $request, Member $member)
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'password.required' => 'Please enter a new password.',
+            'password.min' => 'The password must be at least 8 characters.',
+            'password.confirmed' => 'The password confirmation does not match.',
+        ]);
+
+        $member->password = Hash::make($request->input('password'));
+        $member->save();
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'message' => "Password for member {$member->name} ({$member->user_id}) has been updated successfully.",
+                'member' => [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'user_id' => $member->user_id,
+                    'email' => $member->email,
+                ],
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Password for member {$member->name} ({$member->user_id}) has been updated successfully.");
+    }
+
+    /**
+     * Update/replace the selected member's wallet address.
+     */
+    public function updateWalletAddress(Request $request, Member $member)
+    {
+        $request->validate([
+            'wallet_address' => [
+                'required',
+                'string',
+                'regex:/^0x[a-fA-F0-9]{40}$/',
+            ],
+        ], [
+            'wallet_address.required' => 'Please enter a valid wallet address.',
+            'wallet_address.regex' => 'Please enter a valid USDT (BEP-20) BNB Smart Chain wallet address (e.g. 0x71C...3972).',
+        ]);
+
+        $newAddress = trim($request->input('wallet_address'));
+        $member->wallet_address = $newAddress;
+        $member->save();
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'message' => "Wallet address for member {$member->name} ({$member->user_id}) has been updated successfully.",
+                'member' => [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'user_id' => $member->user_id,
+                    'email' => $member->email,
+                    'wallet_address' => $member->wallet_address,
+                ],
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Wallet address for member {$member->name} ({$member->user_id}) has been updated successfully.");
     }
 }

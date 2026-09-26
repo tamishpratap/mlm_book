@@ -13,7 +13,11 @@ export function AuthProvider({ children }) {
     try {
       const data = await authApi.getMe();
       if (data && data.member) {
-        setUser(data.member);
+        setUser({
+          ...data.member,
+          current_rank: data.current_rank || data.member.current_rank || 'No Rank',
+          rank_info: data.rank_info || data.member.rank_info || null,
+        });
         setUnreadCount(data.unread_notifications_count || 0);
       } else {
         setUser(null);
@@ -31,7 +35,11 @@ export function AuthProvider({ children }) {
     authApi.getMe()
       .then((data) => {
         if (isMounted && data && data.member) {
-          setUser(data.member);
+          setUser({
+            ...data.member,
+            current_rank: data.current_rank || data.member.current_rank || 'No Rank',
+            rank_info: data.rank_info || data.member.rank_info || null,
+          });
           setUnreadCount(data.unread_notifications_count || 0);
         } else if (isMounted) {
           setUser(null);

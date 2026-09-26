@@ -48,7 +48,7 @@ class MemberAdRewardEligibilityController extends Controller
             'success' => true,
             'status' => 'eligible',
             'eligible' => true,
-            'current_rank' => $resolution['rank'] ?? null,
+            'current_rank' => $resolution['rank'] ?? 'No Rank',
             'rank' => $resolution['rank'] ?? null,
             'rank_key' => $resolution['rank_key'] ?? null,
             'priority' => $resolution['priority'] ?? null,
@@ -57,12 +57,14 @@ class MemberAdRewardEligibilityController extends Controller
             'direct_verified_referral_count' => $resolution['direct_verified_referral_count'] ?? 0,
             'user_referrals' => $resolution['user_referrals'] ?? ($resolution['direct_verified_referral_count'] ?? 0),
             'user_team' => $resolution['user_team'] ?? ($resolution['team_count'] ?? 0),
+            'verified_connections' => $resolution['verified_connections'] ?? ($resolution['user_team'] ?? 0),
             'reward' => $resolution['reward'] ?? $resolution['reward_amount_usd'],
             'reward_amount_usd' => $resolution['reward_amount_usd'],
             'reward_amount_exact' => $resolution['reward_amount_exact'],
             'currency' => $resolution['currency'] ?? 'USD',
             'currency_symbol' => $resolution['currency_symbol'] ?? '$',
             'matched_rule_id' => $resolution['matched_rule_id'] ?? null,
+            'next_rank' => $resolution['next_rank'] ?? null,
         ]);
     }
 
@@ -85,13 +87,14 @@ class MemberAdRewardEligibilityController extends Controller
 
         return response()->json([
             'success' => true,
-            'current_rank' => $resolution['rank'] ?? 'Unranked',
+            'current_rank' => $resolution['rank'] ?? 'No Rank',
             'rank' => $resolution['rank'] ?? null,
             'rank_key' => $resolution['rank_key'] ?? null,
             'priority' => $resolution['priority'] ?? null,
             'eligible' => $resolution['eligible'] ?? false,
             'user_referrals' => $resolution['user_referrals'] ?? 0,
             'user_team' => $resolution['user_team'] ?? 0,
+            'verified_connections' => $resolution['verified_connections'] ?? ($resolution['user_team'] ?? 0),
             'referral_requirement' => $resolution['referral_requirement'] ?? null,
             'team_requirement' => $resolution['team_requirement'] ?? null,
             'reward' => $resolution['reward'] ?? 0.0000,
@@ -100,6 +103,7 @@ class MemberAdRewardEligibilityController extends Controller
             'currency' => $resolution['currency'] ?? 'USD',
             'currency_symbol' => $resolution['currency_symbol'] ?? '$',
             'status' => $resolution['status'] ?? 'resolved',
+            'next_rank' => $resolution['next_rank'] ?? null,
             'message' => $resolution['message'] ?? null,
         ]);
     }

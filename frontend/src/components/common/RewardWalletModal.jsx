@@ -13,6 +13,8 @@ import {
   Edit3,
   Send,
   KeyRound,
+  Award,
+  TrendingUp,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import { ModalPortal } from './ModalPortal';
@@ -361,13 +363,13 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
             </div>
           )}
 
-          {/* Balance Cards */}
+          {/* Balance & Rank Cards */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
               gap: '12px',
-              marginBottom: '24px',
+              marginBottom: '16px',
               width: '100%',
               boxSizing: 'border-box',
             }}
@@ -384,15 +386,15 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
               <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
                 Wallet Balance
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 900, color: '#047857' }}>
-                ${Number(balance).toFixed(4)} <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>USD</span>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: '#047857' }}>
+                ${Number(balance).toFixed(4)} <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>USD</span>
               </div>
               <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
                 Separate from Advertising Funds
               </div>
             </div>
 
-            {/* Total Rewards Earned */}
+            {/* Member Rank Card */}
             <div
               style={{
                 padding: '16px',
@@ -402,17 +404,18 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
               }}
             >
               <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
-                Total Rewarded Campaigns
+                Member Rank
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 900, color: '#1e293b' }}>
-                {walletData?.total_reward_count ?? (pagination.total || 0)}
+              <div style={{ fontSize: '18px', fontWeight: 900, color: walletData?.current_rank && walletData.current_rank !== 'No Rank' ? '#7c3aed' : '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Award size={19} color={walletData?.current_rank && walletData.current_rank !== 'No Rank' ? '#7c3aed' : '#94a3b8'} />
+                <span>{walletData?.current_rank || user?.current_rank || 'No Rank'}</span>
               </div>
-              <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
-                1 reward per campaign limit
+              <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>
+                {walletData?.user_referrals ?? 0} Referrals • {walletData?.verified_connections ?? walletData?.user_team ?? 0} Connections
               </div>
             </div>
 
-            {/* Reward Rate */}
+            {/* Reward Rate Card */}
             <div
               style={{
                 padding: '16px',
@@ -425,13 +428,88 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
                 Campaign Reward Rate
               </div>
               <div style={{ fontSize: '18px', fontWeight: 900, color: '#2563eb' }}>
-                {walletData?.reward_range_formatted || '$0.025 – $0.050 USD'}
+                {walletData?.rank_reward_amount_exact ? `$${walletData.rank_reward_amount_exact} USD` : (walletData?.reward_range_formatted || '$0.0250 – $0.1000 USD')}
+              </div>
+              <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>
+                Per verified campaign interaction
+              </div>
+            </div>
+
+            {/* Total Rewards Earned Card */}
+            <div
+              style={{
+                padding: '16px',
+                borderRadius: '12px',
+                backgroundColor: '#f8fafc',
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
+                Total Rewarded Campaigns
+              </div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: '#1e293b' }}>
+                {walletData?.total_reward_count ?? (pagination.total || 0)}
               </div>
               <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
-                Dynamic based on verified referrals
+                1 reward per campaign limit
               </div>
             </div>
           </div>
+
+          {/* Next Rank Progress Banner */}
+          {walletData?.next_rank && (
+            <div
+              style={{
+                padding: '12px 16px',
+                borderRadius: '10px',
+                backgroundColor: '#f5f3ff',
+                border: '1px solid #ddd6fe',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                fontSize: '12.5px',
+                color: '#5b21b6',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TrendingUp size={18} color="#7c3aed" />
+                <span>
+                  Next Rank: <strong>{walletData.next_rank.rank}</strong> (${walletData.next_rank.reward_amount_exact} USD/ad)
+                </span>
+              </div>
+              <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#6d28d9', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <span>Required: {walletData.next_rank.referral_requirement} Referrals &amp; {walletData.next_rank.team_requirement} Connections</span>
+                <span>•</span>
+                <span>
+                  Need: {walletData.next_rank.referrals_needed} more referral{walletData.next_rank.referrals_needed === 1 ? '' : 's'} &amp; {walletData.next_rank.connections_needed} more connection{walletData.next_rank.connections_needed === 1 ? '' : 's'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {!walletData?.next_rank && walletData?.current_rank && walletData.current_rank !== 'No Rank' && (
+            <div
+              style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                backgroundColor: '#fdf4ff',
+                border: '1px solid #f0abfc',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '12.5px',
+                color: '#86198f',
+                fontWeight: 600,
+              }}
+            >
+              <Award size={16} color="#c026d3" />
+              <span>Highest Rank Achieved! You qualify for the maximum campaign reward rate.</span>
+            </div>
+          )}
 
           {/* USDT (BEP-20) Destination Wallet Address Section */}
           <div

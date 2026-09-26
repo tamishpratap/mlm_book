@@ -516,11 +516,7 @@ class AdDeliveryService
         $maxReward = RewardRankRule::getMaximumActiveRewardAmount() ?? AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_BUSINESS_AD) ?? 0.0500;
         $maxRewardFormatted = null;
         if ($maxReward !== null) {
-            $formattedNumber = rtrim(rtrim(sprintf('%.4f', $maxReward), '0'), '.');
-            if (strpos($formattedNumber, '.') !== false && strlen(substr($formattedNumber, strpos($formattedNumber, '.') + 1)) == 1) {
-                $formattedNumber .= '0';
-            }
-            $maxRewardFormatted = '$' . $formattedNumber;
+            $maxRewardFormatted = '$' . number_format((float) $maxReward, 4, '.', '');
         }
 
         $isOwner = $viewerId ? $campaign->isOwner($viewerId) : false;
@@ -578,13 +574,9 @@ class AdDeliveryService
         $alreadyRewarded = false;
 
         if ($hasActiveCampaign) {
-            $maxReward = RewardRankRule::getMaximumActiveRewardAmount() ?? AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT);
+            $maxReward = RewardRankRule::getMaximumActiveRewardAmount() ?? AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT) ?? 0.0500;
             if ($maxReward !== null) {
-                $formattedNumber = rtrim(rtrim(sprintf('%.4f', $maxReward), '0'), '.');
-                if (strpos($formattedNumber, '.') !== false && strlen(substr($formattedNumber, strpos($formattedNumber, '.') + 1)) == 1) {
-                    $formattedNumber .= '0';
-                }
-                $maxRewardFormatted = '$' . $formattedNumber;
+                $maxRewardFormatted = '$' . number_format((float) $maxReward, 4, '.', '');
             }
 
             if ($viewerId) {
@@ -711,7 +703,7 @@ class AdDeliveryService
      */
     public function maintainCampaignLifecycles($now): void
     {
-        $minReward = AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_BUSINESS_AD);
+        $minReward = RewardRankRule::getMinimumActiveRewardAmount() ?? AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_BUSINESS_AD);
         if ($minReward !== null) {
             AdCampaign::query()
                 ->where(function ($q) {
@@ -723,7 +715,7 @@ class AdDeliveryService
                 ->update(['status' => AdCampaign::STATUS_BUDGET_EXHAUSTED]);
         }
 
-        $minEventReward = AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_EVENT);
+        $minEventReward = RewardRankRule::getMinimumActiveRewardAmount() ?? AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_EVENT);
         if ($minEventReward !== null) {
             AdCampaign::query()
                 ->where('campaign_type', AdCampaign::TYPE_EVENT)

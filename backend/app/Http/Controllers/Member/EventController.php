@@ -8,6 +8,7 @@ use App\Models\AdCampaign;
 use App\Models\AdCampaignActivity;
 use App\Models\AdReward;
 use App\Models\AdRewardRule;
+use App\Models\RewardRankRule;
 use App\Models\BusinessPageCategory;
 use App\Models\Event;
 use App\Models\EventInvitation;
@@ -212,15 +213,11 @@ class EventController extends Controller
             ? $query->orderBy('start_date', 'desc')->paginate(12)->withQueryString()
             : $query->orderBy('start_date', 'asc')->paginate(12)->withQueryString();
 
-        $minActiveReward = (float) (AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_EVENT) ?? 0.05);
-        $maxReward = AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT);
+        $minActiveReward = (float) (RewardRankRule::getMinimumActiveRewardAmount() ?? AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_EVENT) ?? 0.0250);
+        $maxReward = RewardRankRule::getMaximumActiveRewardAmount() ?? AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT) ?? 0.0500;
         $maxRewardFormatted = null;
         if ($maxReward !== null) {
-            $formattedNumber = rtrim(rtrim(sprintf('%.4f', $maxReward), '0'), '.');
-            if (strpos($formattedNumber, '.') !== false && strlen(substr($formattedNumber, strpos($formattedNumber, '.') + 1)) == 1) {
-                $formattedNumber .= '0';
-            }
-            $maxRewardFormatted = '$' . $formattedNumber;
+            $maxRewardFormatted = '$' . number_format((float) $maxReward, 4, '.', '');
         }
 
         $myRewardCampaignIds = $member
@@ -669,7 +666,7 @@ class EventController extends Controller
         // Paid campaign status is visible to all members for viewing
         $exposeCampaign = (bool) $campaign;
 
-        $minReward = AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_EVENT);
+        $minReward = RewardRankRule::getMinimumActiveRewardAmount() ?? AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_EVENT) ?? 0.0250;
         $alreadyRewarded = false;
         if ($member && $campaign) {
             $alreadyRewarded = AdReward::where('ad_campaign_id', $campaign->id)
@@ -685,14 +682,10 @@ class EventController extends Controller
             && (float) $campaign->remaining_amount >= (float) $minReward
             && !$event->hasPassed();
 
-        $maxReward = AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT);
+        $maxReward = RewardRankRule::getMaximumActiveRewardAmount() ?? AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT) ?? 0.0500;
         $maxRewardFormatted = null;
         if ($maxReward !== null) {
-            $formattedNumber = rtrim(rtrim(sprintf('%.4f', $maxReward), '0'), '.');
-            if (strpos($formattedNumber, '.') !== false && strlen(substr($formattedNumber, strpos($formattedNumber, '.') + 1)) == 1) {
-                $formattedNumber .= '0';
-            }
-            $maxRewardFormatted = '$' . $formattedNumber;
+            $maxRewardFormatted = '$' . number_format((float) $maxReward, 4, '.', '');
         }
 
         $campaignData = $exposeCampaign ? [

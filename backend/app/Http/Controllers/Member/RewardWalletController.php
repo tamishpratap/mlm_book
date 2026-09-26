@@ -96,6 +96,9 @@ class RewardWalletController extends Controller
         $hasVerifiedWallet = !empty($walletAddress) && $member->reward_wallet_verified_at !== null;
         $walletStatus = $hasVerifiedWallet ? 'verified' : (!empty($walletAddress) ? 'unverified' : 'not_added');
 
+        $rankResolver = app(\App\Services\RewardRankResolver::class);
+        $rankResolution = $rankResolver->resolveForMember($member);
+
         $minReward = \App\Models\AdRewardRule::getMinimumActiveRewardAmount();
         $maxReward = (float) (\App\Models\AdRewardRule::getActiveRules()->max('reward_amount') ?? 0.05);
 
@@ -114,7 +117,20 @@ class RewardWalletController extends Controller
                 'email' => $member->email,
                 'masked_email' => self::maskEmail($member->email),
                 'currency' => 'USD',
-                'reward_per_interaction' => $maxReward,
+                'reward_per_interaction' => $rankResolution['reward'] ?? $maxReward,
+                'current_rank' => $rankResolution['rank'] ?? 'No Rank',
+                'rank' => $rankResolution['rank'] ?? null,
+                'rank_key' => $rankResolution['rank_key'] ?? null,
+                'priority' => $rankResolution['priority'] ?? null,
+                'rank_eligible' => $rankResolution['eligible'] ?? false,
+                'user_referrals' => $rankResolution['user_referrals'] ?? 0,
+                'user_team' => $rankResolution['user_team'] ?? 0,
+                'verified_connections' => $rankResolution['verified_connections'] ?? ($rankResolution['user_team'] ?? 0),
+                'referral_requirement' => $rankResolution['referral_requirement'] ?? null,
+                'team_requirement' => $rankResolution['team_requirement'] ?? null,
+                'rank_reward_amount' => $rankResolution['reward'] ?? 0.0000,
+                'rank_reward_amount_exact' => $rankResolution['reward_amount_exact'] ?? '0.0000',
+                'next_rank' => $rankResolution['next_rank'] ?? null,
                 'min_reward_usd' => $minReward,
                 'max_reward_usd' => $maxReward,
                 'reward_range_formatted' => '$' . number_format($minReward, 3) . ' – $' . number_format($maxReward, 3) . ' USD',

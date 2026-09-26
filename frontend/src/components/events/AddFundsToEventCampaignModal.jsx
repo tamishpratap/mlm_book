@@ -218,7 +218,7 @@ export function AddFundsToEventCampaignModal({
             <div>
               <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600 }}>Running Budget</div>
               <div style={{ fontSize: '13px', fontWeight: 800, color: '#15803d' }}>
-                ${remaining.toFixed(2)}
+                ${remaining.toFixed(4)}
               </div>
             </div>
           </div>

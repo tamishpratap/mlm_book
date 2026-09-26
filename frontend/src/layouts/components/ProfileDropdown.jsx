@@ -16,6 +16,7 @@ import {
   WalletCards,
   Coins,
   LogOut,
+  Award,
 } from 'lucide-react';
 
 export function ProfileDropdown({ isOpen, onToggle, onClose, onOpenReferral, onOpenVerification, onOpenRewardWallet }) {
@@ -222,6 +223,25 @@ export function ProfileDropdown({ isOpen, onToggle, onClose, onOpenReferral, onO
                 <VerifiedBadge member={user} size={14} />
               </strong>
               <small>{user.email}</small>
+              <div style={{ marginTop: '4px', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: user?.current_rank && user.current_rank !== 'No Rank' ? '#7c3aed' : '#64748b',
+                    background: user?.current_rank && user.current_rank !== 'No Rank' ? '#f5f3ff' : '#f1f5f9',
+                    border: `1px solid ${user?.current_rank && user.current_rank !== 'No Rank' ? '#ddd6fe' : '#e2e8f0'}`,
+                    padding: '2px 8px',
+                    borderRadius: '8px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Award size={12} color={user?.current_rank && user.current_rank !== 'No Rank' ? '#7c3aed' : '#94a3b8'} />
+                  <span>Rank: {user?.current_rank || 'No Rank'}</span>
+                </span>
+              </div>
               <em>View your profile</em>
             </span>
           </Link>
@@ -325,9 +345,16 @@ export function ProfileDropdown({ isOpen, onToggle, onClose, onOpenReferral, onO
             </span>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
               <strong style={{ color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Wallet</strong>
-              <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 800, color: '#047857', background: '#ecfdf5', padding: '2px 8px', borderRadius: '10px' }}>
-                ${parseFloat(user?.wallet ?? user?.reward_balance ?? 0).toFixed(4)} USD
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                {user?.current_rank && user.current_rank !== 'No Rank' && (
+                  <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#7c3aed', background: '#f5f3ff', border: '1px solid #ddd6fe', padding: '1px 6px', borderRadius: '8px' }}>
+                    {user.current_rank}
+                  </span>
+                )}
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#047857', background: '#ecfdf5', padding: '2px 8px', borderRadius: '10px' }}>
+                  ${parseFloat(user?.wallet ?? user?.reward_balance ?? 0).toFixed(4)} USD
+                </span>
+              </div>
             </div>
             <ChevronRight size={16} />
           </button>

@@ -306,7 +306,7 @@ export function EditEventPage() {
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#15803d' }}>
                 Budget: <strong>${parseFloat(campaign?.budget || 0).toFixed(2)} USD</strong> • Remaining:{' '}
-                <strong>${parseFloat(campaign?.remaining_amount || 0).toFixed(2)} USD</strong>. Campaign funding is safely managed via Campaign Add Funds and cannot be edited here.
+                <strong>${parseFloat(campaign?.remaining_amount || 0).toFixed(4)} USD</strong>. Campaign funding is safely managed via Campaign Add Funds and cannot be edited here.
               </p>
             </div>
           </div>

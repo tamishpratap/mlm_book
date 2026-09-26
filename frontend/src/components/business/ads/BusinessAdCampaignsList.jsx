@@ -642,7 +642,7 @@ export function BusinessAdCampaignsList({
                   <div>
                     <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Rewards Paid</div>
                     <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#dc2626' }}>
-                      ${spentVal.toFixed(2)}
+                      ${spentVal.toFixed(4)}
                     </div>
                   </div>
 
@@ -655,7 +655,7 @@ export function BusinessAdCampaignsList({
                         color: isExhausted ? '#b91c1c' : isLow ? '#b45309' : '#15803d',
                       }}
                     >
-                      ${remainVal.toFixed(2)}
+                      ${remainVal.toFixed(4)}
                     </div>
                   </div>
                 </div>

@@ -119,7 +119,7 @@ export function BusinessDetailPage() {
       })
         .then((res) => {
           if (res && res.success && res.rewarded) {
-            const amtExact = res.reward_amount_exact || (res.reward_amount_usd ? Number(res.reward_amount_usd).toFixed(4) : '0.0500');
+            const amtExact = res.reward_amount_exact || (res.reward_amount_usd ? Number(res.reward_amount_usd).toFixed(4) : '0.0250');
             setCampaignRewardStatus({
               already_rewarded: true,
               eligible_to_earn: false,

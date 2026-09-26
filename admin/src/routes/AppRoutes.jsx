@@ -13,6 +13,8 @@ import { UnauthorizedPage } from '../pages/common/UnauthorizedPage';
 import { MembersListPage } from '../pages/members/MembersListPage';
 import { MemberDetailsPage } from '../pages/members/MemberDetailsPage';
 import { MemberEditPage } from '../pages/members/MemberEditPage';
+import { MemberSecurityPage } from '../pages/members/MemberSecurityPage';
+import { MemberWalletAddressPage } from '../pages/members/MemberWalletAddressPage';
 
 // Posts & Timeline Moderation Module Pages
 import { PostsListPage } from '../pages/posts/PostsListPage';
@@ -111,6 +113,8 @@ export function AppRoutes() {
         <Route path="members/active" element={<Navigate to="/admin/members" replace />} />
         <Route path="members/pending" element={<MembersListPage defaultMode="pending" />} />
         <Route path="members/blocked" element={<MembersListPage defaultMode="blocked" />} />
+        <Route path="members/security" element={<MemberSecurityPage />} />
+        <Route path="members/wallet-address" element={<MemberWalletAddressPage />} />
         <Route path="members/:id" element={<MemberDetailsPage />} />
         <Route path="members/:id/edit" element={<MemberEditPage />} />
 

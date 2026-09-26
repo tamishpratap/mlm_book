@@ -641,7 +641,7 @@ export function EventOutreachPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <AlertCircle size={20} color="#dc2626" />
                 <span style={{ fontSize: '13.5px', color: '#991b1b', fontWeight: 600 }}>
-                  <strong>Campaign Budget Exhausted:</strong> Remaining running balance (${Number(campaignAnalytics.budget_metrics.remaining_amount).toFixed(2)} USD) is below the minimum active reward threshold (${Number(campaignAnalytics.budget_metrics.minimum_event_reward).toFixed(4)} USD). Top up funds to reactivate and resume reward payouts.
+                  <strong>Campaign Budget Exhausted:</strong> Remaining running balance (${Number(campaignAnalytics.budget_metrics.remaining_amount).toFixed(4)} USD) is below the minimum active reward threshold (${Number(campaignAnalytics.budget_metrics.minimum_event_reward).toFixed(4)} USD). Top up funds to reactivate and resume reward payouts.
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -688,7 +688,7 @@ export function EventOutreachPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <AlertCircle size={20} color="#d97706" />
                 <span style={{ fontSize: '13.5px', color: '#92400e', fontWeight: 600 }}>
-                  <strong>Low Campaign Budget:</strong> Remaining balance (${Number(campaignAnalytics.budget_metrics.remaining_amount).toFixed(2)} USD) is approaching exhaustion. Top up soon to ensure uninterrupted reward payouts.
+                  <strong>Low Campaign Budget:</strong> Remaining balance (${Number(campaignAnalytics.budget_metrics.remaining_amount).toFixed(4)} USD) is approaching exhaustion. Top up soon to ensure uninterrupted reward payouts.
                 </span>
               </div>
               <button
@@ -721,7 +721,7 @@ export function EventOutreachPage() {
                 Rewards Paid Out
               </span>
               <strong style={{ fontSize: '22px', fontWeight: 800, color: '#16a34a' }}>
-                ${Number(campaignAnalytics.budget_metrics.spent_amount).toFixed(2)}
+                ${Number(campaignAnalytics.budget_metrics.spent_amount).toFixed(4)}
               </strong>
               <span style={{ fontSize: '11.5px', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
                 {campaignAnalytics.participant_metrics.rewarded_participants} rewarded participants
@@ -733,7 +733,7 @@ export function EventOutreachPage() {
                 Remaining Running Budget
               </span>
               <strong style={{ fontSize: '22px', fontWeight: 800, color: campaignAnalytics.budget_metrics.is_exhausted ? '#dc2626' : (campaignAnalytics.budget_metrics.is_low_budget ? '#d97706' : '#0284c7') }}>
-                ${Number(campaignAnalytics.budget_metrics.remaining_amount).toFixed(2)}
+                ${Number(campaignAnalytics.budget_metrics.remaining_amount).toFixed(4)}
               </strong>
               <span style={{ fontSize: '11.5px', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
                 USD Available

@@ -105,6 +105,24 @@ export const membersApi = {
         : { type: 'active', ...paramsOrType };
     return http.download(`/members/export/csv`, query);
   },
+
+  /**
+   * Search members for Security and Wallet Address management.
+   * Route: GET /admin/members/search
+   */
+  searchMembers: (params = {}, signal) => http.get('/members/search', params, { signal }),
+
+  /**
+   * Update member password.
+   * Route: POST /admin/members/{member}/password
+   */
+  updatePassword: (memberId, data) => http.post(`/members/${memberId}/password`, data),
+
+  /**
+   * Update member wallet address.
+   * Route: PUT /admin/members/{member}/wallet-address
+   */
+  updateWalletAddress: (memberId, data) => http.put(`/members/${memberId}/wallet-address`, data),
 };
 
 export default membersApi;

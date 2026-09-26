@@ -132,7 +132,7 @@ export default function PaidEventQualificationModal({
   if (!isOpen) return null;
 
   const verifiedCount = previewData?.direct_verified_referral_count ?? 0;
-  const currentRewardExact = previewData?.reward_amount_exact || (previewData?.reward_amount_usd ? Number(previewData.reward_amount_usd).toFixed(4) : '0.00');
+  const currentRewardExact = previewData?.reward_amount_exact || (previewData?.reward_amount_usd ? Number(previewData.reward_amount_usd).toFixed(4) : '0.0000');
   const matchedRange = previewData?.matched_range;
   const allRules = previewData?.all_active_rules || [];
   const eventTitle = event?.title || previewData?.event_title || 'Paid Event';
@@ -326,7 +326,7 @@ export default function PaidEventQualificationModal({
                 {successResult.already_rewarded ? 'Already Qualified!' : 'Reward Credited!'}
               </h4>
               <p style={{ margin: 0, fontSize: '13px', opacity: 0.95, maxWidth: '380px' }}>
-                {successResult.message || `You earned $${successResult.reward_amount_usd} USD credited to your Wallet.`}
+                {successResult.message || `You earned $${successResult.reward_amount_exact || (successResult.reward_amount_usd ? Number(successResult.reward_amount_usd).toFixed(4) : '0.0000')} USD credited to your Wallet.`}
               </p>
               <span style={{ fontSize: '11.5px', opacity: 0.8, marginTop: '4px' }}>
                 Reward credited to your Wallet.

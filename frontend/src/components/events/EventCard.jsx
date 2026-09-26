@@ -46,11 +46,7 @@ function formatRewardAmount(val) {
   if (typeof val === 'string' && val.startsWith('$')) return val;
   const num = Number(val);
   if (Number.isNaN(num)) return null;
-  const s = num.toFixed(4).replace(/\.?0+$/, '');
-  const parts = s.split('.');
-  if (!parts[1]) return `$${parts[0]}.00`;
-  if (parts[1].length === 1) return `$${parts[0]}.${parts[1]}0`;
-  return `$${s}`;
+  return `$${num.toFixed(4)}`;
 }
 
 export function EventCard({ event, initialUserResponse = null, onResponseChange = null }) {
@@ -111,7 +107,7 @@ export function EventCard({ event, initialUserResponse = null, onResponseChange 
     event.campaign_details?.earn_up_to_formatted ||
     formatRewardAmount(event.earn_up_to_usd) ||
     formatRewardAmount(event.campaign?.earn_up_to_usd) ||
-    '$0.05';
+    '$0.0250';
 
   const handleEarnClick = (e) => {
     e.preventDefault();

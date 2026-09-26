@@ -257,7 +257,7 @@ class AdCampaign extends Model
 
     public function getTotalRewardedAmountAttribute(): float
     {
-        return round((float) ($this->rewards()->where('status', AdReward::STATUS_CREDITED)->sum('reward_amount_usd')), 2);
+        return round((float) ($this->rewards()->where('status', AdReward::STATUS_CREDITED)->sum('reward_amount_usd')), 4);
     }
 
     public function getCtrAttribute(): float
@@ -304,7 +304,7 @@ class AdCampaign extends Model
             return false;
         }
 
-        $minReward = AdRewardRule::getMinimumActiveRewardAmount();
+        $minReward = RewardRankRule::getMinimumActiveRewardAmount() ?? AdRewardRule::getMinimumActiveRewardAmount() ?? 0.0250;
         if ((float) $this->remaining_amount < $minReward || (float) $this->budget < $minReward) {
             return false;
         }
@@ -323,7 +323,7 @@ class AdCampaign extends Model
 
     public function scopeEligibleForDelivery($query)
     {
-        $minReward = AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_BUSINESS_AD) ?? AdRewardRule::getMinimumActiveRewardAmount() ?? 0.0250;
+        $minReward = RewardRankRule::getMinimumActiveRewardAmount() ?? AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_BUSINESS_AD) ?? AdRewardRule::getMinimumActiveRewardAmount() ?? 0.0250;
 
         return $query->where('approval_status', self::APPROVAL_APPROVED)
             ->whereIn('status', [self::STATUS_APPROVED, self::STATUS_ACTIVE])
