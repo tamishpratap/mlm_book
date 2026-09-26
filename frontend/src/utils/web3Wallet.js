@@ -32,6 +32,94 @@ export function hasEthereumProvider() {
 }
 
 /**
+ * Convert technical/raw Web3 and JSON-RPC errors into clean, user-friendly messages.
+ */
+export function formatWeb3Error(err) {
+  if (!err) return 'An unexpected wallet error occurred. Please try again.';
+
+  const code = err?.code || err?.error?.code;
+  const rawMsg = String(err?.message || err?.data?.message || err?.error?.message || err || '').toLowerCase();
+
+  // 1. Pending request in extension popup / window (-32002)
+  if (
+    code === -32002 ||
+    rawMsg.includes('already pending') ||
+    rawMsg.includes('wallet_requestpermissions') ||
+    rawMsg.includes('already processing') ||
+    rawMsg.includes('resource unavailable')
+  ) {
+    return 'A connection request is already open in your wallet extension. Please open your MetaMask or Web3 wallet extension icon in your browser toolbar to approve or dismiss it.';
+  }
+
+  // 2. User rejected / cancelled (4001)
+  if (
+    code === 4001 ||
+    rawMsg.includes('user rejected') ||
+    rawMsg.includes('user denied') ||
+    rawMsg.includes('cancelled') ||
+    rawMsg.includes('declined')
+  ) {
+    return 'The connection or transaction request was cancelled in your wallet. Click "Connect Wallet" whenever you are ready to continue.';
+  }
+
+  // 3. Network addition / chain switch (4902)
+  if (
+    code === 4902 ||
+    rawMsg.includes('wallet_addethereumchain') ||
+    rawMsg.includes('unrecognized chain')
+  ) {
+    return 'BNB Smart Chain is not added to your wallet. Please approve adding the BSC network when prompted in your wallet.';
+  }
+
+  // 4. Insufficient funds / gas
+  if (
+    rawMsg.includes('insufficient funds') ||
+    rawMsg.includes('exceeds balance') ||
+    rawMsg.includes('gas required exceeds')
+  ) {
+    return 'Insufficient balance in your wallet. Please ensure you have BNB for network gas fees and sufficient USDT for the deposit.';
+  }
+
+  // 5. No provider / wallet extension missing
+  if (
+    rawMsg.includes('no web3 wallet') ||
+    rawMsg.includes('not detected') ||
+    rawMsg.includes('ethereum is undefined')
+  ) {
+    return 'No Web3 wallet extension detected. Please install MetaMask or open this site in an EVM-compatible Web3 browser (e.g. Trust Wallet / Binance Web3).';
+  }
+
+  // 6. Wallet locked
+  if (rawMsg.includes('locked') || rawMsg.includes('unlock')) {
+    return 'Your Web3 wallet is currently locked. Please open your wallet extension and enter your password to unlock it.';
+  }
+
+  // 7. Internal JSON-RPC error (-32603)
+  if (code === -32603 || rawMsg.includes('internal json-rpc error')) {
+    return 'Your wallet could not complete the request. Please verify that your wallet has enough BNB for gas fees and try again.';
+  }
+
+  // 8. Reverted transaction
+  if (rawMsg.includes('execution reverted') || rawMsg.includes('revert')) {
+    return 'Transaction reverted by the smart contract. Please check your USDT balance and token allowance.';
+  }
+
+  // Fallback: clean up technical prefixes if any
+  const cleanMsg = err?.message ? err.message.replace(/^Error:\s*/i, '').trim() : 'Failed to communicate with Web3 wallet.';
+  if (
+    cleanMsg.includes('wallet_') ||
+    cleanMsg.includes('eth_') ||
+    cleanMsg.includes('rpc') ||
+    cleanMsg.includes('0x') ||
+    cleanMsg.includes('origin http')
+  ) {
+    return 'Your wallet extension could not process the request. Please open MetaMask/extension to check notifications or refresh and try again.';
+  }
+
+  return cleanMsg;
+}
+
+/**
  * Connect user's Web3 wallet and return active address.
  */
 export async function connectWallet() {
@@ -46,10 +134,7 @@ export async function connectWallet() {
     }
     return accounts[0].toLowerCase();
   } catch (err) {
-    if (err.code === 4001) {
-      throw new Error('Connection request was rejected in your wallet.');
-    }
-    throw new Error(err.message || 'Failed to connect wallet.');
+    throw new Error(formatWeb3Error(err));
   }
 }
 
@@ -84,7 +169,7 @@ export async function getCurrentChainId() {
  */
 export async function switchToBsc(isTestnet = false) {
   if (!hasEthereumProvider()) {
-    throw new Error('Web3 wallet is not available.');
+    throw new Error('Web3 wallet is not available. Please install MetaMask or Trust Wallet.');
   }
 
   const config = isTestnet ? BSC_CHAINS.testnet : BSC_CHAINS.mainnet;
@@ -113,13 +198,10 @@ export async function switchToBsc(isTestnet = false) {
         });
         return true;
       } catch (addError) {
-        throw new Error('Failed to add BNB Smart Chain to wallet: ' + addError.message);
+        throw new Error(formatWeb3Error(addError));
       }
     }
-    if (switchError.code === 4001) {
-      throw new Error('Network switch was rejected in your wallet.');
-    }
-    throw new Error('Could not switch to BNB Smart Chain: ' + switchError.message);
+    throw new Error(formatWeb3Error(switchError));
   }
 }
 
@@ -176,7 +258,7 @@ export async function sendBscUsdtTransfer({
   }
 
   if (!recipientAddress || !recipientAddress.startsWith('0x') || recipientAddress.length !== 42) {
-    throw new Error('Destination deposit wallet address is invalid.');
+    throw new Error('Platform receiving deposit wallet address is invalid (must be a valid 42-char 0x BEP-20 address). Please update it in Admin Settings.');
   }
 
   // Ensure connected
@@ -220,13 +302,7 @@ export async function sendBscUsdtTransfer({
       token: 'USDT',
     };
   } catch (err) {
-    if (err.code === 4001) {
-      throw new Error('Transaction was declined/rejected in your wallet.');
-    }
-    if (err.message && err.message.toLowerCase().includes('insufficient funds')) {
-      throw new Error('Insufficient funds in your wallet (ensure you have enough BNB for network gas fees and sufficient USDT).');
-    }
-    throw new Error(err.message || 'Blockchain transaction failed.');
+    throw new Error(formatWeb3Error(err));
   }
 }
 

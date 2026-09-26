@@ -18,6 +18,8 @@ import {
   QrCode,
   TrendingUp,
   Percent,
+  ArrowUpRight,
+  X,
 } from 'lucide-react';
 import depositApi from '../../api/depositApi';
 import useAuth from '../../hooks/useAuth';
@@ -29,6 +31,7 @@ import {
   switchToBsc,
   sendBscUsdtTransfer,
   waitForReceipt,
+  formatWeb3Error,
 } from '../../utils/web3Wallet';
 
 const PRESET_AMOUNTS = [10, 25, 50, 100, 250, 500];
@@ -82,6 +85,12 @@ export function DepositPage() {
     total_deposit: 0,
     pending_deposit: 0,
   });
+
+  // Fund Wallet Full Withdrawal state
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [isSubmittingWithdraw, setIsSubmittingWithdraw] = useState(false);
+  const [withdrawError, setWithdrawError] = useState('');
+  const [withdrawSuccess, setWithdrawSuccess] = useState(null);
 
   // 1. Fetch Config
   const loadConfig = useCallback(async () => {
@@ -185,7 +194,7 @@ export function DepositPage() {
         setChainId(updatedChainId);
       }
     } catch (err) {
-      setWalletError(err.message || 'Failed to connect wallet.');
+      setWalletError(formatWeb3Error(err));
     } finally {
       setIsConnectingWallet(false);
     }
@@ -214,14 +223,14 @@ export function DepositPage() {
       try {
         await handleConnectWallet();
       } catch (err) {
-        setDappError(err.message || 'Wallet connection is required to proceed.');
+        setDappError(formatWeb3Error(err) || 'Wallet connection is required to proceed.');
         return;
       }
     }
 
-    const recipientAddress = config?.crypto_wallet_address;
-    if (!recipientAddress) {
-      setDappError('Deposit destination wallet is not configured. Please contact support.');
+    const recipientAddress = config?.crypto_wallet_address?.trim();
+    if (!recipientAddress || !/^0x[a-fA-F0-9]{40}$/.test(recipientAddress)) {
+      setDappError('Platform receiving deposit wallet address is not configured or invalid (must be 42-char 0x... address). Please set it in Admin Settings.');
       return;
     }
 
@@ -270,16 +279,23 @@ export function DepositPage() {
           feePercent: scPercent,
           netCredit: baseAmount,
           txHash,
-          status: serverRes.deposit?.status_label || 'Verified — Awaiting Admin Approval',
+          status: serverRes.deposit?.status_label || 'Approved & Credited',
           explorerUrl: serverRes.deposit?.explorer_url || (config?.explorer_url ? config.explorer_url + txHash : null),
         });
+        if (serverRes.new_fund_wallet !== undefined) {
+          setDepositStats((prev) => ({
+            ...prev,
+            fund_wallet: Number(serverRes.new_fund_wallet),
+          }));
+        }
+        loadConfig();
         loadHistory(1);
       } else {
         throw new Error(serverRes.message || 'Verification on backend failed.');
       }
     } catch (err) {
       setDappStep('error');
-      setDappError(err.response?.data?.message || err.message || 'Deposit transaction failed.');
+      setDappError(formatWeb3Error(err.response?.data?.message || err.message || err));
     }
   };
 
@@ -331,9 +347,16 @@ export function DepositPage() {
           feePercent: scPercent,
           netCredit: baseAmount,
           txHash: testTxHash,
-          status: serverRes.deposit?.status_label || 'Verified — Awaiting Admin Approval',
+          status: serverRes.deposit?.status_label || 'Approved & Credited',
           explorerUrl: serverRes.deposit?.explorer_url || (config?.explorer_url ? config.explorer_url + testTxHash : null),
         });
+        if (serverRes.new_fund_wallet !== undefined) {
+          setDepositStats((prev) => ({
+            ...prev,
+            fund_wallet: Number(serverRes.new_fund_wallet),
+          }));
+        }
+        loadConfig();
         loadHistory(1);
       } else {
         throw new Error(serverRes.message || 'Verification on backend failed.');
@@ -354,8 +377,8 @@ export function DepositPage() {
     setManualSubmitSuccess(null);
     setManualSubmitError('');
 
-    const amount = parseFloat(manualAmount);
-    if (isNaN(amount) || amount < 10) {
+    const baseAmount = parseFloat(manualAmount);
+    if (isNaN(baseAmount) || baseAmount < 10) {
       setManualVerificationError('Minimum deposit amount is $10.00 USD equivalent.');
       return;
     }
@@ -371,10 +394,14 @@ export function DepositPage() {
       return;
     }
 
+    const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
+    const totalToTransfer = scPercent > 0 ? Number((baseAmount * (1 + scPercent / 100)).toFixed(2)) : baseAmount;
+
     setIsVerifyingManual(true);
     try {
       const res = await depositApi.verifyManualDeposit({
-        amount,
+        amount: totalToTransfer,
+        base_amount: baseAmount,
         transaction_hash: cleanHash,
         wallet_address: walletAddress || undefined,
       });
@@ -444,6 +471,66 @@ export function DepositPage() {
 
   const activeQrSrc = (!qrImgFailed && qrImageUrl) ? qrImageUrl : fallbackQrUrl;
 
+  const memberPayoutAddress = config?.member_wallet_address || user?.wallet_address || user?.reward_wallet_address || '';
+
+  const handleOpenWithdrawModal = () => {
+    setWithdrawError('');
+    setWithdrawSuccess(null);
+    setShowWithdrawModal(true);
+  };
+
+  const handleCloseWithdrawModal = () => {
+    setShowWithdrawModal(false);
+    setWithdrawError('');
+    setWithdrawSuccess(null);
+  };
+
+  const handleConfirmFundWithdrawal = async () => {
+    const balance = Number(depositStats.fund_wallet);
+    const minAmount = Number(config?.min_withdrawal_amount ?? 5.00);
+    const payoutAddress = memberPayoutAddress;
+
+    if (!payoutAddress) {
+      setWithdrawError('Please configure your BEP-20 payout wallet address in your profile before requesting a withdrawal.');
+      return;
+    }
+
+    if (balance <= 0) {
+      setWithdrawError('No funds available to withdraw. Fund Wallet balance must be greater than $0.00.');
+      return;
+    }
+
+    if (balance < minAmount) {
+      setWithdrawError(`Minimum withdrawal amount is $${minAmount.toFixed(2)}. Your current balance is $${balance.toFixed(2)}.`);
+      return;
+    }
+
+    setIsSubmittingWithdraw(true);
+    setWithdrawError('');
+    setWithdrawSuccess(null);
+
+    try {
+      const res = await depositApi.withdrawFundWallet();
+      if (res && res.success) {
+        setWithdrawSuccess(res);
+        setDepositStats((prev) => ({
+          ...prev,
+          fund_wallet: 0,
+        }));
+        loadConfig();
+        loadHistory(1);
+      } else {
+        setWithdrawError(res?.message || 'Failed to submit withdrawal request.');
+      }
+    } catch (err) {
+      console.error('Fund withdrawal error:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to submit Fund Wallet withdrawal request.';
+      setWithdrawError(msg);
+    } finally {
+      setIsSubmittingWithdraw(false);
+    }
+  };
+
   return (
     <main className="page-content member-deposit-page" style={{ padding: '1.5rem', maxWidth: '1100px', margin: '0 auto' }}>
       {/* Header Banner */}
@@ -481,22 +568,66 @@ export function DepositPage() {
           padding: '1.25rem',
           boxShadow: '0 2px 6px rgba(5, 150, 105, 0.05)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          gap: '0.85rem'
         }}>
-          <div>
-            <span style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#047857', fontWeight: 700 }}>
-              Fund Wallet Balance
-            </span>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#065f46', marginTop: '0.25rem' }}>
-              ${depositStats.fund_wallet.toFixed(2)} <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>USD</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <span style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#047857', fontWeight: 700 }}>
+                Fund Wallet Balance
+              </span>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#065f46', marginTop: '0.25rem' }}>
+                ${depositStats.fund_wallet.toFixed(2)} <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>USD</span>
+              </div>
+              <span style={{ fontSize: '0.74rem', color: '#059669', display: 'block', marginTop: '0.2rem' }}>
+                Available in p2p_wallet
+              </span>
             </div>
-            <span style={{ fontSize: '0.74rem', color: '#059669', display: 'block', marginTop: '0.2rem' }}>
-              Available in p2p_wallet
-            </span>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#dcfce7', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Wallet size={22} />
+            </div>
           </div>
-          <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#dcfce7', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Wallet size={22} />
+
+          {/* Quick Action: Fund Wallet Withdrawal Button */}
+          <div style={{
+            paddingTop: '0.65rem',
+            borderTop: '1px dashed #bbf7d0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.5rem',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <ShieldCheck size={13} color="#059669" />
+              0% Fee • Zero Deduction
+            </span>
+            <button
+              type="button"
+              id="btn-withdraw-fund-wallet"
+              onClick={handleOpenWithdrawModal}
+              disabled={depositStats.fund_wallet <= 0}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.42rem 0.9rem',
+                borderRadius: '8px',
+                background: depositStats.fund_wallet > 0 ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : '#e5e7eb',
+                color: depositStats.fund_wallet > 0 ? '#ffffff' : '#9ca3af',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                border: 'none',
+                cursor: depositStats.fund_wallet > 0 ? 'pointer' : 'not-allowed',
+                boxShadow: depositStats.fund_wallet > 0 ? '0 2px 5px rgba(5, 150, 105, 0.25)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+              title={depositStats.fund_wallet > 0 ? 'Request full withdrawal of p2p_wallet balance' : 'Fund Wallet balance is $0.00'}
+            >
+              <ArrowUpRight size={15} />
+              Withdrawal
+            </button>
           </div>
         </div>
 
@@ -759,7 +890,110 @@ export function DepositPage() {
                   </div>
                 )}
               </div>
-              {walletError && <p style={{ color: '#dc2626', fontSize: '0.8rem', margin: '0.5rem 0 0 0' }}>{walletError}</p>}
+
+              {/* User-Friendly Wallet Error / Action Required Alert */}
+              {walletError && (
+                <div
+                  style={{
+                    marginTop: '0.85rem',
+                    padding: '0.85rem 1rem',
+                    background: '#fff1f2',
+                    border: '1px solid #fecdd3',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.75rem',
+                    position: 'relative',
+                    boxShadow: '0 2px 8px rgba(225, 29, 72, 0.06)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      borderRadius: '8px',
+                      background: '#ffe4e6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      color: '#e11d48',
+                    }}
+                  >
+                    <AlertCircle size={18} />
+                  </div>
+
+                  <div style={{ flex: 1, paddingRight: '1.5rem' }}>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#9f1239', marginBottom: '0.2rem' }}>
+                      Wallet Notice
+                    </div>
+                    <div style={{ fontSize: '0.82rem', color: '#be123c', lineHeight: 1.5 }}>
+                      {walletError}
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: '0.5rem',
+                        paddingTop: '0.5rem',
+                        borderTop: '1px dashed #fecdd3',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.76rem', color: '#9f1239', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <HelpCircle size={13} />
+                        Tip: Check the MetaMask / Web3 icon in your browser toolbar.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleConnectWallet}
+                        disabled={isConnectingWallet}
+                        style={{
+                          background: '#e11d48',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '0.25rem 0.65rem',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: isConnectingWallet ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                        }}
+                      >
+                        <RefreshCw size={12} className={isConnectingWallet ? 'animate-spin' : ''} />
+                        <span>Retry Connect</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setWalletError('')}
+                    title="Dismiss notice"
+                    style={{
+                      position: 'absolute',
+                      top: '0.65rem',
+                      right: '0.65rem',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#9f1239',
+                      padding: '3px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Deposit Amount Input */}
@@ -881,10 +1115,6 @@ export function DepositPage() {
                           <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Total To Pay (on-chain):</span>
                           <strong style={{ color: '#176bff', fontSize: '0.92rem' }}>${total.toFixed(2)} USDT</strong>
                         </div>
-                        <div>
-                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Credit Formula:</span>
-                          <strong style={{ color: '#059669' }}>${total.toFixed(2)} / {1 + (scPercent / 100)} = ${base.toFixed(2)} USD</strong>
-                        </div>
                       </div>
 
                       <div style={{
@@ -912,9 +1142,64 @@ export function DepositPage() {
 
               {/* Status or Error Notifications */}
               {dappError && (
-                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '0.85rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.88rem' }}>
-                  <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <div>{dappError}</div>
+                <div
+                  style={{
+                    background: '#fff1f2',
+                    border: '1px solid #fecdd3',
+                    color: '#9f1239',
+                    padding: '0.85rem 1rem',
+                    borderRadius: '12px',
+                    marginBottom: '1.25rem',
+                    display: 'flex',
+                    gap: '0.75rem',
+                    alignItems: 'flex-start',
+                    fontSize: '0.86rem',
+                    position: 'relative',
+                    boxShadow: '0 2px 8px rgba(225, 29, 72, 0.05)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '8px',
+                      background: '#ffe4e6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      color: '#e11d48',
+                    }}
+                  >
+                    <AlertCircle size={17} />
+                  </div>
+                  <div style={{ flex: 1, paddingRight: '1.5rem', lineHeight: 1.5 }}>
+                    <div style={{ fontWeight: 700, marginBottom: '0.2rem', color: '#9f1239' }}>
+                      Deposit Notice
+                    </div>
+                    <div>{dappError}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDappError('')}
+                    title="Dismiss"
+                    style={{
+                      position: 'absolute',
+                      top: '0.65rem',
+                      right: '0.65rem',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#9f1239',
+                      padding: '3px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
               )}
 
@@ -1007,14 +1292,14 @@ export function DepositPage() {
               <div style={{ marginTop: '1.5rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '14px', padding: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#15803d', fontWeight: 700, marginBottom: '0.5rem' }}>
                   <CheckCircle2 size={20} />
-                  <span>DApp Deposit Successfully Submitted!</span>
+                  <span>DApp Deposit Auto-Approved &amp; Credited!</span>
                 </div>
                 <p style={{ color: '#166534', fontSize: '0.88rem', margin: '0 0 0.75rem 0' }}>
-                  Your transfer of <strong>${dappSuccessData.amount} USDT</strong> has been verified on the blockchain. 
+                  Your transfer of <strong>${dappSuccessData.amount} USDT</strong> was verified on the blockchain. 
                   {dappSuccessData.feePercent > 0 && (
                     <span> (${dappSuccessData.baseAmount?.toFixed(2) || dappSuccessData.netCredit?.toFixed(2)} USD base + ${dappSuccessData.feeAmount?.toFixed(2)} USDT {dappSuccessData.feePercent}% service charge).</span>
                   )}
-                  {" "}<strong>${dappSuccessData.netCredit?.toFixed(2) || dappSuccessData.baseAmount?.toFixed(2) || dappSuccessData.amount} USD</strong> will be credited to your Fund Wallet upon approval.
+                  {" "}<strong>+${dappSuccessData.netCredit?.toFixed(2) || dappSuccessData.baseAmount?.toFixed(2) || dappSuccessData.amount} USD</strong> has been automatically credited directly to your Fund Wallet!
                 </p>
                 <div style={{ fontSize: '0.82rem', background: '#fff', padding: '0.65rem', borderRadius: '8px', border: '1px solid #dcfce7' }}>
                   <div style={{ color: '#6b7280', marginBottom: '0.25rem' }}>Transaction Hash:</div>
@@ -1073,7 +1358,7 @@ export function DepositPage() {
                     <Percent size={16} />
                   </div>
                   <div>
-                    <strong>Service Charge ({Number(config?.deposit_fee_percent ?? config?.service_charge_percent)}% on top):</strong> Platform fee is added on top of your deposit amount. E.g. for a $100 deposit, total transfer is 100 + {Number(config?.deposit_fee_percent ?? config?.service_charge_percent)}% = ${(100 * (1 + Number(config?.deposit_fee_percent ?? config?.service_charge_percent)/100)).toFixed(2)} USDT. Net Fund Wallet Credit = Received Amount / (100 + {Number(config?.deposit_fee_percent ?? config?.service_charge_percent)}%) = $100.00 USD.
+                    <strong>Service Charge ({Number(config?.deposit_fee_percent ?? config?.service_charge_percent)}% on top):</strong> Platform fee is added on top of your deposit amount. E.g. for a $100.00 deposit, total transfer is ${(100 * (1 + Number(config?.deposit_fee_percent ?? config?.service_charge_percent)/100)).toFixed(2)} USDT, and $100.00 USD is credited to your Fund Wallet.
                   </div>
                 </li>
               ) : (
@@ -1164,50 +1449,74 @@ export function DepositPage() {
             </div>
 
             <form onSubmit={handleVerifyManual}>
-              {/* Amount */}
+              {/* Deposit Amount Input */}
               <div style={{ marginBottom: '1.25rem' }}>
-                <label htmlFor="manual-amount" style={{ display: 'block', fontSize: '0.88rem', fontWeight: 600, color: '#374151', marginBottom: '0.4rem' }}>
-                  Transferred Amount (USDT) <span style={{ color: '#dc2626' }}>*</span>
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label htmlFor="manual-amount" style={{ fontSize: '0.88rem', fontWeight: 600, color: '#374151' }}>
+                    Desired Deposit Amount (USD) <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>
+                    Minimum Credit: $10.00 USD
+                  </span>
+                </div>
+
                 <div style={{ position: 'relative' }}>
                   <input
                     id="manual-amount"
                     type="number"
-                    step="0.01"
+                    step="1"
                     min="10"
+                    max="100000"
                     value={manualAmount}
                     onChange={(e) => setManualAmount(e.target.value)}
-                    placeholder="50.00"
+                    placeholder="50"
                     required
                     style={{
                       width: '100%',
                       padding: '0.75rem 4rem 0.75rem 1rem',
                       borderRadius: '12px',
                       border: '1px solid #d1d5db',
-                      fontSize: '1rem',
-                      fontWeight: 600,
+                      fontSize: '1.1rem',
+                      fontWeight: 700,
+                      color: '#111827',
+                      outline: 'none',
                       boxSizing: 'border-box',
                     }}
                   />
-                  <span style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#6b7280' }}>
-                    USDT
+                  <span style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#6b7280', fontSize: '0.9rem' }}>
+                    USD
                   </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.35rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                  <small style={{ color: '#6b7280', fontSize: '0.78rem' }}>Minimum $10.00 USD equivalent.</small>
-                  {Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0) > 0 && (
-                    <span style={{ fontSize: '0.76rem', color: '#b45309', fontWeight: 600 }}>
-                      💡 Tip: Service charge is +{Number(config?.deposit_fee_percent ?? config?.service_charge_percent)}% on top. (Transfer ${(100 * (1 + Number(config?.deposit_fee_percent ?? config?.service_charge_percent)/100)).toFixed(2)} USDT for $100.00 net credit).
-                    </span>
-                  )}
+
+                {/* Preset Chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.65rem' }}>
+                  {PRESET_AMOUNTS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setManualAmount(String(preset))}
+                      style={{
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                        background: parseFloat(manualAmount) === preset ? '#eff6ff' : '#f9fafb',
+                        color: parseFloat(manualAmount) === preset ? '#176bff' : '#4b5563',
+                        fontWeight: 600,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ${preset}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Live Deposit Preview into Fund Wallet with On-Top Service Charge */}
                 {(() => {
                   const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
-                  const amt = parseFloat(manualAmount) || 0;
-                  const net = scPercent > 0 ? Number((amt / (1 + scPercent / 100)).toFixed(2)) : amt;
-                  const fee = scPercent > 0 ? Number((amt - net).toFixed(2)) : 0;
+                  const base = parseFloat(manualAmount) || 0;
+                  const total = scPercent > 0 ? Number((base * (1 + scPercent / 100)).toFixed(2)) : base;
+                  const fee = scPercent > 0 ? Number((total - base).toFixed(2)) : 0;
 
                   return (
                     <div style={{
@@ -1216,16 +1525,16 @@ export function DepositPage() {
                       borderRadius: '12px',
                       padding: '0.85rem 1rem',
                       fontSize: '0.82rem',
-                      marginTop: '0.65rem',
+                      marginTop: '0.85rem',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '0.5rem',
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
-                        <span style={{ color: '#374151', fontWeight: 600 }}>Target: <strong>Fund Wallet</strong></span>
+                        <span style={{ color: '#374151', fontWeight: 600 }}>Credit Target: <strong>Fund Wallet</strong></span>
                         {scPercent > 0 ? (
                           <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}>
-                            ⚡ Service Charge: +{scPercent}% on top (-${fee.toFixed(2)} USDT)
+                            ⚡ Service Charge: +{scPercent}% on top (+${fee.toFixed(2)} USDT)
                           </span>
                         ) : (
                           <span style={{ background: '#d1fae5', color: '#065f46', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}>
@@ -1246,25 +1555,19 @@ export function DepositPage() {
                         fontSize: '0.8rem',
                       }}>
                         <div>
-                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Transferred Amount:</span>
-                          <strong style={{ color: '#111827' }}>${amt.toFixed(2)} USDT</strong>
+                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Deposit Base:</span>
+                          <strong style={{ color: '#111827' }}>${base.toFixed(2)} USD</strong>
                         </div>
                         {scPercent > 0 && (
                           <div>
-                            <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Fee ({scPercent}%):</span>
-                            <strong style={{ color: '#d97706' }}>-${fee.toFixed(2)} USDT</strong>
+                            <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Fee ({scPercent}% on top):</span>
+                            <strong style={{ color: '#d97706' }}>+${fee.toFixed(2)} USDT</strong>
                           </div>
                         )}
                         <div>
-                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Net Wallet Credit:</span>
-                          <strong style={{ color: '#059669', fontSize: '0.92rem' }}>+${net.toFixed(2)} USD</strong>
+                          <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Total To Transfer (on-chain):</span>
+                          <strong style={{ color: '#176bff', fontSize: '0.92rem' }}>${total.toFixed(2)} USDT</strong>
                         </div>
-                        {scPercent > 0 && (
-                          <div>
-                            <span style={{ color: '#6b7280', display: 'block', fontSize: '0.72rem' }}>Formula:</span>
-                            <strong style={{ color: '#047857' }}>${amt.toFixed(2)} / {1 + (scPercent / 100)} = ${net.toFixed(2)}</strong>
-                          </div>
-                        )}
                       </div>
 
                       <div style={{
@@ -1279,10 +1582,10 @@ export function DepositPage() {
                         fontWeight: 600,
                       }}>
                         <span>
-                          Fund Wallet Credit: <strong style={{ color: '#059669' }}>+${net.toFixed(2)} USD</strong>
+                          Fund Wallet Credit: <strong style={{ color: '#059669' }}>+${base.toFixed(2)} USD</strong>
                         </span>
                         <span>
-                          New Balance: <strong>${(depositStats.fund_wallet + net).toFixed(2)} USD</strong>
+                          New Balance: <strong>${(depositStats.fund_wallet + base).toFixed(2)} USD</strong>
                         </span>
                       </div>
                     </div>
@@ -1373,11 +1676,64 @@ export function DepositPage() {
 
               {/* Verification Error */}
               {manualVerificationError && (
-                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '0.85rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.88rem' }}>
-                  <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <div>
-                    <strong>Verification Failed:</strong> {manualVerificationError}
+                <div
+                  style={{
+                    background: '#fff1f2',
+                    border: '1px solid #fecdd3',
+                    color: '#9f1239',
+                    padding: '0.85rem 1rem',
+                    borderRadius: '12px',
+                    marginBottom: '1.25rem',
+                    display: 'flex',
+                    gap: '0.75rem',
+                    alignItems: 'flex-start',
+                    fontSize: '0.86rem',
+                    position: 'relative',
+                    boxShadow: '0 2px 8px rgba(225, 29, 72, 0.05)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '8px',
+                      background: '#ffe4e6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      color: '#e11d48',
+                    }}
+                  >
+                    <AlertCircle size={17} />
                   </div>
+                  <div style={{ flex: 1, paddingRight: '1.5rem', lineHeight: 1.5 }}>
+                    <div style={{ fontWeight: 700, marginBottom: '0.2rem', color: '#9f1239' }}>
+                      Verification Notice
+                    </div>
+                    <div>{manualVerificationError}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setManualVerificationError('')}
+                    title="Dismiss"
+                    style={{
+                      position: 'absolute',
+                      top: '0.65rem',
+                      right: '0.65rem',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#9f1239',
+                      padding: '3px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
               )}
 
@@ -1444,14 +1800,11 @@ export function DepositPage() {
                       <>
                         <div>
                           <span style={{ color: '#6b7280', display: 'block' }}>Service Charge ({scPercent}% On Top)</span>
-                          <strong style={{ color: '#d97706', fontSize: '0.95rem' }}>-${feeAmt.toFixed(2)} USDT</strong>
+                          <strong style={{ color: '#d97706', fontSize: '0.95rem' }}>+${feeAmt.toFixed(2)} USDT</strong>
                         </div>
                         <div>
                           <span style={{ color: '#6b7280', display: 'block' }}>Net Fund Wallet Credit</span>
                           <strong style={{ color: '#059669', fontSize: '1.05rem' }}>+${netCredit.toFixed(2)} USD</strong>
-                          <span style={{ fontSize: '0.72rem', color: '#047857', display: 'block' }}>
-                            (${verifiedAmt.toFixed(2)} / {1 + (scPercent / 100)})
-                          </span>
                         </div>
                       </>
                     )}
@@ -1473,8 +1826,43 @@ export function DepositPage() {
                   </div>
 
                   {manualSubmitError && (
-                    <div style={{ color: '#b91c1c', fontSize: '0.84rem', marginBottom: '0.75rem' }}>
-                      {manualSubmitError}
+                    <div
+                      style={{
+                        background: '#fff1f2',
+                        border: '1px solid #fecdd3',
+                        color: '#9f1239',
+                        padding: '0.75rem 1rem',
+                        borderRadius: '10px',
+                        marginBottom: '0.85rem',
+                        display: 'flex',
+                        gap: '0.65rem',
+                        alignItems: 'flex-start',
+                        fontSize: '0.84rem',
+                        position: 'relative',
+                      }}
+                    >
+                      <AlertCircle size={16} style={{ color: '#e11d48', flexShrink: 0, marginTop: '2px' }} />
+                      <div style={{ flex: 1, paddingRight: '1.25rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Submission Notice:</strong>
+                        <span>{manualSubmitError}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setManualSubmitError('')}
+                        title="Dismiss"
+                        style={{
+                          position: 'absolute',
+                          top: '0.5rem',
+                          right: '0.5rem',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#9f1239',
+                          padding: '2px',
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
                   )}
 
@@ -1508,7 +1896,7 @@ export function DepositPage() {
                     ) : (
                       <>
                         <Send size={18} />
-                        <span>Submit Deposit Request (${netCredit.toFixed(2)} USD Net Credit)</span>
+                        <span>Submit Deposit Request (+${netCredit.toFixed(2)} USD Net Credit)</span>
                       </>
                     )}
                   </button>
@@ -1707,7 +2095,7 @@ export function DepositPage() {
                     1
                   </div>
                   <div style={{ fontSize: '0.82rem', color: '#4b5563' }}>
-                    <strong style={{ color: '#111827' }}>Send USDT:</strong> Scan QR or transfer BEP-20 USDT to the address above. Remember service charge is added on top (e.g. transfer $105 USDT for $100.00 Fund Wallet credit).
+                    <strong style={{ color: '#111827' }}>Send USDT:</strong> Scan QR or transfer BEP-20 USDT to the address above. Service charge is applied on top of the amount.
                   </div>
                 </div>
 
@@ -1915,6 +2303,367 @@ export function DepositPage() {
           </div>
         )}
       </section>
+
+      {/* Fund Wallet Full Withdrawal Confirmation Modal */}
+      {showWithdrawModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem',
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '20px',
+            maxWidth: '520px',
+            width: '100%',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: '1px solid #e2e8f0',
+            overflow: 'hidden',
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid #f1f5f9',
+              background: '#f8fafc',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: '#dcfce7',
+                  color: '#059669',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <ArrowUpRight size={22} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                    Withdraw Fund Wallet Balance
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                    Request full withdrawal of p2p_wallet with 0% fee
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseWithdrawModal}
+                disabled={isSubmittingWithdraw}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '0.35rem',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '1.5rem' }}>
+              {withdrawSuccess ? (
+                /* Success View */
+                <div style={{ textAlign: 'center', padding: '0.75rem 0.25rem' }}>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    background: '#dcfce7',
+                    color: '#059669',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1rem',
+                  }}>
+                    <CheckCircle2 size={36} />
+                  </div>
+                  <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem' }}>
+                    Withdrawal Request Submitted!
+                  </h4>
+                  <p style={{ fontSize: '0.88rem', color: '#64748b', margin: '0 0 1.25rem' }}>
+                    {withdrawSuccess.message || 'Your Fund Wallet withdrawal request has been placed and is currently pending admin review.'}
+                  </p>
+
+                  <div style={{
+                    background: '#f8fafc',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    padding: '1rem',
+                    textAlign: 'left',
+                    marginBottom: '1.5rem',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#64748b' }}>Request ID:</span>
+                      <strong style={{ color: '#0f172a', fontFamily: 'monospace' }}>
+                        {withdrawSuccess.details?.request_id || withdrawSuccess.withdrawal?.request_id}
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#64748b' }}>Withdrawal Amount:</span>
+                      <strong style={{ color: '#059669', fontWeight: 800 }}>
+                        ${Number(withdrawSuccess.details?.gross_amount ?? withdrawSuccess.withdrawal?.gross_amount ?? 0).toFixed(2)} USD
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#64748b' }}>Service Charge / Deduction:</span>
+                      <strong style={{ color: '#059669' }}>
+                        $0.00 (0% Zero Fee)
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#64748b' }}>Net Receivable Amount:</span>
+                      <strong style={{ color: '#047857', fontWeight: 800 }}>
+                        ${Number(withdrawSuccess.details?.net_amount ?? withdrawSuccess.withdrawal?.net_amount ?? 0).toFixed(2)} USDT
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#64748b' }}>Status:</span>
+                      <span style={{ background: '#fef3c7', color: '#d97706', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 700, fontSize: '0.75rem' }}>
+                        Pending Admin Review
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCloseWithdrawModal}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #059669, #047857)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '0.92rem',
+                    }}
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                /* Confirmation Form View */
+                <div>
+                  {withdrawError && (
+                    <div
+                      style={{
+                        padding: '0.85rem 1rem',
+                        borderRadius: '10px',
+                        background: '#fff1f2',
+                        border: '1px solid #fecdd3',
+                        color: '#9f1239',
+                        fontSize: '0.85rem',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.65rem',
+                        position: 'relative',
+                      }}
+                    >
+                      <AlertCircle size={18} style={{ color: '#e11d48', flexShrink: 0, marginTop: '2px' }} />
+                      <div style={{ flex: 1, paddingRight: '1.25rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Withdrawal Notice:</strong>
+                        <span>{withdrawError}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setWithdrawError('')}
+                        title="Dismiss"
+                        style={{
+                          position: 'absolute',
+                          top: '0.5rem',
+                          right: '0.5rem',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#9f1239',
+                          padding: '2px',
+                        }}
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Summary Breakdown Box */}
+                  <div style={{
+                    background: '#f8fafc',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    padding: '1rem',
+                    marginBottom: '1rem',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Fund Wallet Balance:</span>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#065f46' }}>
+                        ${depositStats.fund_wallet.toFixed(2)} <span style={{ fontSize: '0.75rem' }}>USD</span>
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#64748b' }}>Service Charge / Deduction:</span>
+                      <strong style={{ color: '#059669' }}>$0.00 (0.00% Zero Fee)</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', fontSize: '0.85rem', paddingTop: '0.5rem', borderTop: '1px dashed #cbd5e1' }}>
+                      <span style={{ color: '#1e293b', fontWeight: 700 }}>Total Net Receivable:</span>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#047857' }}>
+                        ${depositStats.fund_wallet.toFixed(2)} <span style={{ fontSize: '0.75rem' }}>USDT (BEP-20)</span>
+                      </span>
+                    </div>
+
+                    {/* Destination Address */}
+                    <div style={{ paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0' }}>
+                      <span style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748b', fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>
+                        Payout Wallet Address (BEP-20)
+                      </span>
+                      {memberPayoutAddress ? (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: '#ffffff',
+                          padding: '0.5rem 0.75rem',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          fontFamily: 'monospace',
+                          fontSize: '0.82rem',
+                          color: '#0f172a',
+                          wordBreak: 'break-all',
+                        }}>
+                          <span>{memberPayoutAddress}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(memberPayoutAddress)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              color: copiedHash === memberPayoutAddress ? '#059669' : '#64748b',
+                              marginLeft: '0.5rem',
+                              flexShrink: 0,
+                            }}
+                            title="Copy Address"
+                          >
+                            {copiedHash === memberPayoutAddress ? <Check size={16} /> : <Copy size={16} />}
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{
+                          padding: '0.65rem 0.75rem',
+                          borderRadius: '8px',
+                          background: '#fff1f2',
+                          border: '1px solid #fecdd3',
+                          color: '#be123c',
+                          fontSize: '0.8rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                        }}>
+                          <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                          <span>No payout address configured. Please set your BEP-20 wallet address in profile.</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Conditions & Notice */}
+                  <div style={{
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    color: '#166534',
+                    fontSize: '0.78rem',
+                    lineHeight: '1.4',
+                    marginBottom: '1.25rem',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                      <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: '2px' }} color="#059669" />
+                      <span>
+                        Clicking confirm will request a full withdrawal of <strong>${depositStats.fund_wallet.toFixed(2)} USD</strong> from your Fund Wallet. No deduction or service fee will be applied (0% fee). Your request will be queued for Admin payout review.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                    <button
+                      type="button"
+                      onClick={handleCloseWithdrawModal}
+                      disabled={isSubmittingWithdraw}
+                      style={{
+                        padding: '0.65rem 1.25rem',
+                        borderRadius: '10px',
+                        background: '#f1f5f9',
+                        color: '#475569',
+                        fontWeight: 600,
+                        fontSize: '0.88rem',
+                        border: 'none',
+                        cursor: isSubmittingWithdraw ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      id="btn-confirm-fund-withdrawal"
+                      onClick={handleConfirmFundWithdrawal}
+                      disabled={isSubmittingWithdraw || depositStats.fund_wallet <= 0 || !memberPayoutAddress}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        padding: '0.65rem 1.35rem',
+                        borderRadius: '10px',
+                        background: (depositStats.fund_wallet > 0 && memberPayoutAddress) ? 'linear-gradient(135deg, #059669, #047857)' : '#e5e7eb',
+                        color: (depositStats.fund_wallet > 0 && memberPayoutAddress) ? '#ffffff' : '#9ca3af',
+                        fontWeight: 700,
+                        fontSize: '0.88rem',
+                        border: 'none',
+                        cursor: (depositStats.fund_wallet > 0 && memberPayoutAddress && !isSubmittingWithdraw) ? 'pointer' : 'not-allowed',
+                        boxShadow: (depositStats.fund_wallet > 0 && memberPayoutAddress) ? '0 4px 6px -1px rgba(5, 150, 105, 0.2)' : 'none',
+                      }}
+                    >
+                      {isSubmittingWithdraw ? (
+                        <>
+                          <RefreshCw size={16} className="animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <ArrowUpRight size={16} />
+                          Confirm & Submit Request
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

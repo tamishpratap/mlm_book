@@ -448,7 +448,7 @@ class BscTransactionVerifierService
         }
 
         $amount = $expectedAmount > 0 ? $expectedAmount : 50.00;
-        $mockSender = !empty($expectedSenderWallet) ? $expectedSenderWallet : ('0x' . substr(md5($txHash . '_sender'), 0, 40));
+        $mockSender = !empty($expectedSenderWallet) ? $expectedSenderWallet : ('0x' . substr(hash('sha256', $txHash . '_sender'), 0, 40));
 
         return [
             'verified' => true,
