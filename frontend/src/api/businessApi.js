@@ -655,6 +655,26 @@ export const businessApi = {
   },
 
   /**
+   * Restart a stopped ad campaign
+   * @param {string} slug
+   * @param {string|number} campaignId
+   */
+  async restartAdCampaign(slug, campaignId) {
+    const response = await apiClient.post(`/business-pages/${slug}/ad-campaigns/${campaignId}/restart`);
+    return response.data;
+  },
+
+  /**
+   * Close an ad campaign and refund remaining balance to p2p fund wallet
+   * @param {string} slug
+   * @param {string|number} campaignId
+   */
+  async closeAdCampaign(slug, campaignId) {
+    const response = await apiClient.post(`/business-pages/${slug}/ad-campaigns/${campaignId}/close`);
+    return response.data;
+  },
+
+  /**
    * Add funds (top-up) to an existing ad campaign and reactivate if exhausted
    * @param {string} slug
    * @param {string|number} campaignId

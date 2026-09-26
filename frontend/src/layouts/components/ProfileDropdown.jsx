@@ -326,7 +326,7 @@ export function ProfileDropdown({ isOpen, onToggle, onClose, onOpenReferral, onO
             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
               <strong style={{ color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Wallet</strong>
               <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 800, color: '#047857', background: '#ecfdf5', padding: '2px 8px', borderRadius: '10px' }}>
-                ${parseFloat(user?.wallet ?? user?.reward_balance ?? 0).toFixed(2)} USD
+                ${parseFloat(user?.wallet ?? user?.reward_balance ?? 0).toFixed(4)} USD
               </span>
             </div>
             <ChevronRight size={16} />

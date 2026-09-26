@@ -101,14 +101,11 @@ class CommunityPostController extends Controller
         $community->increment('post_count');
         $post->load(['member', 'comments.member', 'likes', 'reactions']);
 
-        $html = view('member.posts.partials.card', compact('post'))->render();
-
         return response()->json([
             'success' => true,
             'message' => 'Post published to ' . $community->name . '!',
             'post' => $post,
             'post_id' => $post->id,
-            'html' => $html,
             'post_count' => $community->fresh()->post_count,
         ]);
     }

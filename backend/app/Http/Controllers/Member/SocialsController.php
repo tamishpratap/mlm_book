@@ -151,11 +151,6 @@ class SocialsController extends Controller
                 return $post;
             });
 
-            $html = '';
-            foreach ($formattedItems as $post) {
-                $html .= view('member.posts.partials.card', compact('post'))->render();
-            }
-
             return response()->json([
                 'success' => true,
                 'has_more' => $posts->hasMorePages(),
@@ -163,7 +158,6 @@ class SocialsController extends Controller
                 'next_page' => $posts->currentPage() + 1,
                 'total' => max($posts->total(), $posts->count()),
                 'posts' => $formattedItems->values()->all(),
-                'html' => $html,
             ]);
         }
 

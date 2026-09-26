@@ -158,7 +158,7 @@ class WithdrawalController extends Controller
         if ($grossAmount > $walletBalance) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid Amount Entered. Amount cannot be greater than Wallet balance ($' . number_format($walletBalance, 2) . ').',
+                'message' => 'Invalid Amount Entered. Amount cannot be greater than Wallet balance ($' . number_format($walletBalance, 4) . ').',
             ], 422);
         }
 

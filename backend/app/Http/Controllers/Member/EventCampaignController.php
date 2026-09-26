@@ -1416,7 +1416,7 @@ class EventCampaignController extends Controller
                 );
 
                 // Credit Member's canonical Wallet atomically
-                $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 2);
+                $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 4);
                 $lockedMember->save();
                 $newWalletBalance = (float) $lockedMember->wallet;
 

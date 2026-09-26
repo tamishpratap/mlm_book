@@ -155,7 +155,7 @@ export function WithdrawalPage() {
           <div className="withdrawal-stat-info">
             <span className="withdrawal-stat-label">Wallet Balance</span>
             <span className="withdrawal-stat-value">
-              ${parseFloat(memberData?.wallet || user?.wallet || 0).toFixed(2)}
+              ${parseFloat(memberData?.wallet || user?.wallet || 0).toFixed(4)}
             </span>
           </div>
         </div>

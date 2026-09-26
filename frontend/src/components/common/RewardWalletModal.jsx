@@ -385,7 +385,7 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
                 Wallet Balance
               </div>
               <div style={{ fontSize: '24px', fontWeight: 900, color: '#047857' }}>
-                ${Number(balance).toFixed(2)} <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>USD</span>
+                ${Number(balance).toFixed(4)} <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>USD</span>
               </div>
               <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
                 Separate from Advertising Funds
