@@ -129,7 +129,6 @@ class PostController extends Controller
                 'message' => 'Your post has been published.',
                 'post_id' => $post->id,
                 'post' => $post,
-                'html' => view('member.posts.partials.card', compact('post'))->render(),
             ]);
         }
 
@@ -917,7 +916,6 @@ class PostController extends Controller
                 'original_post_id' => $originalPost->id,
                 'shared_post_id' => $newPost->id,
                 'shares_count' => $sharesCount,
-                'html' => view('member.posts.partials.card', ['post' => $newPost])->render(),
             ]);
         }
 

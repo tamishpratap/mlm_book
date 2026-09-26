@@ -39,6 +39,7 @@ export function BusinessAdCampaignsList({
   const [statusFilter, setStatusFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState('running'); // 'running' | 'closed'
   const [fetchedPosts, setFetchedPosts] = useState([]);
   const [hasPageContent, setHasPageContent] = useState(null);
   const [contentError, setContentError] = useState('');
@@ -57,9 +58,16 @@ export function BusinessAdCampaignsList({
     setError('');
 
     try {
+      let finalStatus = statusFilter;
+      if (!finalStatus) {
+        finalStatus = viewMode === 'running'
+          ? 'draft,pending_review,approved,active,paused,rejected,stopped'
+          : 'completed,cancelled';
+      }
+
       const params = {
         page: currentPage,
-        status: statusFilter || undefined,
+        status: finalStatus,
         q: searchQuery || undefined,
       };
 
@@ -85,11 +93,17 @@ export function BusinessAdCampaignsList({
     } finally {
       setLoading(false);
     }
-  }, [page, currentPage, statusFilter, searchQuery]);
+  }, [page, currentPage, statusFilter, searchQuery, viewMode]);
 
   useEffect(() => {
     fetchCampaigns();
   }, [fetchCampaigns]);
+
+  // When viewMode changes, reset status filter and page
+  useEffect(() => {
+    setStatusFilter('');
+    setCurrentPage(1);
+  }, [viewMode]);
 
   const effectivePosts = (fetchedPosts && fetchedPosts.length > 0) ? fetchedPosts : availablePosts;
   const hasContent = hasPageContent !== null
@@ -106,6 +120,7 @@ export function BusinessAdCampaignsList({
   };
 
   const handleCampaignCreated = (newCampaign) => {
+    setViewMode('running');
     fetchCampaigns();
     if (newCampaign) {
       setDetailCampaign(newCampaign);
@@ -139,6 +154,8 @@ export function BusinessAdCampaignsList({
         return { bg: '#f1f5f9', color: '#475569', label: 'Stopped' };
       case 'completed':
         return { bg: '#f1f5f9', color: '#475569', label: 'Completed' };
+      case 'cancelled':
+        return { bg: '#fee2e2', color: '#b91c1c', label: 'Closed / Cancelled' };
       default:
         return { bg: '#f3f4f6', color: '#6b7280', label: 'Draft' };
     }
@@ -245,49 +262,56 @@ export function BusinessAdCampaignsList({
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '14px',
+            marginBottom: '16px',
+            borderBottom: '1px solid #e2e8f0',
+            paddingBottom: '16px',
           }}
         >
-          {/* Left: Search & Status Filter */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '260px' }}>
-            <div style={{ position: 'relative', flex: 1, maxWidth: '320px' }}>
-              <Search
-                size={16}
-                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search campaigns..."
-                className="biz-search-input"
-                style={{ width: '100%', paddingLeft: '36px', borderRadius: '10px' }}
-              />
-            </div>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="biz-filter-select"
-              style={{ padding: '9px 14px', borderRadius: '10px' }}
-            >
-              <option value="">All Statuses</option>
-              <option value="draft">Drafts</option>
-              <option value="pending_review">Pending Review</option>
-              <option value="approved">Approved</option>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-              <option value="rejected">Rejected</option>
-              <option value="stopped">Stopped</option>
-            </select>
-
+          {/* View Mode Toggle */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: '#f1f5f9',
+              borderRadius: '10px',
+              padding: '4px',
+            }}
+          >
             <button
               type="button"
-              className="mini-button"
-              onClick={fetchCampaigns}
-              title="Refresh campaigns"
-              style={{ borderRadius: '10px', padding: '9px' }}
+              onClick={() => setViewMode('running')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                backgroundColor: viewMode === 'running' ? '#ffffff' : 'transparent',
+                color: viewMode === 'running' ? '#0f172a' : '#64748b',
+                border: 'none',
+                boxShadow: viewMode === 'running' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
             >
-              <RefreshCw size={15} />
+              Running Ads
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('closed')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                backgroundColor: viewMode === 'closed' ? '#ffffff' : 'transparent',
+                color: viewMode === 'closed' ? '#0f172a' : '#64748b',
+                border: 'none',
+                boxShadow: viewMode === 'closed' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              Closed Ads
             </button>
           </div>
 
@@ -342,6 +366,69 @@ export function BusinessAdCampaignsList({
               </button>
             </div>
           )}
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '14px',
+          }}
+        >
+          {/* Left: Search & Status Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '260px' }}>
+            <div style={{ position: 'relative', flex: 1, maxWidth: '320px' }}>
+              <Search
+                size={16}
+                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search campaigns..."
+                className="biz-search-input"
+                style={{ width: '100%', paddingLeft: '36px', borderRadius: '10px' }}
+              />
+            </div>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="biz-filter-select"
+              style={{ padding: '9px 14px', borderRadius: '10px' }}
+            >
+              <option value="">All Statuses</option>
+              {viewMode === 'running' ? (
+                <>
+                  <option value="draft">Drafts</option>
+                  <option value="pending_review">Pending Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="stopped">Stopped</option>
+                </>
+              ) : (
+                <>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Closed / Cancelled</option>
+                </>
+              )}
+            </select>
+
+            <button
+              type="button"
+              className="mini-button"
+              onClick={fetchCampaigns}
+              title="Refresh campaigns"
+              style={{ borderRadius: '10px', padding: '9px' }}
+            >
+              <RefreshCw size={15} />
+            </button>
+          </div>
         </div>
       </div>
 

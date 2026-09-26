@@ -622,14 +622,11 @@ class BusinessPageController extends Controller
 
         $post->load(['member', 'businessPage']);
 
-        $html = view('member.posts.partials.card', compact('post'))->render();
-
         return response()->json([
             'success' => true,
             'message' => 'Post published to ' . $businessPage->page_name . ' timeline!',
             'post' => $post,
             'post_id' => $post->id,
-            'html' => $html,
         ]);
     }
 
