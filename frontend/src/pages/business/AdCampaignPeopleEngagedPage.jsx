@@ -1874,7 +1874,7 @@ export function AdCampaignPeopleEngagedPage() {
           page={businessPage}
           campaign={campaign}
           availableAdFunds={Number(data?.metrics?.available_ad_funds ?? data?.metrics?.member_ad_balance ?? 0)}
-          platformFeePercent={Number(data?.metrics?.campaign_platform_fee_percent ?? 2.5)}
+          platformFeePercent={Number(data?.metrics?.campaign_platform_fee_percent ?? 0)}
           onClose={() => setShowTopUpModal(false)}
           onCampaignUpdated={() => {
             setShowTopUpModal(false);

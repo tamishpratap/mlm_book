@@ -661,7 +661,7 @@ export function BusinessAdCampaignsList({
           availablePosts={effectivePosts}
           hasPageContent={hasContent}
           availableAdFunds={Number(metrics.available_ad_funds !== undefined ? metrics.available_ad_funds : (metrics.member_ad_balance || 0))}
-          platformFeePercent={Number(metrics.campaign_platform_fee_percent ?? 2.5)}
+          platformFeePercent={Number(metrics.campaign_platform_fee_percent ?? 0)}
           onAddFundClick={() => {
             setShowCreateModal(false);
             navigate('/member/deposit');
@@ -695,7 +695,7 @@ export function BusinessAdCampaignsList({
           page={page}
           campaign={topUpCampaign}
           availableAdFunds={Number(metrics.available_ad_funds !== undefined ? metrics.available_ad_funds : (metrics.member_ad_balance || 0))}
-          platformFeePercent={Number(metrics.campaign_platform_fee_percent ?? 2.5)}
+          platformFeePercent={Number(metrics.campaign_platform_fee_percent ?? 0)}
           onClose={() => setTopUpCampaign(null)}
           onCampaignUpdated={() => {
             setTopUpCampaign(null);

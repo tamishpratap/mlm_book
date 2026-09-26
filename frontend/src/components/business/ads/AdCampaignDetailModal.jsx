@@ -117,7 +117,7 @@ export function AdCampaignDetailModal({
       original_budget: 0,
       additional_funding: 0,
       total_funded: 0,
-      platform_fee_percent: 2.5,
+      platform_fee_percent: 0,
       platform_fee_amount: 0,
       spent_amount: 0,
       remaining_budget: 0,
@@ -195,7 +195,7 @@ export function AdCampaignDetailModal({
               original_budget: Number(currentCampaign.budget || 0),
               additional_funding: Number(currentCampaign.additional_funding || 0),
               total_funded: Number(currentCampaign.total_funded || 0),
-              platform_fee_percent: 2.5,
+              platform_fee_percent: 0,
               platform_fee_amount: Number(currentCampaign.fee_amount || 0),
               spent_amount: Number(currentCampaign.spent_amount || 0),
               remaining_budget: Number(currentCampaign.remaining_amount || 0),
@@ -703,8 +703,12 @@ export function AdCampaignDetailModal({
   const origBudget = parseFloat(currentCampaign.budget) || 0;
   const additionalFunding = parseFloat(currentCampaign.additional_funding) || 0;
   const totalFunded = parseFloat(currentCampaign.total_funded) || (origBudget + additionalFunding);
-  const feePercent = parseFloat(currentCampaign.fee_percent) || 2.5;
-  const feeAmount = parseFloat(currentCampaign.fee_amount) || Math.round(totalFunded * (feePercent / 100) * 100) / 100;
+  const feePercent = currentCampaign.fee_percent !== undefined && currentCampaign.fee_percent !== null && !isNaN(Number(currentCampaign.fee_percent))
+    ? parseFloat(currentCampaign.fee_percent)
+    : 0;
+  const feeAmount = currentCampaign.fee_amount !== undefined && currentCampaign.fee_amount !== null && !isNaN(Number(currentCampaign.fee_amount))
+    ? parseFloat(currentCampaign.fee_amount)
+    : (feePercent > 0 ? Math.round(totalFunded * (feePercent / 100) * 100) / 100 : 0);
   const spent = parseFloat(currentCampaign.spent_amount) || 0;
   const remaining = parseFloat(currentCampaign.remaining_amount) || Math.max(0, totalFunded - spent);
 
@@ -1233,12 +1237,14 @@ export function AdCampaignDetailModal({
                     </div>
                   </div>
 
-                  <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({feePercent}%)</span>
-                    <div style={{ fontSize: '16px', fontWeight: 800, color: '#64748b', marginTop: '4px' }}>
-                      ${feeAmount.toFixed(2)}
+                  {feeAmount > 0 && (
+                    <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({feePercent}%)</span>
+                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#64748b', marginTop: '4px' }}>
+                        ${feeAmount.toFixed(2)}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Rewards Paid</span>
@@ -3338,12 +3344,14 @@ export function AdCampaignDetailModal({
                     </div>
                   </div>
 
-                  <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({feePercent}%)</span>
-                    <div style={{ fontSize: '16px', fontWeight: 800, color: '#64748b', marginTop: '3px' }}>
-                      ${(engagementSummary.financials?.platform_fee_amount || feeAmount).toFixed(2)}
+                  {((engagementSummary.financials?.platform_fee_amount || feeAmount) > 0) && (
+                    <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({feePercent}%)</span>
+                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#64748b', marginTop: '3px' }}>
+                        ${(engagementSummary.financials?.platform_fee_amount || feeAmount).toFixed(2)}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Authoritative Rewards Paid</span>

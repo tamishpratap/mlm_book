@@ -150,14 +150,17 @@ class MobileBusinessAndCampaignController extends Controller
         ]);
 
         $budget = (float) $validated['budget'];
-        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 2.5);
+        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.0);
         $feeAmount = round($budget * ($feePercent / 100), 2);
         $totalDebit = round($budget + $feeAmount, 2);
 
         $availableFunds = (float) ($member->p2p_wallet ?? 0.00);
         if ($availableFunds < $totalDebit) {
+            $shortfallMsg = $feeAmount > 0
+                ? "Insufficient ad funds. Required: \${$totalDebit} (Budget \${$budget} + \${$feeAmount} platform fee). Available: \${$availableFunds} USD. Please deposit funds first."
+                : "Insufficient ad funds. Required: \${$totalDebit} (Budget \${$budget}). Available: \${$availableFunds} USD. Please deposit funds first.";
             return response()->json([
-                'message' => "Insufficient ad funds. Required: \${$totalDebit} (Budget \${$budget} + \${$feeAmount} platform fee). Available: \${$availableFunds} USD. Please deposit funds first.",
+                'message' => $shortfallMsg,
             ], 422);
         }
 

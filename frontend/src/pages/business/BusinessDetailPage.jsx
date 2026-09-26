@@ -2298,6 +2298,7 @@ export function BusinessDetailPage() {
           availablePosts={timelinePosts}
           hasPageContent={Boolean(targetPostForAd) || (timelinePosts && timelinePosts.length > 0) || (Number(data?.audience_counters?.posts || 0) > 0)}
           availableAdFunds={Number(currentUser?.p2p_wallet ?? currentUser?.fund_wallet ?? 0.00)}
+          platformFeePercent={0}
           onAddFundClick={() => {
             setShowRunAdModal(false);
             navigate('/member/deposit');

@@ -148,7 +148,7 @@ class AdCampaignManagementController extends Controller
             'total_impressions' => $totalImpressions,
             'total_clicks' => $totalClicks,
             'average_ctr' => $avgCtr,
-            'campaign_platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 2.50),
+            'campaign_platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 0.00),
         ];
 
         return response()->json([
@@ -345,7 +345,7 @@ class AdCampaignManagementController extends Controller
                 'recent_clicks_24h' => AdClick::where('created_at', '>=', now()->subDay())->count(),
                 'recent_verified_visits_24h' => AdReward::where('status', AdReward::STATUS_CREDITED)->where('created_at', '>=', now()->subDay())->count(),
                 'recent_rewards_paid_24h' => round((float) AdReward::where('status', AdReward::STATUS_CREDITED)->where('created_at', '>=', now()->subDay())->sum('reward_amount_usd'), 2),
-                'campaign_platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 2.50),
+                'campaign_platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 0.00),
             ],
             'top_campaigns' => $topCampaigns,
         ]);
@@ -893,7 +893,7 @@ class AdCampaignManagementController extends Controller
      */
     public function getSettings(): JsonResponse
     {
-        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 2.50);
+        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
 
         return response()->json([
             'success' => true,

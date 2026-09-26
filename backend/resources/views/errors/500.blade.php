@@ -11,7 +11,7 @@
     <p style="color: #667085; max-width: 480px; margin: 0 auto 20px;">
         An unexpected error occurred on our server. Our team has been notified.
     </p>
-    <a href="{{ route('member.dashboard') }}" class="member-button member-button--primary">
+    <a href="{{ Route::has('member.dashboard') ? route('member.dashboard') : url('/') }}" class="member-button member-button--primary">
         <i data-lucide="house" aria-hidden="true"></i> Back to Dashboard
     </a>
 </div>

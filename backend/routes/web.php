@@ -43,9 +43,9 @@ use App\Http\Middleware\UpdateLastSeenMiddleware;
 use Illuminate\Support\Facades\Route;
 
 
-// Route::get('/', function () {
-//     return redirect()->route('member.login');
-// });
+Route::get('/', function () {
+    return redirect()->route('member.login');
+});
 
 Route::get('/auth/google', [MemberAuthController::class, 'redirectToGoogle'])
     ->name('member.google.redirect');
@@ -81,824 +81,824 @@ Route::get('/sounds/{file}', function ($file) {
     abort(404);
 })->where('file', '[a-zA-Z0-9_\-\.]+');
 
-// Route::prefix('member')
-//     ->name('member.')
-//     ->group(function () {
-//         Route::get('/login', [MemberAuthController::class, 'showLogin'])
-//             ->name('login');
+Route::prefix('member')
+    ->name('member.')
+    ->group(function () {
+        Route::get('/login', [MemberAuthController::class, 'showLogin'])
+            ->name('login');
 
-//         Route::post('/login', [MemberAuthController::class, 'login'])
-//             ->name('login.submit');
+        Route::post('/login', [MemberAuthController::class, 'login'])
+            ->name('login.submit');
 
-//         Route::get('/register', [MemberAuthController::class, 'showRegister'])
-//             ->name('register');
+        Route::get('/register', [MemberAuthController::class, 'showRegister'])
+            ->name('register');
 
-//         Route::get('/register/check-phone', [MemberAuthController::class, 'checkPhone'])
-//             ->name('register.check-phone');
+        Route::get('/register/check-phone', [MemberAuthController::class, 'checkPhone'])
+            ->name('register.check-phone');
 
-//         Route::get('/register/check-user-id', [MemberAuthController::class, 'checkUserId'])
-//             ->name('register.check-user-id');
+        Route::get('/register/check-user-id', [MemberAuthController::class, 'checkUserId'])
+            ->name('register.check-user-id');
 
-//         Route::get('/register/check-introducer', [MemberAuthController::class, 'checkIntroducer'])
-//             ->name('register.check-introducer');
+        Route::get('/register/check-introducer', [MemberAuthController::class, 'checkIntroducer'])
+            ->name('register.check-introducer');
 
-//         Route::post('/register', [MemberAuthController::class, 'register'])
-//             ->name('register.submit');
+        Route::post('/register', [MemberAuthController::class, 'register'])
+            ->name('register.submit');
 
-//         Route::get('/register/verify', [MemberAuthController::class, 'showVerifyEmail'])
-//             ->name('register.verify');
+        Route::get('/register/verify', [MemberAuthController::class, 'showVerifyEmail'])
+            ->name('register.verify');
 
-//         Route::post('/register/verify', [MemberAuthController::class, 'verifyEmailOtp'])
-//             ->name('register.verify.submit');
+        Route::post('/register/verify', [MemberAuthController::class, 'verifyEmailOtp'])
+            ->name('register.verify.submit');
 
-//         Route::post('/register/resend-otp', [MemberAuthController::class, 'resendRegistrationOtp'])
-//             ->name('register.resend-otp');
+        Route::post('/register/resend-otp', [MemberAuthController::class, 'resendRegistrationOtp'])
+            ->name('register.resend-otp');
 
-//         Route::post('/register/cancel', [MemberAuthController::class, 'cancelRegistration'])
-//             ->name('register.cancel');
+        Route::post('/register/cancel', [MemberAuthController::class, 'cancelRegistration'])
+            ->name('register.cancel');
 
-//         Route::get('/forgot-password', [MemberPasswordResetController::class, 'showForgotPassword'])
-//             ->name('forgot-password');
+        Route::get('/forgot-password', [MemberPasswordResetController::class, 'showForgotPassword'])
+            ->name('forgot-password');
 
-//         Route::post('/forgot-password', [MemberPasswordResetController::class, 'sendResetLink'])
-//             ->name('forgot-password.send');
+        Route::post('/forgot-password', [MemberPasswordResetController::class, 'sendResetLink'])
+            ->name('forgot-password.send');
 
-//         Route::get('/reset-password/{token}', [MemberPasswordResetController::class, 'showResetPassword'])
-//             ->name('password.reset');
+        Route::get('/reset-password/{token}', [MemberPasswordResetController::class, 'showResetPassword'])
+            ->name('password.reset');
 
-//         Route::post('/reset-password', [MemberPasswordResetController::class, 'resetPassword'])
-//             ->name('password.update');
+        Route::post('/reset-password', [MemberPasswordResetController::class, 'resetPassword'])
+            ->name('password.update');
 
-//         Route::middleware(['auth:member', UpdateLastSeenMiddleware::class, SecurityHeadersMiddleware::class])->group(function () {
-//             Route::get('/dashboard', [DashboardController::class, 'index'])
-//                 ->name('dashboard');
+        Route::middleware(['auth:member', UpdateLastSeenMiddleware::class, SecurityHeadersMiddleware::class])->group(function () {
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->name('dashboard');
 
-//             Route::get('/socials', [SocialsController::class, 'index'])
-//                 ->name('socials');
+            Route::get('/socials', [SocialsController::class, 'index'])
+                ->name('socials');
 
-//             Route::get('/watch', [WatchController::class, 'index'])
-//                 ->name('watch.index');
+            Route::get('/watch', [WatchController::class, 'index'])
+                ->name('watch.index');
 
-//             Route::get('/create-video', function () {
-//                 return redirect()->route('member.watch.index');
-//             })->name('create-video');
+            Route::get('/create-video', function () {
+                return redirect()->route('member.watch.index');
+            })->name('create-video');
 
-//             Route::get('/videos/create', function () {
-//                 return redirect()->route('member.watch.index');
-//             });
+            Route::get('/videos/create', function () {
+                return redirect()->route('member.watch.index');
+            });
 
-//             Route::post('/posts', [PostController::class, 'store'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->name('posts.store');
+            Route::post('/posts', [PostController::class, 'store'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->name('posts.store');
 
-//             Route::get('/posts/{post}', [PostController::class, 'show'])
-//                 ->whereNumber('post')
-//                 ->name('posts.show');
+            Route::get('/posts/{post}', [PostController::class, 'show'])
+                ->whereNumber('post')
+                ->name('posts.show');
 
-//             Route::post('/posts/{post}/like', [PostController::class, 'toggleLike'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->whereNumber('post')
-//                 ->name('posts.like');
+            Route::post('/posts/{post}/like', [PostController::class, 'toggleLike'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->whereNumber('post')
+                ->name('posts.like');
 
-//             Route::get('/posts/{post}/likers', [PostController::class, 'likers'])
-//                 ->whereNumber('post')
-//                 ->name('posts.likers');
+            Route::get('/posts/{post}/likers', [PostController::class, 'likers'])
+                ->whereNumber('post')
+                ->name('posts.likers');
 
-//             Route::post('/posts/{post}/react', [PostController::class, 'react'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->whereNumber('post')
-//                 ->name('posts.react');
+            Route::post('/posts/{post}/react', [PostController::class, 'react'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->whereNumber('post')
+                ->name('posts.react');
 
-//             Route::get('/posts/{post}/reactors', [PostController::class, 'reactors'])
-//                 ->whereNumber('post')
-//                 ->name('posts.reactors');
+            Route::get('/posts/{post}/reactors', [PostController::class, 'reactors'])
+                ->whereNumber('post')
+                ->name('posts.reactors');
 
-//             Route::get('/posts/{post}/comments', [PostController::class, 'comments'])
-//                 ->whereNumber('post')
-//                 ->name('posts.comments.index');
+            Route::get('/posts/{post}/comments', [PostController::class, 'comments'])
+                ->whereNumber('post')
+                ->name('posts.comments.index');
 
-//             Route::post('/posts/{post}/comments', [PostController::class, 'storeComment'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->whereNumber('post')
-//                 ->name('posts.comments.store');
+            Route::post('/posts/{post}/comments', [PostController::class, 'storeComment'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->whereNumber('post')
+                ->name('posts.comments.store');
 
-//             Route::delete('/comments/{comment}', [PostController::class, 'destroyComment'])
-//                 ->whereNumber('comment')
-//                 ->name('posts.comments.destroy');
+            Route::delete('/comments/{comment}', [PostController::class, 'destroyComment'])
+                ->whereNumber('comment')
+                ->name('posts.comments.destroy');
 
-//             Route::put('/comments/{comment}', [PostController::class, 'updateComment'])
-//                 ->whereNumber('comment')
-//                 ->name('posts.comments.update');
+            Route::put('/comments/{comment}', [PostController::class, 'updateComment'])
+                ->whereNumber('comment')
+                ->name('posts.comments.update');
 
-//             Route::get('/comments/{comment}/replies', [PostController::class, 'replies'])
-//                 ->whereNumber('comment')
-//                 ->name('comments.replies.index');
+            Route::get('/comments/{comment}/replies', [PostController::class, 'replies'])
+                ->whereNumber('comment')
+                ->name('comments.replies.index');
 
-//             Route::post('/comments/{comment}/replies', [PostController::class, 'storeReply'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->whereNumber('comment')
-//                 ->name('comments.replies.store');
+            Route::post('/comments/{comment}/replies', [PostController::class, 'storeReply'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->whereNumber('comment')
+                ->name('comments.replies.store');
 
-//             Route::post('/comments/{comment}/react', [PostController::class, 'reactComment'])
-//                 ->whereNumber('comment')
-//                 ->name('comments.react');
+            Route::post('/comments/{comment}/react', [PostController::class, 'reactComment'])
+                ->whereNumber('comment')
+                ->name('comments.react');
 
-//             Route::get('/comments/{comment}/reactors', [PostController::class, 'commentReactors'])
-//                 ->whereNumber('comment')
-//                 ->name('comments.reactors');
+            Route::get('/comments/{comment}/reactors', [PostController::class, 'commentReactors'])
+                ->whereNumber('comment')
+                ->name('comments.reactors');
 
-//             Route::post('/posts/{post}/share', [PostController::class, 'sharePost'])
-//                 ->whereNumber('post')
-//                 ->name('posts.share');
+            Route::post('/posts/{post}/share', [PostController::class, 'sharePost'])
+                ->whereNumber('post')
+                ->name('posts.share');
 
-//             Route::post('/posts/{post}/send-to-friends', [PostController::class, 'sendToFriends'])
-//                 ->whereNumber('post')
-//                 ->name('posts.send-to-friends');
+            Route::post('/posts/{post}/send-to-friends', [PostController::class, 'sendToFriends'])
+                ->whereNumber('post')
+                ->name('posts.send-to-friends');
 
-//             Route::get('/posts/{post}/sharers', [PostController::class, 'postSharers'])
-//                 ->whereNumber('post')
-//                 ->name('posts.sharers');
+            Route::get('/posts/{post}/sharers', [PostController::class, 'postSharers'])
+                ->whereNumber('post')
+                ->name('posts.sharers');
 
-//             Route::post('/posts/{post}/save', [PostController::class, 'toggleSave'])
-//                 ->whereNumber('post')
-//                 ->name('posts.save');
+            Route::post('/posts/{post}/save', [PostController::class, 'toggleSave'])
+                ->whereNumber('post')
+                ->name('posts.save');
 
-//             Route::post('/posts/{post}/hide', [PostController::class, 'hidePost'])
-//                 ->whereNumber('post')
-//                 ->name('posts.hide');
+            Route::post('/posts/{post}/hide', [PostController::class, 'hidePost'])
+                ->whereNumber('post')
+                ->name('posts.hide');
 
-//             Route::post('/posts/{post}/report', [PostController::class, 'reportPost'])
-//                 ->name('posts.report');
+            Route::post('/posts/{post}/report', [PostController::class, 'reportPost'])
+                ->name('posts.report');
 
-//             Route::post('/posts/{post}/pin', [PostController::class, 'togglePin'])
-//                 ->whereNumber('post')
-//                 ->name('posts.pin');
+            Route::post('/posts/{post}/pin', [PostController::class, 'togglePin'])
+                ->whereNumber('post')
+                ->name('posts.pin');
 
-//             Route::get('/saved-posts', [PostController::class, 'savedPosts'])
-//                 ->name('posts.saved');
+            Route::get('/saved-posts', [PostController::class, 'savedPosts'])
+                ->name('posts.saved');
 
-//             Route::get('/feed/check-new', [PostController::class, 'checkNewPosts'])
-//                 ->name('posts.check-new');
+            Route::get('/feed/check-new', [PostController::class, 'checkNewPosts'])
+                ->name('posts.check-new');
 
-//             Route::post('/stories', [StoryController::class, 'store'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->name('stories.store');
+            Route::post('/stories', [StoryController::class, 'store'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->name('stories.store');
 
-//             Route::get('/stories/{story}', [StoryController::class, 'show'])
-//                 ->whereNumber('story')
-//                 ->name('stories.show');
+            Route::get('/stories/{story}', [StoryController::class, 'show'])
+                ->whereNumber('story')
+                ->name('stories.show');
 
-//             Route::get('/stories/{story}/viewers', [StoryController::class, 'viewers'])
-//                 ->whereNumber('story')
-//                 ->name('stories.viewers');
+            Route::get('/stories/{story}/viewers', [StoryController::class, 'viewers'])
+                ->whereNumber('story')
+                ->name('stories.viewers');
 
-//             Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike'])
-//                 ->whereNumber('story')
-//                 ->name('stories.like');
+            Route::post('/stories/{story}/like', [StoryController::class, 'toggleLike'])
+                ->whereNumber('story')
+                ->name('stories.like');
 
-//             Route::post('/stories/{story}/react', [StoryController::class, 'react'])
-//                 ->whereNumber('story')
-//                 ->name('stories.react');
+            Route::post('/stories/{story}/react', [StoryController::class, 'react'])
+                ->whereNumber('story')
+                ->name('stories.react');
 
-//             Route::get('/stories/{story}/reactors', [StoryController::class, 'reactors'])
-//                 ->whereNumber('story')
-//                 ->name('stories.reactors');
+            Route::get('/stories/{story}/reactors', [StoryController::class, 'reactors'])
+                ->whereNumber('story')
+                ->name('stories.reactors');
 
-//             Route::post('/stories/{story}/reply', [StoryController::class, 'reply'])
-//                 ->whereNumber('story')
-//                 ->name('stories.reply');
+            Route::post('/stories/{story}/reply', [StoryController::class, 'reply'])
+                ->whereNumber('story')
+                ->name('stories.reply');
 
-//             Route::get('/stories/{story}/replies', [StoryController::class, 'replies'])
-//                 ->whereNumber('story')
-//                 ->name('stories.replies');
+            Route::get('/stories/{story}/replies', [StoryController::class, 'replies'])
+                ->whereNumber('story')
+                ->name('stories.replies');
 
-//             Route::delete('/stories/{story}', [StoryController::class, 'destroy'])
-//                 ->whereNumber('story')
-//                 ->name('stories.destroy');
+            Route::delete('/stories/{story}', [StoryController::class, 'destroy'])
+                ->whereNumber('story')
+                ->name('stories.destroy');
 
-//             Route::delete('/story-replies/{reply}', [StoryController::class, 'destroyReply'])
-//                 ->whereNumber('reply')
-//                 ->name('stories.reply.destroy');
+            Route::delete('/story-replies/{reply}', [StoryController::class, 'destroyReply'])
+                ->whereNumber('reply')
+                ->name('stories.reply.destroy');
 
-//             Route::get('/notifications', [NotificationController::class, 'index'])
-//                 ->name('notifications.index');
+            Route::get('/notifications', [NotificationController::class, 'index'])
+                ->name('notifications.index');
 
-//             Route::get('/notifications/dropdown', [NotificationController::class, 'dropdown'])
-//                 ->name('notifications.dropdown');
+            Route::get('/notifications/dropdown', [NotificationController::class, 'dropdown'])
+                ->name('notifications.dropdown');
 
-//             Route::get('/notifications/poll', [NotificationController::class, 'poll'])
-//                 ->name('notifications.poll');
+            Route::get('/notifications/poll', [NotificationController::class, 'poll'])
+                ->name('notifications.poll');
 
-//             Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
-//                 ->name('notifications.read-all');
+            Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
+                ->name('notifications.read-all');
 
-//             Route::delete('/notifications/clear-all', [NotificationController::class, 'clearAll'])
-//                 ->name('notifications.clear-all');
+            Route::delete('/notifications/clear-all', [NotificationController::class, 'clearAll'])
+                ->name('notifications.clear-all');
 
-//             Route::get('/notifications/{notificationId}', [NotificationController::class, 'show'])
-//                 ->name('notifications.show');
+            Route::get('/notifications/{notificationId}', [NotificationController::class, 'show'])
+                ->name('notifications.show');
 
-//             Route::post('/notifications/{notificationId}/read', [NotificationController::class, 'markAsRead'])
-//                 ->name('notifications.read');
+            Route::post('/notifications/{notificationId}/read', [NotificationController::class, 'markAsRead'])
+                ->name('notifications.read');
 
-//             Route::delete('/notifications/{notificationId}', [NotificationController::class, 'destroy'])
-//                 ->name('notifications.destroy');
+            Route::delete('/notifications/{notificationId}', [NotificationController::class, 'destroy'])
+                ->name('notifications.destroy');
 
-//             Route::get('/search', [MemberSearchController::class, 'index'])
-//                 ->name('search');
+            Route::get('/search', [MemberSearchController::class, 'index'])
+                ->name('search');
 
-//             Route::get('/search/results', [MemberSearchController::class, 'results'])
-//                 ->name('search.results');
+            Route::get('/search/results', [MemberSearchController::class, 'results'])
+                ->name('search.results');
 
-//             Route::get('/friends', [FriendshipController::class, 'index'])
-//                 ->name('friends.index');
+            Route::get('/friends', [FriendshipController::class, 'index'])
+                ->name('friends.index');
 
-//             Route::get('/friend-requests', [FriendshipController::class, 'requests'])
-//                 ->name('friend-requests.index');
+            Route::get('/friend-requests', [FriendshipController::class, 'requests'])
+                ->name('friend-requests.index');
 
-//             Route::post('/friends/request/{member}', [FriendshipController::class, 'send'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->whereNumber('member')
-//                 ->name('friends.request');
+            Route::post('/friends/request/{member}', [FriendshipController::class, 'send'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->whereNumber('member')
+                ->name('friends.request');
 
-//             Route::post('/friend-requests/{friendship}/accept', [FriendshipController::class, 'accept'])
-//                 ->whereNumber('friendship')
-//                 ->name('friend-requests.accept');
+            Route::post('/friend-requests/{friendship}/accept', [FriendshipController::class, 'accept'])
+                ->whereNumber('friendship')
+                ->name('friend-requests.accept');
 
-//             Route::post('/friend-requests/{friendship}/reject', [FriendshipController::class, 'reject'])
-//                 ->whereNumber('friendship')
-//                 ->name('friend-requests.reject');
+            Route::post('/friend-requests/{friendship}/reject', [FriendshipController::class, 'reject'])
+                ->whereNumber('friendship')
+                ->name('friend-requests.reject');
 
-//             Route::delete('/friend-requests/{friendship}/cancel', [FriendshipController::class, 'cancel'])
-//                 ->whereNumber('friendship')
-//                 ->name('friend-requests.cancel');
+            Route::delete('/friend-requests/{friendship}/cancel', [FriendshipController::class, 'cancel'])
+                ->whereNumber('friendship')
+                ->name('friend-requests.cancel');
 
-//             Route::post('/people/{member}/follow', [FollowController::class, 'toggleFollow'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->whereNumber('member')
-//                 ->name('people.follow');
+            Route::post('/people/{member}/follow', [FollowController::class, 'toggleFollow'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->whereNumber('member')
+                ->name('people.follow');
 
-//             Route::get('/people/{member}/followers', [FollowController::class, 'followers'])
-//                 ->whereNumber('member')
-//                 ->name('people.followers');
+            Route::get('/people/{member}/followers', [FollowController::class, 'followers'])
+                ->whereNumber('member')
+                ->name('people.followers');
 
-//             Route::get('/people/{member}/following', [FollowController::class, 'following'])
-//                 ->whereNumber('member')
-//                 ->name('people.following');
+            Route::get('/people/{member}/following', [FollowController::class, 'following'])
+                ->whereNumber('member')
+                ->name('people.following');
 
-//             Route::get('/people/{member}', [MemberDirectoryProfileController::class, 'show'])
-//                 ->whereNumber('member')
-//                 ->name('people.show');
+            Route::get('/people/{member}', [MemberDirectoryProfileController::class, 'show'])
+                ->whereNumber('member')
+                ->name('people.show');
 
-//             Route::get('/people/{member}/friends', [FriendshipController::class, 'memberFriends'])
-//                 ->whereNumber('member')
-//                 ->name('people.friends');
+            Route::get('/people/{member}/friends', [FriendshipController::class, 'memberFriends'])
+                ->whereNumber('member')
+                ->name('people.friends');
 
-//             Route::get('/profile', [ProfileController::class, 'show'])
-//                 ->name('profile.show');
+            Route::get('/profile', [ProfileController::class, 'show'])
+                ->name('profile.show');
 
-//             Route::get('/profile/edit', [ProfileController::class, 'edit'])
-//                 ->name('profile.edit');
+            Route::get('/profile/edit', [ProfileController::class, 'edit'])
+                ->name('profile.edit');
 
-//             Route::put('/profile', [ProfileController::class, 'update'])
-//                 ->name('profile.update');
+            Route::put('/profile', [ProfileController::class, 'update'])
+                ->name('profile.update');
 
-//             Route::post('/profile/photo', [ProfileController::class, 'updateProfilePhoto'])
-//                 ->name('profile.photo.update');
+            Route::post('/profile/photo', [ProfileController::class, 'updateProfilePhoto'])
+                ->name('profile.photo.update');
 
-//             Route::delete('/profile/photo', [ProfileController::class, 'removeProfilePhoto'])
-//                 ->name('profile.photo.remove');
+            Route::delete('/profile/photo', [ProfileController::class, 'removeProfilePhoto'])
+                ->name('profile.photo.remove');
 
-//             Route::post('/profile/cover', [ProfileController::class, 'updateCoverPhoto'])
-//                 ->name('profile.cover.update');
+            Route::post('/profile/cover', [ProfileController::class, 'updateCoverPhoto'])
+                ->name('profile.cover.update');
 
-//             Route::delete('/profile/cover', [ProfileController::class, 'removeCoverPhoto'])
-//                 ->name('profile.cover.remove');
+            Route::delete('/profile/cover', [ProfileController::class, 'removeCoverPhoto'])
+                ->name('profile.cover.remove');
 
-//             Route::get('/account/settings', [AccountController::class, 'settings'])
-//                 ->name('account.settings');
+            Route::get('/account/settings', [AccountController::class, 'settings'])
+                ->name('account.settings');
 
-//             Route::put('/account/settings', [AccountController::class, 'updateSettings'])
-//                 ->name('account.settings.update');
+            Route::put('/account/settings', [AccountController::class, 'updateSettings'])
+                ->name('account.settings.update');
 
-//             Route::get('/account/check-introducer', [AccountController::class, 'checkIntroducer'])
-//                 ->name('account.check-introducer');
+            Route::get('/account/check-introducer', [AccountController::class, 'checkIntroducer'])
+                ->name('account.check-introducer');
 
-//             Route::post('/account/introducer', [AccountController::class, 'claimIntroducer'])
-//                 ->name('account.introducer.claim');
+            Route::post('/account/introducer', [AccountController::class, 'claimIntroducer'])
+                ->name('account.introducer.claim');
 
-//             Route::get('/account/verification-status', [AccountVerificationController::class, 'getVerificationStatus'])
-//                 ->name('account.verification.status');
+            Route::get('/account/verification-status', [AccountVerificationController::class, 'getVerificationStatus'])
+                ->name('account.verification.status');
 
-//             Route::post('/account/verification/initiate', [AccountVerificationController::class, 'initiateWhatsAppVerification'])
-//                 ->name('account.verification.initiate');
+            Route::post('/account/verification/initiate', [AccountVerificationController::class, 'initiateWhatsAppVerification'])
+                ->name('account.verification.initiate');
 
-//             Route::post('/account/verification/submit-hi', [AccountVerificationController::class, 'submitWhatsAppVerificationRequest'])
-//                 ->name('account.verification.submit-hi');
+            Route::post('/account/verification/submit-hi', [AccountVerificationController::class, 'submitWhatsAppVerificationRequest'])
+                ->name('account.verification.submit-hi');
 
-//             Route::post('/account/mobile/send-otp', [AccountVerificationController::class, 'sendMobileOtp'])
-//                 ->name('account.mobile.send-otp');
+            Route::post('/account/mobile/send-otp', [AccountVerificationController::class, 'sendMobileOtp'])
+                ->name('account.mobile.send-otp');
 
-//             Route::post('/account/mobile/verify-otp', [AccountVerificationController::class, 'verifyMobileOtp'])
-//                 ->name('account.mobile.verify-otp');
+            Route::post('/account/mobile/verify-otp', [AccountVerificationController::class, 'verifyMobileOtp'])
+                ->name('account.mobile.verify-otp');
 
-//             Route::post('/account/email/send-otp', [AccountVerificationController::class, 'sendEmailOtp'])
-//                 ->name('account.email.send-otp');
+            Route::post('/account/email/send-otp', [AccountVerificationController::class, 'sendEmailOtp'])
+                ->name('account.email.send-otp');
 
-//             Route::post('/account/email/verify-otp', [AccountVerificationController::class, 'verifyEmailOtp'])
-//                 ->name('account.email.verify-otp');
+            Route::post('/account/email/verify-otp', [AccountVerificationController::class, 'verifyEmailOtp'])
+                ->name('account.email.verify-otp');
 
-//             Route::get('/account/security', [AccountController::class, 'security'])
-//                 ->name('account.security');
+            Route::get('/account/security', [AccountController::class, 'security'])
+                ->name('account.security');
 
-//             Route::put('/account/password', [AccountController::class, 'updatePassword'])
-//                 ->name('account.password.update');
+            Route::put('/account/password', [AccountController::class, 'updatePassword'])
+                ->name('account.password.update');
 
-//             Route::post('/people/{member}/block', [BlockController::class, 'block'])
-//                 ->whereNumber('member')
-//                 ->name('people.block');
+            Route::post('/people/{member}/block', [BlockController::class, 'block'])
+                ->whereNumber('member')
+                ->name('people.block');
 
-//             Route::delete('/people/{member}/unblock', [BlockController::class, 'unblock'])
-//                 ->whereNumber('member')
-//                 ->name('people.unblock');
+            Route::delete('/people/{member}/unblock', [BlockController::class, 'unblock'])
+                ->whereNumber('member')
+                ->name('people.unblock');
 
-//             Route::get('/blocked-users', [BlockController::class, 'index'])
-//                 ->name('blocked-users.index');
+            Route::get('/blocked-users', [BlockController::class, 'index'])
+                ->name('blocked-users.index');
 
-//             Route::get('/people/suggestions', [SocialFeaturesController::class, 'suggestions'])
-//                 ->name('people.suggestions');
+            Route::get('/people/suggestions', [SocialFeaturesController::class, 'suggestions'])
+                ->name('people.suggestions');
 
-//             Route::get('/profile/visitors', [SocialFeaturesController::class, 'visitors'])
-//                 ->name('profile.visitors');
+            Route::get('/profile/visitors', [SocialFeaturesController::class, 'visitors'])
+                ->name('profile.visitors');
 
-//             Route::get('/marketplace', [MarketplaceController::class, 'index'])
-//                 ->name('marketplace.index');
+            Route::get('/marketplace', [MarketplaceController::class, 'index'])
+                ->name('marketplace.index');
 
-//             Route::get('/marketplace/create', [MarketplaceController::class, 'create'])
-//                 ->name('marketplace.create');
+            Route::get('/marketplace/create', [MarketplaceController::class, 'create'])
+                ->name('marketplace.create');
 
-//             Route::post('/marketplace', [MarketplaceController::class, 'store'])
-//                 ->name('marketplace.store');
+            Route::post('/marketplace', [MarketplaceController::class, 'store'])
+                ->name('marketplace.store');
 
-//             Route::get('/marketplace/my-products', [MarketplaceController::class, 'myProducts'])
-//                 ->name('marketplace.my-products');
+            Route::get('/marketplace/my-products', [MarketplaceController::class, 'myProducts'])
+                ->name('marketplace.my-products');
 
-//             Route::get('/marketplace/saved', [MarketplaceController::class, 'saved'])
-//                 ->name('marketplace.saved');
+            Route::get('/marketplace/saved', [MarketplaceController::class, 'saved'])
+                ->name('marketplace.saved');
 
-//             Route::get('/marketplace/{product}', [MarketplaceController::class, 'show'])
-//                 ->whereNumber('product')
-//                 ->name('marketplace.show');
+            Route::get('/marketplace/{product}', [MarketplaceController::class, 'show'])
+                ->whereNumber('product')
+                ->name('marketplace.show');
 
-//             Route::get('/marketplace/{product}/edit', [MarketplaceController::class, 'edit'])
-//                 ->whereNumber('product')
-//                 ->name('marketplace.edit');
+            Route::get('/marketplace/{product}/edit', [MarketplaceController::class, 'edit'])
+                ->whereNumber('product')
+                ->name('marketplace.edit');
 
-//             Route::put('/marketplace/{product}', [MarketplaceController::class, 'update'])
-//                 ->whereNumber('product')
-//                 ->name('marketplace.update');
+            Route::put('/marketplace/{product}', [MarketplaceController::class, 'update'])
+                ->whereNumber('product')
+                ->name('marketplace.update');
 
-//             Route::delete('/marketplace/{product}', [MarketplaceController::class, 'destroy'])
-//                 ->whereNumber('product')
-//                 ->name('marketplace.destroy');
+            Route::delete('/marketplace/{product}', [MarketplaceController::class, 'destroy'])
+                ->whereNumber('product')
+                ->name('marketplace.destroy');
 
-//             Route::post('/marketplace/{product}/status', [MarketplaceController::class, 'toggleStatus'])
-//                 ->whereNumber('product')
-//                 ->name('marketplace.status');
+            Route::post('/marketplace/{product}/status', [MarketplaceController::class, 'toggleStatus'])
+                ->whereNumber('product')
+                ->name('marketplace.status');
 
-//             Route::post('/marketplace/{product}/save', [MarketplaceController::class, 'toggleSave'])
-//                 ->whereNumber('product')
-//                 ->name('marketplace.save');
+            Route::post('/marketplace/{product}/save', [MarketplaceController::class, 'toggleSave'])
+                ->whereNumber('product')
+                ->name('marketplace.save');
 
-//             Route::post('/marketplace/{product}/report', [MarketplaceController::class, 'report'])
-//                 ->whereNumber('product')
-//                 ->name('marketplace.report');
+            Route::post('/marketplace/{product}/report', [MarketplaceController::class, 'report'])
+                ->whereNumber('product')
+                ->name('marketplace.report');
 
-//             // Community Base & Static Routes
-//             Route::get('/community', [CommunityController::class, 'index'])
-//                 ->name('community.index');
+            // Community Base & Static Routes
+            Route::get('/community', [CommunityController::class, 'index'])
+                ->name('community.index');
 
-//             Route::get('/community/create', [CommunityController::class, 'create'])
-//                 ->name('community.create');
+            Route::get('/community/create', [CommunityController::class, 'create'])
+                ->name('community.create');
 
-//             Route::post('/community', [CommunityController::class, 'store'])
-//                 ->name('community.store');
+            Route::post('/community', [CommunityController::class, 'store'])
+                ->name('community.store');
 
-//             // Community Discovery Platform Routes (Phase 8)
-//             Route::get('/community/discover', [CommunityDiscoveryController::class, 'discover'])
-//                 ->name('community.discover');
+            // Community Discovery Platform Routes (Phase 8)
+            Route::get('/community/discover', [CommunityDiscoveryController::class, 'discover'])
+                ->name('community.discover');
 
-//             Route::get('/community/search-ajax', [CommunityDiscoveryController::class, 'searchAjax'])
-//                 ->name('community.search-ajax');
+            Route::get('/community/search-ajax', [CommunityDiscoveryController::class, 'searchAjax'])
+                ->name('community.search-ajax');
 
-//             // Community Notifications Center Routes (Phase 7)
-//             Route::get('/community/notifications', [CommunityNotificationController::class, 'index'])
-//                 ->name('community.notifications.index');
+            // Community Notifications Center Routes (Phase 7)
+            Route::get('/community/notifications', [CommunityNotificationController::class, 'index'])
+                ->name('community.notifications.index');
 
-//             Route::post('/community/notifications/{notification}/read', [CommunityNotificationController::class, 'markAsRead'])
-//                 ->name('community.notifications.read');
+            Route::post('/community/notifications/{notification}/read', [CommunityNotificationController::class, 'markAsRead'])
+                ->name('community.notifications.read');
 
-//             Route::post('/community/notifications/mark-all-read', [CommunityNotificationController::class, 'markAllAsRead'])
-//                 ->name('community.notifications.mark-all-read');
+            Route::post('/community/notifications/mark-all-read', [CommunityNotificationController::class, 'markAllAsRead'])
+                ->name('community.notifications.mark-all-read');
 
-//             Route::get('/community/notifications/unread-count', [CommunityNotificationController::class, 'unreadCount'])
-//                 ->name('community.notifications.unread-count');
+            Route::get('/community/notifications/unread-count', [CommunityNotificationController::class, 'unreadCount'])
+                ->name('community.notifications.unread-count');
 
-//             // Community Invite Process Route (Phase 4)
-//             Route::post('/community/invite/{code}/join', [CommunityInviteController::class, 'processJoin'])
-//                 ->name('community.invite.join');
+            // Community Invite Process Route (Phase 4)
+            Route::post('/community/invite/{code}/join', [CommunityInviteController::class, 'processJoin'])
+                ->name('community.invite.join');
 
-//             // Community Wildcard & Slug Parameter Routes
-//             Route::get('/community/{community:slug}', [CommunityController::class, 'show'])
-//                 ->name('community.show');
+            // Community Wildcard & Slug Parameter Routes
+            Route::get('/community/{community:slug}', [CommunityController::class, 'show'])
+                ->name('community.show');
 
-//             Route::get('/community/{community:slug}/edit', [CommunityController::class, 'edit'])
-//                 ->name('community.edit');
+            Route::get('/community/{community:slug}/edit', [CommunityController::class, 'edit'])
+                ->name('community.edit');
 
-//             Route::put('/community/{community:slug}', [CommunityController::class, 'update'])
-//                 ->name('community.update');
+            Route::put('/community/{community:slug}', [CommunityController::class, 'update'])
+                ->name('community.update');
 
-//             Route::delete('/community/{community:slug}', [CommunityController::class, 'destroy'])
-//                 ->name('community.destroy');
+            Route::delete('/community/{community:slug}', [CommunityController::class, 'destroy'])
+                ->name('community.destroy');
 
-//             Route::post('/community/{community:slug}/cover', [CommunityController::class, 'updateCover'])
-//                 ->name('community.cover.update');
+            Route::post('/community/{community:slug}/cover', [CommunityController::class, 'updateCover'])
+                ->name('community.cover.update');
 
-//             Route::post('/community/{community:slug}/cover/remove', [CommunityController::class, 'removeCover'])
-//                 ->name('community.cover.remove');
+            Route::post('/community/{community:slug}/cover/remove', [CommunityController::class, 'removeCover'])
+                ->name('community.cover.remove');
 
-//             Route::post('/community/{community:slug}/logo', [CommunityController::class, 'updateLogo'])
-//                 ->name('community.logo.update');
+            Route::post('/community/{community:slug}/logo', [CommunityController::class, 'updateLogo'])
+                ->name('community.logo.update');
 
-//             Route::post('/community/{community:slug}/logo/remove', [CommunityController::class, 'removeLogo'])
-//                 ->name('community.logo.remove');
+            Route::post('/community/{community:slug}/logo/remove', [CommunityController::class, 'removeLogo'])
+                ->name('community.logo.remove');
 
-//             // Community Membership Routes (Phase 2)
-//             Route::post('/community/{community:slug}/join', [CommunityMembershipController::class, 'join'])
-//                 ->name('community.join');
+            // Community Membership Routes (Phase 2)
+            Route::post('/community/{community:slug}/join', [CommunityMembershipController::class, 'join'])
+                ->name('community.join');
 
-//             Route::post('/community/{community:slug}/leave', [CommunityMembershipController::class, 'leave'])
-//                 ->name('community.leave');
+            Route::post('/community/{community:slug}/leave', [CommunityMembershipController::class, 'leave'])
+                ->name('community.leave');
 
-//             Route::post('/community/{community:slug}/requests/{membership}/handle', [CommunityMembershipController::class, 'handleRequest'])
-//                 ->name('community.requests.handle');
+            Route::post('/community/{community:slug}/requests/{membership}/handle', [CommunityMembershipController::class, 'handleRequest'])
+                ->name('community.requests.handle');
 
-//             Route::post('/community/{community:slug}/members/{membership}/role', [CommunityMembershipController::class, 'updateRole'])
-//                 ->name('community.members.role');
+            Route::post('/community/{community:slug}/members/{membership}/role', [CommunityMembershipController::class, 'updateRole'])
+                ->name('community.members.role');
 
-//             Route::delete('/community/{community:slug}/members/{membership}', [CommunityMembershipController::class, 'removeMember'])
-//                 ->name('community.members.remove');
+            Route::delete('/community/{community:slug}/members/{membership}', [CommunityMembershipController::class, 'removeMember'])
+                ->name('community.members.remove');
 
-//             // Community Feed & Post Routes (Phase 3)
-//             Route::post('/community/{community:slug}/posts', [CommunityPostController::class, 'store'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->name('community.posts.store');
+            // Community Feed & Post Routes (Phase 3)
+            Route::post('/community/{community:slug}/posts', [CommunityPostController::class, 'store'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->name('community.posts.store');
 
-//             Route::post('/community/{community:slug}/posts/{post}/pin', [CommunityPostController::class, 'togglePin'])
-//                 ->name('community.posts.pin');
+            Route::post('/community/{community:slug}/posts/{post}/pin', [CommunityPostController::class, 'togglePin'])
+                ->name('community.posts.pin');
 
-//             Route::post('/community/{community:slug}/posts/{post}/announcement', [CommunityPostController::class, 'toggleAnnouncement'])
-//                 ->name('community.posts.announcement');
+            Route::post('/community/{community:slug}/posts/{post}/announcement', [CommunityPostController::class, 'toggleAnnouncement'])
+                ->name('community.posts.announcement');
 
-//             Route::delete('/community/{community:slug}/posts/{post}', [CommunityPostController::class, 'destroy'])
-//                 ->name('community.posts.destroy');
+            Route::delete('/community/{community:slug}/posts/{post}', [CommunityPostController::class, 'destroy'])
+                ->name('community.posts.destroy');
 
-//             // Community Invite Management Routes (Phase 4)
-//             Route::get('/community/{community:slug}/invites/friends', [CommunityInviteController::class, 'getFriends'])
-//                 ->name('community.invites.friends');
+            // Community Invite Management Routes (Phase 4)
+            Route::get('/community/{community:slug}/invites/friends', [CommunityInviteController::class, 'getFriends'])
+                ->name('community.invites.friends');
 
-//             Route::post('/community/{community:slug}/invites/send', [CommunityInviteController::class, 'sendInvites'])
-//                 ->name('community.invites.send');
+            Route::post('/community/{community:slug}/invites/send', [CommunityInviteController::class, 'sendInvites'])
+                ->name('community.invites.send');
 
-//             Route::post('/community/{community:slug}/invites/generate', [CommunityInviteController::class, 'generate'])
-//                 ->name('community.invites.generate');
+            Route::post('/community/{community:slug}/invites/generate', [CommunityInviteController::class, 'generate'])
+                ->name('community.invites.generate');
 
-//             Route::post('/community/{community:slug}/invites/revoke', [CommunityInviteController::class, 'revoke'])
-//                 ->name('community.invites.revoke');
+            Route::post('/community/{community:slug}/invites/revoke', [CommunityInviteController::class, 'revoke'])
+                ->name('community.invites.revoke');
 
-//             // Community Moderation & Admin Panel Routes (Phase 5)
-//             Route::get('/community/{community:slug}/admin', [CommunityModerationController::class, 'adminPanel'])
-//                 ->name('community.admin');
+            // Community Moderation & Admin Panel Routes (Phase 5)
+            Route::get('/community/{community:slug}/admin', [CommunityModerationController::class, 'adminPanel'])
+                ->name('community.admin');
 
-//             Route::post('/community/{community:slug}/moderation/ban', [CommunityModerationController::class, 'banMember'])
-//                 ->name('community.moderation.ban');
+            Route::post('/community/{community:slug}/moderation/ban', [CommunityModerationController::class, 'banMember'])
+                ->name('community.moderation.ban');
 
-//             Route::post('/community/{community:slug}/moderation/unban', [CommunityModerationController::class, 'unbanMember'])
-//                 ->name('community.moderation.unban');
+            Route::post('/community/{community:slug}/moderation/unban', [CommunityModerationController::class, 'unbanMember'])
+                ->name('community.moderation.unban');
 
-//             Route::post('/community/{community:slug}/moderation/mute', [CommunityModerationController::class, 'muteMember'])
-//                 ->name('community.moderation.mute');
+            Route::post('/community/{community:slug}/moderation/mute', [CommunityModerationController::class, 'muteMember'])
+                ->name('community.moderation.mute');
 
-//             Route::post('/community/{community:slug}/moderation/unmute', [CommunityModerationController::class, 'unmuteMember'])
-//                 ->name('community.moderation.unmute');
+            Route::post('/community/{community:slug}/moderation/unmute', [CommunityModerationController::class, 'unmuteMember'])
+                ->name('community.moderation.unmute');
 
-//             Route::post('/community/{community:slug}/moderation/warn', [CommunityModerationController::class, 'warnMember'])
-//                 ->name('community.moderation.warn');
+            Route::post('/community/{community:slug}/moderation/warn', [CommunityModerationController::class, 'warnMember'])
+                ->name('community.moderation.warn');
 
-//             Route::post('/community/{community:slug}/reports', [CommunityModerationController::class, 'storeReport'])
-//                 ->name('community.reports.store');
+            Route::post('/community/{community:slug}/reports', [CommunityModerationController::class, 'storeReport'])
+                ->name('community.reports.store');
 
-//             Route::post('/community/{community:slug}/reports/{report}/handle', [CommunityModerationController::class, 'handleReport'])
-//                 ->name('community.reports.handle');
+            Route::post('/community/{community:slug}/reports/{report}/handle', [CommunityModerationController::class, 'handleReport'])
+                ->name('community.reports.handle');
 
-//             Route::put('/community/{community:slug}/settings', [CommunityModerationController::class, 'updateSettings'])
-//                 ->name('community.settings.update');
+            Route::put('/community/{community:slug}/settings', [CommunityModerationController::class, 'updateSettings'])
+                ->name('community.settings.update');
 
-//             Route::post('/community/{community:slug}/transfer-ownership', [CommunityModerationController::class, 'transferOwnership'])
-//                 ->name('community.transfer-ownership');
+            Route::post('/community/{community:slug}/transfer-ownership', [CommunityModerationController::class, 'transferOwnership'])
+                ->name('community.transfer-ownership');
 
-//             Route::post('/community/{community:slug}/preferences', [CommunityNotificationController::class, 'updatePreferences'])
-//                 ->name('community.preferences.update');
+            Route::post('/community/{community:slug}/preferences', [CommunityNotificationController::class, 'updatePreferences'])
+                ->name('community.preferences.update');
 
-//             Route::get('/community/{community:slug}/activity', [CommunityNotificationController::class, 'activityTimeline'])
-//                 ->name('community.activity');
+            Route::get('/community/{community:slug}/activity', [CommunityNotificationController::class, 'activityTimeline'])
+                ->name('community.activity');
 
-//             // Community Analytics Platform Routes (Phase 9)
-//             Route::get('/community/{community:slug}/analytics', [CommunityAnalyticsController::class, 'index'])
-//                 ->name('community.analytics');
+            // Community Analytics Platform Routes (Phase 9)
+            Route::get('/community/{community:slug}/analytics', [CommunityAnalyticsController::class, 'index'])
+                ->name('community.analytics');
 
-//             Route::get('/community/{community:slug}/analytics/export', [CommunityAnalyticsController::class, 'exportCsv'])
-//                 ->name('community.analytics.export');
+            Route::get('/community/{community:slug}/analytics/export', [CommunityAnalyticsController::class, 'exportCsv'])
+                ->name('community.analytics.export');
 
-//             // Legacy Group Redirects
-//             Route::get('/groups', function () {
-//                 return redirect()->route('member.community.index');
-//             })->name('groups.index');
+            // Legacy Group Redirects
+            Route::get('/groups', function () {
+                return redirect()->route('member.community.index');
+            })->name('groups.index');
 
-//             Route::get('/groups/create', function () {
-//                 return redirect()->route('member.community.create');
-//             })->name('groups.create');
+            Route::get('/groups/create', function () {
+                return redirect()->route('member.community.create');
+            })->name('groups.create');
 
-//             Route::get('/groups/{group}', function (Group $group) {
-//                 return redirect()->route('member.community.index');
-//             })->name('groups.show');
+            Route::get('/groups/{group}', function (Group $group) {
+                return redirect()->route('member.community.index');
+            })->name('groups.show');
 
-//             // Event Routes
-//             Route::get('/events', [EventController::class, 'index'])
-//                 ->name('events.index');
+            // Event Routes
+            Route::get('/events', [EventController::class, 'index'])
+                ->name('events.index');
 
-//             Route::get('/events/create', [EventController::class, 'create'])
-//                 ->name('events.create');
+            Route::get('/events/create', [EventController::class, 'create'])
+                ->name('events.create');
 
-//             Route::post('/events', [EventController::class, 'store'])
-//                 ->name('events.store');
+            Route::post('/events', [EventController::class, 'store'])
+                ->name('events.store');
 
-//             Route::get('/events/{event}', [EventController::class, 'show'])
-//                 ->whereNumber('event')
-//                 ->name('events.show');
+            Route::get('/events/{event}', [EventController::class, 'show'])
+                ->whereNumber('event')
+                ->name('events.show');
 
-//             Route::get('/events/{event}/edit', [EventController::class, 'edit'])
-//                 ->whereNumber('event')
-//                 ->name('events.edit');
+            Route::get('/events/{event}/edit', [EventController::class, 'edit'])
+                ->whereNumber('event')
+                ->name('events.edit');
 
-//             Route::put('/events/{event}', [EventController::class, 'update'])
-//                 ->whereNumber('event')
-//                 ->name('events.update');
+            Route::put('/events/{event}', [EventController::class, 'update'])
+                ->whereNumber('event')
+                ->name('events.update');
 
-//             Route::delete('/events/{event}', [EventController::class, 'destroy'])
-//                 ->whereNumber('event')
-//                 ->name('events.destroy');
+            Route::delete('/events/{event}', [EventController::class, 'destroy'])
+                ->whereNumber('event')
+                ->name('events.destroy');
 
-//             Route::post('/events/{event}/respond', [EventController::class, 'respond'])
-//                 ->whereNumber('event')
-//                 ->name('events.respond');
+            Route::post('/events/{event}/respond', [EventController::class, 'respond'])
+                ->whereNumber('event')
+                ->name('events.respond');
 
-//             Route::post('/events/{event}/invite', [EventController::class, 'invite'])
-//                 ->whereNumber('event')
-//                 ->name('events.invite');
+            Route::post('/events/{event}/invite', [EventController::class, 'invite'])
+                ->whereNumber('event')
+                ->name('events.invite');
 
-//             Route::get('/events/{event}/outreach', [EventController::class, 'outreach'])
-//                 ->whereNumber('event')
-//                 ->name('events.outreach');
+            Route::get('/events/{event}/outreach', [EventController::class, 'outreach'])
+                ->whereNumber('event')
+                ->name('events.outreach');
 
-//             Route::post('/events/{event}/posts', [EventController::class, 'storePost'])
-//                 ->whereNumber('event')
-//                 ->name('events.posts.store');
+            Route::post('/events/{event}/posts', [EventController::class, 'storePost'])
+                ->whereNumber('event')
+                ->name('events.posts.store');
 
-//             Route::get('/events/{event}/campaign', [EventCampaignController::class, 'show'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.show');
+            Route::get('/events/{event}/campaign', [EventCampaignController::class, 'show'])
+                ->whereNumber('event')
+                ->name('events.campaign.show');
 
-//             Route::post('/events/{event}/campaign', [EventCampaignController::class, 'store'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.store');
+            Route::post('/events/{event}/campaign', [EventCampaignController::class, 'store'])
+                ->whereNumber('event')
+                ->name('events.campaign.store');
 
-//             Route::post('/events/{event}/campaign/allocate-budget', [EventCampaignController::class, 'allocateBudget'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.allocate-budget');
+            Route::post('/events/{event}/campaign/allocate-budget', [EventCampaignController::class, 'allocateBudget'])
+                ->whereNumber('event')
+                ->name('events.campaign.allocate-budget');
 
-//             Route::post('/events/{event}/campaign/add-funds', [EventCampaignController::class, 'addFunds'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.add-funds');
+            Route::post('/events/{event}/campaign/add-funds', [EventCampaignController::class, 'addFunds'])
+                ->whereNumber('event')
+                ->name('events.campaign.add-funds');
 
-//             Route::post('/events/{event}/add-funds', [EventCampaignController::class, 'addFunds'])
-//                 ->whereNumber('event')
-//                 ->name('events.add-funds');
+            Route::post('/events/{event}/add-funds', [EventCampaignController::class, 'addFunds'])
+                ->whereNumber('event')
+                ->name('events.add-funds');
 
-//             Route::post('/events/{event}/campaign/activate', [EventCampaignController::class, 'activate'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.activate');
+            Route::post('/events/{event}/campaign/activate', [EventCampaignController::class, 'activate'])
+                ->whereNumber('event')
+                ->name('events.campaign.activate');
 
-//             Route::post('/events/{event}/campaign/pause', [EventCampaignController::class, 'pause'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.pause');
+            Route::post('/events/{event}/campaign/pause', [EventCampaignController::class, 'pause'])
+                ->whereNumber('event')
+                ->name('events.campaign.pause');
 
-//             Route::post('/events/{event}/campaign/resume', [EventCampaignController::class, 'resume'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.resume');
+            Route::post('/events/{event}/campaign/resume', [EventCampaignController::class, 'resume'])
+                ->whereNumber('event')
+                ->name('events.campaign.resume');
 
-//             Route::post('/events/{event}/campaign/reactivate', [EventCampaignController::class, 'reactivate'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.reactivate');
+            Route::post('/events/{event}/campaign/reactivate', [EventCampaignController::class, 'reactivate'])
+                ->whereNumber('event')
+                ->name('events.campaign.reactivate');
 
-//             Route::get('/events/{event}/campaign/analytics', [EventCampaignController::class, 'analytics'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.analytics');
+            Route::get('/events/{event}/campaign/analytics', [EventCampaignController::class, 'analytics'])
+                ->whereNumber('event')
+                ->name('events.campaign.analytics');
 
-//             Route::get('/events/{event}/campaign/participants', [EventCampaignController::class, 'participants'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.participants');
+            Route::get('/events/{event}/campaign/participants', [EventCampaignController::class, 'participants'])
+                ->whereNumber('event')
+                ->name('events.campaign.participants');
 
-//             Route::get('/events/sponsored-feed', [EventCampaignController::class, 'sponsoredFeed'])
-//                 ->name('events.sponsored-feed');
+            Route::get('/events/sponsored-feed', [EventCampaignController::class, 'sponsoredFeed'])
+                ->name('events.sponsored-feed');
 
-//             Route::get('/events/{event}/reward-preview', [EventCampaignController::class, 'rewardPreview'])
-//                 ->whereNumber('event')
-//                 ->name('events.reward-preview');
+            Route::get('/events/{event}/reward-preview', [EventCampaignController::class, 'rewardPreview'])
+                ->whereNumber('event')
+                ->name('events.reward-preview');
 
-//             Route::post('/events/{event}/campaign/qualify-interest', [EventCampaignController::class, 'qualifyInterest'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.qualify-interest');
+            Route::post('/events/{event}/campaign/qualify-interest', [EventCampaignController::class, 'qualifyInterest'])
+                ->whereNumber('event')
+                ->name('events.campaign.qualify-interest');
 
-//             Route::post('/events/{event}/campaign/claim', [EventCampaignController::class, 'qualifyInterest'])
-//                 ->whereNumber('event')
-//                 ->name('events.campaign.claim');
+            Route::post('/events/{event}/campaign/claim', [EventCampaignController::class, 'qualifyInterest'])
+                ->whereNumber('event')
+                ->name('events.campaign.claim');
 
-//             // Business Pages Routes (Phase 1 Foundation)
-//             Route::get('/business-pages', [BusinessPageController::class, 'index'])
-//                 ->name('business-pages.index');
+            // Business Pages Routes (Phase 1 Foundation)
+            Route::get('/business-pages', [BusinessPageController::class, 'index'])
+                ->name('business-pages.index');
 
-//             Route::get('/business-pages/create', [BusinessPageController::class, 'create'])
-//                 ->name('business-pages.create');
+            Route::get('/business-pages/create', [BusinessPageController::class, 'create'])
+                ->name('business-pages.create');
 
-//             Route::post('/business-pages', [BusinessPageController::class, 'store'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->name('business-pages.store');
+            Route::post('/business-pages', [BusinessPageController::class, 'store'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->name('business-pages.store');
 
-//             Route::get('/business-pages/{businessPage:slug}', [BusinessPageController::class, 'show'])
-//                 ->name('business-pages.show');
+            Route::get('/business-pages/{businessPage:slug}', [BusinessPageController::class, 'show'])
+                ->name('business-pages.show');
 
-//             Route::get('/business-pages/{businessPage:slug}/edit', [BusinessPageController::class, 'edit'])
-//                 ->name('business-pages.edit');
+            Route::get('/business-pages/{businessPage:slug}/edit', [BusinessPageController::class, 'edit'])
+                ->name('business-pages.edit');
 
-//             Route::put('/business-pages/{businessPage:slug}', [BusinessPageController::class, 'update'])
-//                 ->name('business-pages.update');
+            Route::put('/business-pages/{businessPage:slug}', [BusinessPageController::class, 'update'])
+                ->name('business-pages.update');
 
-//             Route::delete('/business-pages/{businessPage:slug}', [BusinessPageController::class, 'destroy'])
-//                 ->name('business-pages.destroy');
+            Route::delete('/business-pages/{businessPage:slug}', [BusinessPageController::class, 'destroy'])
+                ->name('business-pages.destroy');
 
-//             // Business Pages Timeline Posts Routes (Phase 3)
-//             Route::post('/business-pages/{businessPage:slug}/posts', [BusinessPageController::class, 'storePost'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->name('business-pages.posts.store');
+            // Business Pages Timeline Posts Routes (Phase 3)
+            Route::post('/business-pages/{businessPage:slug}/posts', [BusinessPageController::class, 'storePost'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->name('business-pages.posts.store');
 
-//             Route::post('/business-pages/{businessPage:slug}/posts/{post}/pin', [BusinessPageController::class, 'togglePinPost'])
-//                 ->name('business-pages.posts.pin');
+            Route::post('/business-pages/{businessPage:slug}/posts/{post}/pin', [BusinessPageController::class, 'togglePinPost'])
+                ->name('business-pages.posts.pin');
 
-//             Route::post('/business-pages/{businessPage:slug}/posts/{post}/feature', [BusinessPageController::class, 'toggleFeaturePost'])
-//                 ->name('business-pages.posts.feature');
+            Route::post('/business-pages/{businessPage:slug}/posts/{post}/feature', [BusinessPageController::class, 'toggleFeaturePost'])
+                ->name('business-pages.posts.feature');
 
-//             Route::delete('/business-pages/{businessPage:slug}/posts/{post}', [BusinessPageController::class, 'destroyPost'])
-//                 ->name('business-pages.posts.destroy');
+            Route::delete('/business-pages/{businessPage:slug}/posts/{post}', [BusinessPageController::class, 'destroyPost'])
+                ->name('business-pages.posts.destroy');
 
-//             // Business Pages Team Management Routes (Phase 4)
-//             Route::get('/business-pages/{businessPage:slug}/team', [BusinessTeamController::class, 'index'])
-//                 ->name('business-pages.team.index');
+            // Business Pages Team Management Routes (Phase 4)
+            Route::get('/business-pages/{businessPage:slug}/team', [BusinessTeamController::class, 'index'])
+                ->name('business-pages.team.index');
 
-//             Route::post('/business-pages/{businessPage:slug}/team/invite', [BusinessTeamController::class, 'invite'])
-//                 ->name('business-pages.team.invite');
+            Route::post('/business-pages/{businessPage:slug}/team/invite', [BusinessTeamController::class, 'invite'])
+                ->name('business-pages.team.invite');
 
-//             Route::delete('/business-pages/{businessPage:slug}/team/invitations/{invitation}', [BusinessTeamController::class, 'cancelInvite'])
-//                 ->name('business-pages.team.invitations.cancel');
+            Route::delete('/business-pages/{businessPage:slug}/team/invitations/{invitation}', [BusinessTeamController::class, 'cancelInvite'])
+                ->name('business-pages.team.invitations.cancel');
 
-//             Route::put('/business-pages/{businessPage:slug}/team/members/{teamMember}/role', [BusinessTeamController::class, 'changeRole'])
-//                 ->name('business-pages.team.members.role');
+            Route::put('/business-pages/{businessPage:slug}/team/members/{teamMember}/role', [BusinessTeamController::class, 'changeRole'])
+                ->name('business-pages.team.members.role');
 
-//             Route::delete('/business-pages/{businessPage:slug}/team/members/{teamMember}', [BusinessTeamController::class, 'removeMember'])
-//                 ->name('business-pages.team.members.remove');
+            Route::delete('/business-pages/{businessPage:slug}/team/members/{teamMember}', [BusinessTeamController::class, 'removeMember'])
+                ->name('business-pages.team.members.remove');
 
-//             Route::post('/business-invitations/{invitation}/accept', [BusinessTeamController::class, 'acceptInvite'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->name('business-invitations.accept');
+            Route::post('/business-invitations/{invitation}/accept', [BusinessTeamController::class, 'acceptInvite'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->name('business-invitations.accept');
 
-//             Route::post('/business-invitations/{invitation}/reject', [BusinessTeamController::class, 'rejectInvite'])
-//                 ->name('business-invitations.reject');
+            Route::post('/business-invitations/{invitation}/reject', [BusinessTeamController::class, 'rejectInvite'])
+                ->name('business-invitations.reject');
 
-//             // Business Pages Followers Routes (Phase 5)
-//             Route::post('/business-pages/{businessPage:slug}/follow', [BusinessFollowerController::class, 'toggleFollow'])
-//                 ->middleware(EnsureMemberMobileVerified::class)
-//                 ->name('business-pages.follow.toggle');
+            // Business Pages Followers Routes (Phase 5)
+            Route::post('/business-pages/{businessPage:slug}/follow', [BusinessFollowerController::class, 'toggleFollow'])
+                ->middleware(EnsureMemberMobileVerified::class)
+                ->name('business-pages.follow.toggle');
 
-//             Route::post('/business-pages/{businessPage:slug}/follow-requests/{follower}', [BusinessFollowerController::class, 'handleRequest'])
-//                 ->name('business-pages.followers.handle-request');
+            Route::post('/business-pages/{businessPage:slug}/follow-requests/{follower}', [BusinessFollowerController::class, 'handleRequest'])
+                ->name('business-pages.followers.handle-request');
 
-//             Route::delete('/business-pages/{businessPage:slug}/followers/{follower}', [BusinessFollowerController::class, 'removeFollower'])
-//                 ->name('business-pages.followers.remove');
+            Route::delete('/business-pages/{businessPage:slug}/followers/{follower}', [BusinessFollowerController::class, 'removeFollower'])
+                ->name('business-pages.followers.remove');
 
-//             Route::post('/business-pages/{businessPage:slug}/invite-to-follow', [BusinessFollowerController::class, 'inviteToFollow'])
-//                 ->name('business-pages.followers.invite');
+            Route::post('/business-pages/{businessPage:slug}/invite-to-follow', [BusinessFollowerController::class, 'inviteToFollow'])
+                ->name('business-pages.followers.invite');
 
-//             // Business Pages Reviews Routes (Phase 6)
-//             Route::post('/business-pages/{businessPage:slug}/reviews', [BusinessReviewController::class, 'store'])
-//                 ->name('business-pages.reviews.store');
+            // Business Pages Reviews Routes (Phase 6)
+            Route::post('/business-pages/{businessPage:slug}/reviews', [BusinessReviewController::class, 'store'])
+                ->name('business-pages.reviews.store');
 
-//             Route::put('/business-pages/{businessPage:slug}/reviews/{review}', [BusinessReviewController::class, 'update'])
-//                 ->name('business-pages.reviews.update');
+            Route::put('/business-pages/{businessPage:slug}/reviews/{review}', [BusinessReviewController::class, 'update'])
+                ->name('business-pages.reviews.update');
 
-//             Route::delete('/business-pages/{businessPage:slug}/reviews/{review}', [BusinessReviewController::class, 'destroy'])
-//                 ->name('business-pages.reviews.destroy');
+            Route::delete('/business-pages/{businessPage:slug}/reviews/{review}', [BusinessReviewController::class, 'destroy'])
+                ->name('business-pages.reviews.destroy');
 
-//             Route::post('/business-pages/{businessPage:slug}/reviews/{review}/reply', [BusinessReviewController::class, 'storeReply'])
-//                 ->name('business-pages.reviews.reply');
+            Route::post('/business-pages/{businessPage:slug}/reviews/{review}/reply', [BusinessReviewController::class, 'storeReply'])
+                ->name('business-pages.reviews.reply');
 
-//             Route::post('/business-pages/{businessPage:slug}/reviews/{review}/vote', [BusinessReviewController::class, 'vote'])
-//                 ->name('business-pages.reviews.vote');
+            Route::post('/business-pages/{businessPage:slug}/reviews/{review}/vote', [BusinessReviewController::class, 'vote'])
+                ->name('business-pages.reviews.vote');
 
-//             Route::post('/business-pages/{businessPage:slug}/reviews/{review}/report', [BusinessReviewController::class, 'report'])
-//                 ->name('business-pages.reviews.report');
+            Route::post('/business-pages/{businessPage:slug}/reviews/{review}/report', [BusinessReviewController::class, 'report'])
+                ->name('business-pages.reviews.report');
 
-//             Route::post('/business-pages/{businessPage:slug}/reviews/{review}/hide', [BusinessReviewController::class, 'toggleHide'])
-//                 ->name('business-pages.reviews.hide');
+            Route::post('/business-pages/{businessPage:slug}/reviews/{review}/hide', [BusinessReviewController::class, 'toggleHide'])
+                ->name('business-pages.reviews.hide');
 
-//             // Business Pages Inbox & Customer Messaging Routes (Phase 7)
-//             Route::get('/business-pages/{businessPage:slug}/inbox', [BusinessInboxController::class, 'index'])
-//                 ->name('business-pages.inbox.index');
+            // Business Pages Inbox & Customer Messaging Routes (Phase 7)
+            Route::get('/business-pages/{businessPage:slug}/inbox', [BusinessInboxController::class, 'index'])
+                ->name('business-pages.inbox.index');
 
-//             Route::post('/business-pages/{businessPage:slug}/inbox/chat', [BusinessInboxController::class, 'startConversation'])
-//                 ->name('business-pages.inbox.start');
+            Route::post('/business-pages/{businessPage:slug}/inbox/chat', [BusinessInboxController::class, 'startConversation'])
+                ->name('business-pages.inbox.start');
 
-//             Route::get('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}', [BusinessInboxController::class, 'showConversation'])
-//                 ->name('business-pages.inbox.show');
+            Route::get('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}', [BusinessInboxController::class, 'showConversation'])
+                ->name('business-pages.inbox.show');
 
-//             Route::post('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/messages', [BusinessInboxController::class, 'sendMessage'])
-//                 ->name('business-pages.inbox.send');
+            Route::post('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/messages', [BusinessInboxController::class, 'sendMessage'])
+                ->name('business-pages.inbox.send');
 
-//             Route::post('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/request', [BusinessInboxController::class, 'handleRequest'])
-//                 ->name('business-pages.inbox.request');
+            Route::post('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/request', [BusinessInboxController::class, 'handleRequest'])
+                ->name('business-pages.inbox.request');
 
-//             Route::post('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/star', [BusinessInboxController::class, 'toggleStar'])
-//                 ->name('business-pages.inbox.star');
+            Route::post('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/star', [BusinessInboxController::class, 'toggleStar'])
+                ->name('business-pages.inbox.star');
 
-//             Route::post('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/pin', [BusinessInboxController::class, 'togglePin'])
-//                 ->name('business-pages.inbox.pin');
+            Route::post('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/pin', [BusinessInboxController::class, 'togglePin'])
+                ->name('business-pages.inbox.pin');
 
-//             Route::put('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/status', [BusinessInboxController::class, 'updateStatus'])
-//                 ->name('business-pages.inbox.status');
+            Route::put('/business-pages/{businessPage:slug}/inbox/conversations/{conversation}/status', [BusinessInboxController::class, 'updateStatus'])
+                ->name('business-pages.inbox.status');
 
-//             Route::post('/business-pages/{businessPage:slug}/inbox/quick-replies', [BusinessInboxController::class, 'storeQuickReply'])
-//                 ->name('business-pages.inbox.quick-replies.store');
+            Route::post('/business-pages/{businessPage:slug}/inbox/quick-replies', [BusinessInboxController::class, 'storeQuickReply'])
+                ->name('business-pages.inbox.quick-replies.store');
 
-//             Route::delete('/business-pages/{businessPage:slug}/inbox/quick-replies/{quickReply}', [BusinessInboxController::class, 'destroyQuickReply'])
-//                 ->name('business-pages.inbox.quick-replies.destroy');
+            Route::delete('/business-pages/{businessPage:slug}/inbox/quick-replies/{quickReply}', [BusinessInboxController::class, 'destroyQuickReply'])
+                ->name('business-pages.inbox.quick-replies.destroy');
 
-//             Route::get('/business-pages/{businessPage:slug}/notifications', [BusinessInboxController::class, 'notifications'])
-//                 ->name('business-pages.notifications.index');
+            Route::get('/business-pages/{businessPage:slug}/notifications', [BusinessInboxController::class, 'notifications'])
+                ->name('business-pages.notifications.index');
 
-//             Route::post('/business-pages/{businessPage:slug}/notifications/read', [BusinessInboxController::class, 'markNotificationsRead'])
-//                 ->name('business-pages.notifications.read');
+            Route::post('/business-pages/{businessPage:slug}/notifications/read', [BusinessInboxController::class, 'markNotificationsRead'])
+                ->name('business-pages.notifications.read');
 
-//             // Business Pages Directory & Discovery Routes (Phase 8)
-//             Route::get('/business-directory', [BusinessDirectoryController::class, 'directory'])
-//                 ->name('business-pages.directory.index');
+            // Business Pages Directory & Discovery Routes (Phase 8)
+            Route::get('/business-directory', [BusinessDirectoryController::class, 'directory'])
+                ->name('business-pages.directory.index');
 
-//             Route::get('/business-directory/categories/{category}', [BusinessDirectoryController::class, 'category'])
-//                 ->name('business-pages.directory.category');
+            Route::get('/business-directory/categories/{category}', [BusinessDirectoryController::class, 'category'])
+                ->name('business-pages.directory.category');
 
-//             Route::get('/business-directory/search', [BusinessDirectoryController::class, 'search'])
-//                 ->name('business-pages.directory.search');
+            Route::get('/business-directory/search', [BusinessDirectoryController::class, 'search'])
+                ->name('business-pages.directory.search');
 
-//             // Business Pages Analytics & Insights Routes (Phase 9)
-//             Route::get('/business-pages/{businessPage:slug}/analytics', [BusinessAnalyticsController::class, 'index'])
-//                 ->name('business-pages.analytics.index');
+            // Business Pages Analytics & Insights Routes (Phase 9)
+            Route::get('/business-pages/{businessPage:slug}/analytics', [BusinessAnalyticsController::class, 'index'])
+                ->name('business-pages.analytics.index');
 
-//             Route::get('/business-pages/{businessPage:slug}/analytics/data', [BusinessAnalyticsController::class, 'data'])
-//                 ->name('business-pages.analytics.data');
+            Route::get('/business-pages/{businessPage:slug}/analytics/data', [BusinessAnalyticsController::class, 'data'])
+                ->name('business-pages.analytics.data');
 
-//             // Business Pages Verification Routes (Phase 10)
-//             Route::get('/business-pages/{businessPage:slug}/verification', [BusinessVerificationController::class, 'index'])
-//                 ->name('business-pages.verification.index');
+            // Business Pages Verification Routes (Phase 10)
+            Route::get('/business-pages/{businessPage:slug}/verification', [BusinessVerificationController::class, 'index'])
+                ->name('business-pages.verification.index');
 
-//             Route::post('/business-pages/{businessPage:slug}/verification', [BusinessVerificationController::class, 'store'])
-//                 ->name('business-pages.verification.store');
+            Route::post('/business-pages/{businessPage:slug}/verification', [BusinessVerificationController::class, 'store'])
+                ->name('business-pages.verification.store');
 
-//             Route::post('/logout', [MemberAuthController::class, 'logout'])
-//                 ->name('logout');
+            Route::post('/logout', [MemberAuthController::class, 'logout'])
+                ->name('logout');
 
-//             /*
-//              | Future authenticated Member Panel routes must be added here.
-//              */
-//         });
-//     });
+            /*
+             | Future authenticated Member Panel routes must be added here.
+             */
+        });
+    });
 
 /*
  |--------------------------------------------------------------------------
@@ -1113,8 +1113,4 @@ Route::get('/storage/{path}', function (string $path) {
         'Cache-Control' => 'public, max-age=86400',
     ]);
 })->where('path', '.*');
-
-Route::fallback(function () {
-    echo "Sorry Not Found";
-});
 

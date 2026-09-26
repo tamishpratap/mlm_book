@@ -74,7 +74,7 @@ class BusinessAdCampaignController extends Controller
         $avgCtr = $totalImpressions > 0 ? round(($totalClicks / $totalImpressions) * 100, 2) : 0.00;
 
         $availableAdFunds = round((float) ($member->p2p_wallet ?? 0.00), 2);
-        $campaignFeePercent = (float) Setting::get('campaign_platform_fee_percent', 2.50);
+        $campaignFeePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
 
         $metrics = [
             'total_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->count(),
@@ -174,7 +174,7 @@ class BusinessAdCampaignController extends Controller
         }
 
         $campaignBudget = round((float) $validated['budget'], 2);
-        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 2.50);
+        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
         $feeAmount = round($campaignBudget * ($feePercent / 100), 2);
         $totalWalletDebit = round($campaignBudget + $feeAmount, 2);
 
@@ -198,10 +198,11 @@ class BusinessAdCampaignController extends Controller
 
             if ($availableFunds < $totalWalletDebit) {
                 $shortfall = round($totalWalletDebit - $availableFunds, 2);
+                $insufficientMsg = $feeAmount > 0
+                    ? "Insufficient advertising funds. Campaign Budget: \${$campaignBudget} USD, Platform Fee ({$feePercent}%): \${$feeAmount} USD, Total Required: \${$totalWalletDebit} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please add funds."
+                    : "Insufficient advertising funds. Campaign Budget: \${$campaignBudget} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please add funds.";
                 throw ValidationException::withMessages([
-                    'budget' => [
-                        "Insufficient advertising funds. Campaign Budget: \${$campaignBudget} USD, Platform Fee ({$feePercent}%): \${$feeAmount} USD, Total Required: \${$totalWalletDebit} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please add funds."
-                    ],
+                    'budget' => [$insufficientMsg],
                 ]);
             }
 
@@ -294,7 +295,7 @@ class BusinessAdCampaignController extends Controller
         ]);
 
         $topUpAmount = round((float) $validated['amount'], 2);
-        $feePercent = (float) ($campaign->fee_percent ?? Setting::get('campaign_platform_fee_percent', 2.50));
+        $feePercent = (float) ($campaign->fee_percent ?? Setting::get('campaign_platform_fee_percent', 0.00));
         $feeAmount = round($topUpAmount * ($feePercent / 100), 2);
         $totalWalletDebit = round($topUpAmount + $feeAmount, 2);
 
@@ -305,10 +306,11 @@ class BusinessAdCampaignController extends Controller
 
             if ($availableFunds < $totalWalletDebit) {
                 $shortfall = round($totalWalletDebit - $availableFunds, 2);
+                $insufficientTopUpMsg = $feeAmount > 0
+                    ? "Insufficient advertising funds to add funds. Top-up Amount: \${$topUpAmount} USD, Platform Fee: \${$feeAmount} USD, Total Required: \${$totalWalletDebit} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please deposit funds first."
+                    : "Insufficient advertising funds to add funds. Top-up Amount: \${$topUpAmount} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please deposit funds first.";
                 throw ValidationException::withMessages([
-                    'amount' => [
-                        "Insufficient advertising funds to add funds. Top-up Amount: \${$topUpAmount} USD, Platform Fee: \${$feeAmount} USD, Total Required: \${$totalWalletDebit} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please deposit funds first."
-                    ],
+                    'amount' => [$insufficientTopUpMsg],
                 ]);
             }
 
@@ -423,7 +425,7 @@ class BusinessAdCampaignController extends Controller
         DB::transaction(function () use ($campaign, $member, $validated, &$updateData) {
             if (isset($validated['budget'])) {
                 $newBudget = round((float) $validated['budget'], 2);
-                $feePercent = (float) ($campaign->fee_percent ?? Setting::get('campaign_platform_fee_percent', 2.50));
+                $feePercent = (float) ($campaign->fee_percent ?? Setting::get('campaign_platform_fee_percent', 0.00));
                 $newFeeAmount = round($newBudget * ($feePercent / 100), 2);
                 $newTotalDebit = round($newBudget + $newFeeAmount, 2);
 
