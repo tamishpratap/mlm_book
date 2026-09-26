@@ -323,7 +323,7 @@ class WithdrawalManagementController extends Controller
 
             if ($member) {
                 $previousBalance = (float) ($member->wallet ?? 0.00);
-                $newBalance = round($previousBalance + $refundedAmount, 2);
+                $newBalance = round($previousBalance + $refundedAmount, 4);
                 $member->wallet = $newBalance;
                 $member->save();
             }

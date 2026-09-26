@@ -1090,7 +1090,7 @@ class BusinessAdCampaignController extends Controller
             }
 
             // 8. Credit Member's wallet balance atomically
-            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 2);
+            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 4);
             $lockedMember->save();
             $newWalletBalance = (float) $lockedMember->wallet;
 
@@ -1679,7 +1679,7 @@ class BusinessAdCampaignController extends Controller
             }
 
             // Credit Member Wallet Balance atomically
-            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 2);
+            $lockedMember->wallet = round((float) ($lockedMember->wallet ?? 0.00) + $rewardAmount, 4);
             $lockedMember->save();
             $newWalletBalance = (float) $lockedMember->wallet;
 

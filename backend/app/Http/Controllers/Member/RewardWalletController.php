@@ -103,9 +103,9 @@ class RewardWalletController extends Controller
             'success' => true,
             'wallet' => [
                 'wallet' => $walletBalance,
-                'wallet_formatted' => '$' . number_format($walletBalance, 2) . ' USD',
+                'wallet_formatted' => '$' . number_format($walletBalance, 4) . ' USD',
                 'reward_balance' => $walletBalance,
-                'reward_balance_formatted' => '$' . number_format($walletBalance, 2) . ' USD',
+                'reward_balance_formatted' => '$' . number_format($walletBalance, 4) . ' USD',
                 'total_rewards_earned' => round($totalEarned, 4),
                 'total_rewards_earned_formatted' => '$' . number_format($totalEarned, 4) . ' USD',
                 'total_reward_count' => $totalCount,

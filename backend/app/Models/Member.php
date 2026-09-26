@@ -60,7 +60,7 @@ class Member extends Authenticatable
             'direct_referral_count' => 'integer',
             'referral_counted_at' => 'datetime',
             'p2p_wallet' => 'float',
-            'wallet' => 'float',
+            'wallet' => 'decimal:4',
             'password' => 'hashed',
         ];
     }
@@ -79,7 +79,7 @@ class Member extends Authenticatable
 
     public function creditWallet(float $amount): float
     {
-        $this->wallet = round((float) ($this->wallet ?? 0.00) + max(0.00, $amount), 2);
+        $this->wallet = round((float) ($this->wallet ?? 0.00) + max(0.00, $amount), 4);
         $this->save();
         return (float) $this->wallet;
     }
