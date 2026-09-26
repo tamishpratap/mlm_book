@@ -478,7 +478,7 @@ export function AdCampaignDetailModal({
       `"${(item.user?.username || '').replace(/"/g, '""')}"`,
       item.user?.is_verified ? 'Yes' : 'No',
       `"${(item.action_label || item.action || '').replace(/"/g, '""')}"`,
-      item.reward_amount_usd ? item.reward_amount_usd.toFixed(4) : '0.0000',
+      item.reward_amount_usd !== undefined && item.reward_amount_usd !== null ? Number(item.reward_amount_usd).toFixed(4) : '0.0000',
       `"${(item.tier_label || '').replace(/"/g, '""')}"`,
       `"${(item.user?.phone || '').replace(/"/g, '""')}"`,
       `"${(item.user?.email || '').replace(/"/g, '""')}"`,
@@ -507,7 +507,7 @@ export function AdCampaignDetailModal({
       `"${(item.user?.username || '').replace(/"/g, '""')}"`,
       item.user?.is_verified ? 'Yes' : 'No',
       `"${(item.action_label || item.action || '').replace(/"/g, '""')}"`,
-      item.reward_amount_usd ? item.reward_amount_usd.toFixed(4) : '0.0000',
+      item.reward_amount_usd !== undefined && item.reward_amount_usd !== null ? Number(item.reward_amount_usd).toFixed(4) : '0.0000',
       `"${(item.tier_label || '').replace(/"/g, '""')}"`,
       `"${(item.user?.phone || '').replace(/"/g, '""')}"`,
       `"${(item.user?.email || '').replace(/"/g, '""')}"`,
@@ -1267,7 +1267,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Rewards Paid</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#dc2626', marginTop: '4px' }}>
-                      ${spent.toFixed(2)}
+                      ${spent.toFixed(4)}
                     </div>
                   </div>
 
@@ -1281,7 +1281,7 @@ export function AdCampaignDetailModal({
                         marginTop: '4px',
                       }}
                     >
-                      ${remaining.toFixed(2)}
+                      ${remaining.toFixed(4)}
                     </div>
                   </div>
                 </div>
@@ -1593,7 +1593,7 @@ export function AdCampaignDetailModal({
                     <DollarSign size={14} color="#16a34a" />
                   </div>
                   <div style={{ fontSize: '18px', fontWeight: 800, color: '#14532d', marginTop: '4px' }}>
-                    ${engagementSummary.total_rewards_paid.toFixed(3)}
+                    ${engagementSummary.total_rewards_paid.toFixed(4)}
                   </div>
                   <div style={{ fontSize: '11px', color: '#4ade80', marginTop: '2px' }}>Total USD credited</div>
                 </div>
@@ -3379,7 +3379,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Current Running Budget</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: isExhausted ? '#b91c1c' : '#15803d', marginTop: '3px' }}>
-                      ${(engagementSummary.financials?.remaining_budget || remaining).toFixed(2)}
+                      ${(engagementSummary.financials?.remaining_budget || remaining).toFixed(4)}
                     </div>
                   </div>
                 </div>
@@ -3684,7 +3684,7 @@ export function AdCampaignDetailModal({
                 <div>
                   <div style={{ fontSize: '12px', color: '#166534', fontWeight: 600 }}>Refund to P2P Fund Wallet</div>
                   <div style={{ fontSize: '18px', fontWeight: 800, color: '#15803d' }}>
-                    ${remaining.toFixed(2)} USD
+                    ${remaining.toFixed(4)} USD
                   </div>
                   <div style={{ fontSize: '12px', color: '#166534' }}>
                     will be returned to your P2P Fund Wallet immediately.

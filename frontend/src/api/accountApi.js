@@ -127,6 +127,14 @@ export const accountApi = {
     const response = await apiClient.post('/rewards/wallet/verify-otp', data);
     return response.data;
   },
+
+  /**
+   * Get member's dynamic rank and reward metrics based on Admin configured Reward Rules
+   */
+  async getCurrentRank() {
+    const response = await apiClient.get('/rewards/current-rank');
+    return response.data;
+  },
 };
 
 export default accountApi;

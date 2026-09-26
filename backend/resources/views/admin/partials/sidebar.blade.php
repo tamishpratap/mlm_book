@@ -55,6 +55,8 @@
                         <li><a href="{{ route('admin.members.index') }}" class="{{ request()->routeIs('admin.members.index') || request()->routeIs('admin.members.active') ? 'active' : '' }}">Verified Members</a></li>
                         <li><a href="{{ route('admin.members.pending') }}" class="{{ request()->routeIs('admin.members.pending') ? 'active' : '' }}">Unverified Members</a></li>
                         <li><a href="{{ route('admin.members.blocked') }}" class="{{ request()->routeIs('admin.members.blocked') ? 'active' : '' }}">Blocked Members</a></li>
+                        <li><a href="{{ route('admin.members.security') }}" class="{{ request()->routeIs('admin.members.security') ? 'active' : '' }}">Security</a></li>
+                        <li><a href="{{ route('admin.members.wallet-address') }}" class="{{ request()->routeIs('admin.members.wallet-address') ? 'active' : '' }}">Wallet Address</a></li>
                     </ul>
                 </li>
                 <li class="sidebar-list">

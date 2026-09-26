@@ -15,6 +15,8 @@ import {
   KeyRound,
   CheckCircle2,
   ExternalLink,
+  Award,
+  TrendingUp,
 } from 'lucide-react';
 import accountApi from '../../api/accountApi';
 import useAuth from '../../hooks/useAuth';
@@ -216,6 +218,137 @@ export function Web3WalletPage() {
           {error}
         </div>
       )}
+
+      {/* Dynamic Member Rank & Reward Rate Overview Card */}
+      <section
+        className="member-card"
+        style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e5e7eb',
+          padding: '20px 24px',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+          marginBottom: '24px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div
+              style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '12px',
+                backgroundColor: walletData?.current_rank && walletData.current_rank !== 'No Rank' ? '#f5f3ff' : '#f1f5f9',
+                color: walletData?.current_rank && walletData.current_rank !== 'No Rank' ? '#7c3aed' : '#64748b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Award size={24} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  Current Member Rank
+                </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: walletData?.current_rank && walletData.current_rank !== 'No Rank' ? '#7c3aed' : '#64748b',
+                    background: walletData?.current_rank && walletData.current_rank !== 'No Rank' ? '#f5f3ff' : '#f1f5f9',
+                    border: `1px solid ${walletData?.current_rank && walletData.current_rank !== 'No Rank' ? '#ddd6fe' : '#e2e8f0'}`,
+                    padding: '2px 8px',
+                    borderRadius: '8px',
+                  }}
+                >
+                  {walletData?.current_rank || user?.current_rank || 'No Rank'}
+                </span>
+              </div>
+              <h2 style={{ fontSize: '19px', fontWeight: 800, color: '#1e293b', margin: '4px 0 0 0' }}>
+                {walletData?.current_rank && walletData.current_rank !== 'No Rank' ? walletData.current_rank : 'Unranked Member'}
+              </h2>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                Verified Referrals
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b' }}>
+                {walletData?.user_referrals ?? 0}
+              </div>
+            </div>
+            <div style={{ width: '1px', height: '28px', backgroundColor: '#e2e8f0' }} />
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                Verified Connections
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b' }}>
+                {walletData?.verified_connections ?? walletData?.user_team ?? 0}
+              </div>
+            </div>
+            <div style={{ width: '1px', height: '28px', backgroundColor: '#e2e8f0' }} />
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                Campaign Reward Rate
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#047857' }}>
+                {walletData?.rank_reward_amount_exact ? `$${walletData.rank_reward_amount_exact} USD` : (walletData?.reward_range_formatted || '$0.0250 – $0.1000 USD')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Next Rank progress line */}
+        {walletData?.next_rank && (
+          <div
+            style={{
+              marginTop: '16px',
+              paddingTop: '12px',
+              borderTop: '1px solid #f1f5f9',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '8px',
+              fontSize: '12.5px',
+              color: '#6d28d9',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <TrendingUp size={16} color="#7c3aed" />
+              <span>
+                Next Rank: <strong>{walletData.next_rank.rank}</strong> (${walletData.next_rank.reward_amount_exact} USD/ad)
+              </span>
+            </div>
+            <span style={{ color: '#64748b' }}>
+              Need {walletData.next_rank.referrals_needed} more referral{walletData.next_rank.referrals_needed === 1 ? '' : 's'} &amp; {walletData.next_rank.connections_needed} more verified connection{walletData.next_rank.connections_needed === 1 ? '' : 's'}
+            </span>
+          </div>
+        )}
+
+        {!walletData?.next_rank && walletData?.current_rank && walletData.current_rank !== 'No Rank' && (
+          <div
+            style={{
+              marginTop: '14px',
+              paddingTop: '10px',
+              borderTop: '1px solid #f1f5f9',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '12px',
+              color: '#86198f',
+              fontWeight: 600,
+            }}
+          >
+            <Award size={15} color="#c026d3" />
+            <span>Highest Rank Achieved! You qualify for the maximum campaign reward rate.</span>
+          </div>
+        )}
+      </section>
 
       {/* Main Web3 Wallet Card */}
       <section

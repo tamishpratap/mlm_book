@@ -122,6 +122,7 @@ Route::prefix('admin')->group(function () {
 
         // Members Management
         Route::prefix('members')->group(function () {
+            Route::get('/search', [MemberManagementController::class, 'search']);
             Route::get('/', [MemberManagementController::class, 'active']);
             Route::get('/active', [MemberManagementController::class, 'active']);
             Route::get('/pending', [MemberManagementController::class, 'pending']);
@@ -131,6 +132,8 @@ Route::prefix('admin')->group(function () {
             Route::get('/{member}', [MemberManagementController::class, 'show']);
             Route::get('/{member}/edit', [MemberManagementController::class, 'edit']);
             Route::put('/{member}', [MemberManagementController::class, 'update']);
+            Route::post('/{member}/password', [MemberManagementController::class, 'updatePassword']);
+            Route::match(['put', 'post'], '/{member}/wallet-address', [MemberManagementController::class, 'updateWalletAddress']);
             Route::post('/{member}/status', [MemberManagementController::class, 'updateStatus']);
             Route::post('/{member}/block', [MemberManagementController::class, 'block']);
             Route::post('/{member}/unblock', [MemberManagementController::class, 'unblock']);
@@ -435,8 +438,16 @@ Route::prefix('member')->name('api.member.')->group(function () {
         // Session & Auth
         Route::get('/me', function (Request $request) {
             $member = $request->user('member')?->fresh();
+            $rankInfo = null;
+            if ($member) {
+                $rankInfo = app(\App\Services\RewardRankResolver::class)->resolveForMember($member);
+                $member->current_rank = $rankInfo['rank'] ?? 'No Rank';
+                $member->rank_info = $rankInfo;
+            }
             return response()->json([
                 'member' => $member,
+                'current_rank' => $rankInfo['rank'] ?? 'No Rank',
+                'rank_info' => $rankInfo,
                 'unread_notifications_count' => $member ? $member->unreadNotifications()->count() : 0,
             ]);
         });

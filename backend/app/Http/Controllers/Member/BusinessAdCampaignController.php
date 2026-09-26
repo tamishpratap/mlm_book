@@ -10,6 +10,7 @@ use App\Models\AdImpression;
 use App\Models\AdCampaignActivity;
 use App\Models\AdReward;
 use App\Models\AdRewardRule;
+use App\Models\RewardRankRule;
 use App\Models\BusinessFollower;
 use App\Models\BusinessPage;
 use App\Models\Member;
@@ -1099,7 +1100,7 @@ class BusinessAdCampaignController extends Controller
             $rewardAmount = (float) $resolution['reward_amount_usd'];
             $rewardAmountExact = (string) $resolution['reward_amount_exact'];
             $snapshot = $resolution['snapshot'] ?? [];
-            $minActiveReward = AdRewardRule::getMinimumActiveRewardAmount();
+            $minActiveReward = RewardRankRule::getMinimumActiveRewardAmount() ?? AdRewardRule::getMinimumActiveRewardAmount() ?? 0.0250;
 
             // 2. Verify Campaign is Active and Approved
             if ($lockedCampaign->approval_status !== AdCampaign::APPROVAL_APPROVED ||
@@ -1183,8 +1184,11 @@ class BusinessAdCampaignController extends Controller
                     'ad_campaign_id' => $lockedCampaign->id,
                     'member_id' => $lockedMember->id,
                     'ad_reward_rule_id' => $snapshot['ad_reward_rule_id'] ?? null,
-                    'direct_verified_referral_count' => $snapshot['direct_verified_referral_count'] ?? 0,
-                    'rule_min_referrals' => $snapshot['min_referrals'] ?? null,
+                    'reward_rank_rule_id' => $snapshot['rule_id'] ?? null,
+                    'direct_verified_referral_count' => $snapshot['direct_verified_referral_count'] ?? $snapshot['user_referrals'] ?? 0,
+                    'team_count' => $snapshot['user_team'] ?? $snapshot['team_count'] ?? 0,
+                    'rank_at_reward' => $snapshot['rank'] ?? null,
+                    'rule_min_referrals' => $snapshot['min_referrals'] ?? $snapshot['referral_requirement'] ?? null,
                     'rule_max_referrals' => $snapshot['max_referrals'] ?? null,
                     'rule_version' => (string) ($snapshot['rule_version'] ?? ''),
                     'reward_amount_usd' => $rewardAmount,
@@ -1395,28 +1399,55 @@ class BusinessAdCampaignController extends Controller
         $rewardAmount = $resolution['success'] ? (float) $resolution['reward_amount_usd'] : AdCampaign::REWARD_AMOUNT;
 
         // Fetch all active admin rules for dynamic display in popup
-        $activeRules = AdRewardRule::getActiveRules();
-        $maxReward = $activeRules->isNotEmpty() ? (float) $activeRules->max('reward_amount') : AdCampaign::REWARD_AMOUNT;
-        $maxPossibleReward = min(AdRewardRule::MAX_PERMISSIBLE_REWARD_USD, max(0.05, $maxReward));
+        $hasRankRules = RewardRankRule::active()->exists();
+        $activeRules = $hasRankRules
+            ? RewardRankRule::getActiveRules()
+            : AdRewardRule::getActiveRules();
 
-        $rulesFormatted = $activeRules->map(function (AdRewardRule $r) use ($resolution) {
-            $min = (int) $r->min_referrals;
-            $max = $r->max_referrals !== null ? (int) $r->max_referrals : null;
-            $isCurrent = $resolution['success'] && (int) ($resolution['matched_rule_id'] ?? 0) === (int) $r->id;
-            $isUnconfigured = $r->reward_amount === null || $r->reward_amount === '';
+        $maxReward = $hasRankRules
+            ? (float) RewardRankRule::getMaximumActiveRewardAmount()
+            : ($activeRules->isNotEmpty() ? (float) $activeRules->max('reward_amount') : AdCampaign::REWARD_AMOUNT);
 
-            return [
-                'id' => $r->id,
-                'min_referrals' => $min,
-                'max_referrals' => $max,
-                'label' => $min . ($max !== null ? "–{$max}" : '+'),
-                'reward_amount_usd' => !$isUnconfigured ? (float) $r->reward_amount : null,
-                'reward_amount_exact' => !$isUnconfigured ? number_format((float) $r->reward_amount, 4, '.', '') : null,
-                'reward_amount_formatted' => !$isUnconfigured ? '$' . number_format((float) $r->reward_amount, 3) . ' USD' : 'Config Required',
-                'is_unconfigured' => $isUnconfigured,
-                'is_current' => $isCurrent,
-            ];
-        })->values();
+        $maxPossibleReward = $maxReward;
+
+        $rulesFormatted = $hasRankRules
+            ? $activeRules->map(function (RewardRankRule $r) use ($resolution) {
+                $isCurrent = $resolution['success'] && ($resolution['rank_key'] ?? '') === $r->rank_key;
+                $amount = (float) $r->reward_amount;
+                return [
+                    'id' => $r->id,
+                    'rank' => $r->rank_name,
+                    'rank_key' => $r->rank_key,
+                    'priority' => $r->priority,
+                    'min_referrals' => (int) $r->referral_requirement,
+                    'team_requirement' => (int) $r->team_requirement,
+                    'label' => $r->rank_name,
+                    'reward_amount_usd' => $amount,
+                    'reward_amount_exact' => number_format($amount, 4, '.', ''),
+                    'reward_amount_formatted' => '$' . number_format($amount, 4, '.', '') . ' USD',
+                    'is_unconfigured' => false,
+                    'is_current' => $isCurrent,
+                ];
+            })->values()
+            : $activeRules->map(function (AdRewardRule $r) use ($resolution) {
+                $min = (int) $r->min_referrals;
+                $max = $r->max_referrals !== null ? (int) $r->max_referrals : null;
+                $isCurrent = $resolution['success'] && (int) ($resolution['matched_rule_id'] ?? 0) === (int) $r->id;
+                $isUnconfigured = $r->reward_amount === null || $r->reward_amount === '';
+                $amount = !$isUnconfigured ? (float) $r->reward_amount : null;
+
+                return [
+                    'id' => $r->id,
+                    'min_referrals' => $min,
+                    'max_referrals' => $max,
+                    'label' => $min . ($max !== null ? "–{$max}" : '+'),
+                    'reward_amount_usd' => $amount,
+                    'reward_amount_exact' => $amount !== null ? number_format($amount, 4, '.', '') : null,
+                    'reward_amount_formatted' => $amount !== null ? '$' . number_format($amount, 4, '.', '') . ' USD' : 'Config Required',
+                    'is_unconfigured' => $isUnconfigured,
+                    'is_current' => $isCurrent,
+                ];
+            })->values();
 
         $hasBudget = (float) ($campaign->remaining_amount ?? 0.00) >= $rewardAmount;
         $isActive = $campaign->approval_status === AdCampaign::APPROVAL_APPROVED &&
@@ -1445,7 +1476,7 @@ class BusinessAdCampaignController extends Controller
             'reward_amount_usd' => $isOwner ? 0.00 : $rewardAmount,
             'reward_amount_exact' => $isOwner ? '0.0000' : number_format($rewardAmount, 4, '.', ''),
             'max_possible_reward_usd' => $isOwner ? 0.00 : $maxPossibleReward,
-            'max_possible_reward_label' => $isOwner ? null : ('Earn up to $' . number_format($maxPossibleReward, 2)),
+            'max_possible_reward_label' => $isOwner ? null : ('Earn up to $' . number_format($maxPossibleReward, 4, '.', '')),
             'member_reward' => $isOwner ? [
                 'direct_verified_referral_count' => $resolution['direct_verified_referral_count'] ?? 0,
                 'applicable_reward_usd' => 0.00,
@@ -1662,7 +1693,7 @@ class BusinessAdCampaignController extends Controller
             $rewardAmount = (float) $resolution['reward_amount_usd'];
             $rewardAmountExact = (string) ($resolution['reward_amount_exact'] ?? sprintf('%.4f', $rewardAmount));
             $snapshot = $resolution['snapshot'] ?? [];
-            $minActiveReward = AdRewardRule::getMinimumActiveRewardAmount();
+            $minActiveReward = RewardRankRule::getMinimumActiveRewardAmount() ?? AdRewardRule::getMinimumActiveRewardAmount() ?? 0.0250;
 
             // Verify Campaign is Active and Approved
             if ($lockedCampaign->approval_status !== AdCampaign::APPROVAL_APPROVED ||
@@ -1782,8 +1813,11 @@ class BusinessAdCampaignController extends Controller
                     'ad_campaign_id' => $lockedCampaign->id,
                     'member_id' => $lockedMember->id,
                     'ad_reward_rule_id' => $snapshot['ad_reward_rule_id'] ?? null,
-                    'direct_verified_referral_count' => $snapshot['direct_verified_referral_count'] ?? 0,
-                    'rule_min_referrals' => $snapshot['min_referrals'] ?? null,
+                    'reward_rank_rule_id' => $snapshot['rule_id'] ?? null,
+                    'direct_verified_referral_count' => $snapshot['direct_verified_referral_count'] ?? $snapshot['user_referrals'] ?? 0,
+                    'team_count' => $snapshot['user_team'] ?? $snapshot['team_count'] ?? 0,
+                    'rank_at_reward' => $snapshot['rank'] ?? null,
+                    'rule_min_referrals' => $snapshot['min_referrals'] ?? $snapshot['referral_requirement'] ?? null,
                     'rule_max_referrals' => $snapshot['max_referrals'] ?? null,
                     'rule_version' => (string) ($snapshot['rule_version'] ?? ''),
                     'reward_amount_usd' => $rewardAmount,
@@ -1836,14 +1870,10 @@ class BusinessAdCampaignController extends Controller
         $member = auth('member')->user();
         $limit = min(50, max(5, (int) $request->input('limit', 20)));
 
-        $maxReward = AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_BUSINESS_AD) ?? 0.0500;
+        $maxReward = RewardRankRule::getMaximumActiveRewardAmount() ?? AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_BUSINESS_AD) ?? 0.0500;
         $maxRewardFormatted = null;
         if ($maxReward !== null) {
-            $formattedNumber = rtrim(rtrim(sprintf('%.4f', $maxReward), '0'), '.');
-            if (strpos($formattedNumber, '.') !== false && strlen(substr($formattedNumber, strpos($formattedNumber, '.') + 1)) == 1) {
-                $formattedNumber .= '0';
-            }
-            $maxRewardFormatted = '$' . $formattedNumber;
+            $maxRewardFormatted = '$' . number_format((float) $maxReward, 4, '.', '');
         }
 
         $campaigns = AdCampaign::query()

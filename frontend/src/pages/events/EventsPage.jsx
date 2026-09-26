@@ -628,11 +628,11 @@ export function EventsPage({ defaultTab }) {
                         </div>
                         <div>
                           <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Spent</span>
-                          <strong style={{ color: '#64748b' }}>${spent.toFixed(2)} USD</strong>
+                          <strong style={{ color: '#64748b' }}>${spent.toFixed(4)} USD</strong>
                         </div>
                         <div>
                           <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Remaining Budget</span>
-                          <strong style={{ color: remainingColor, fontWeight: 800 }}>${remaining.toFixed(2)} USD</strong>
+                          <strong style={{ color: remainingColor, fontWeight: 800 }}>${remaining.toFixed(4)} USD</strong>
                         </div>
                       </div>
                     </div>

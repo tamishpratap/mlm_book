@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Friendship;
 use App\Models\Member;
 use App\Models\RewardRankRule;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 class RewardRankResolver
 {
     /**
-     * Request-level memoized cache for team counts to prevent redundant tree traversals.
+     * Request-level memoized cache for team/connections counts to prevent redundant queries.
      *
      * @var array<int, int>
      */
@@ -34,12 +35,16 @@ class RewardRankResolver
     }
 
     /**
-     * Get the authoritative TOTAL VERIFIED DOWNLINE TEAM count for a member.
-     * Traverses the recursive tree of all verified members introduced under this member's referral ancestry.
+     * Get the authoritative VERIFIED CONNECTIONS count for a member.
+     * Strictly:
+     * 1. Friendship status is 'accepted'.
+     * 2. The connected member has completed mobile/WhatsApp verification (mobile_verified_at is not null).
+     * 3. The connected member is not blocked.
+     * 4. Unverified members, pending, rejected, or blocked connections MUST NOT contribute to count.
      */
-    public function getVerifiedTeamCount(Member $member): int
+    public function getVerifiedConnectionsCount(Member $member): int
     {
-        if (empty($member->user_id) || empty($member->id)) {
+        if (empty($member->id)) {
             return 0;
         }
 
@@ -47,75 +52,21 @@ class RewardRankResolver
             return $this->teamCountMemory[$member->id];
         }
 
-        $userId = (string) $member->user_id;
+        $count = count($member->acceptedConnectionIds(true));
+        $this->teamCountMemory[$member->id] = $count;
 
-        // Attempt recursive CTE first (fast and single-query in MySQL 8.0+ / MariaDB 10.2+)
-        try {
-            $count = (int) DB::selectOne("
-                WITH RECURSIVE downline AS (
-                    SELECT user_id, introducer_id, mobile_verified_at
-                    FROM members
-                    WHERE introducer_id = :userId
-                    UNION ALL
-                    SELECT m.user_id, m.introducer_id, m.mobile_verified_at
-                    FROM members m
-                    INNER JOIN downline d ON m.introducer_id = d.user_id
-                )
-                SELECT COUNT(*) as total_count FROM downline WHERE mobile_verified_at IS NOT NULL
-            ", ['userId' => $userId])->total_count;
-
-            $this->teamCountMemory[$member->id] = $count;
-            return $count;
-        } catch (\Throwable $e) {
-            // Robust iterative fallback if recursive CTE is not supported by database engine
-            $count = $this->calculateTeamIteratively($userId);
-            $this->teamCountMemory[$member->id] = $count;
-            return $count;
-        }
+        return $count;
     }
 
     /**
-     * Iterative BFS traversal fallback for calculating verified downline team count.
+     * Get the authoritative TOTAL TEAM count for rank calculation.
+     * VERY IMPORTANT: For rank calculation: Team Count = Verified Connections.
+     * teamCount = count(member's verified connections).
+     * Unverified members MUST NOT contribute to Team Count.
      */
-    protected function calculateTeamIteratively(string $rootUserId): int
+    public function getVerifiedTeamCount(Member $member): int
     {
-        $currentLevelUserIds = [$rootUserId];
-        $visited = [strtolower($rootUserId) => true];
-        $totalVerifiedCount = 0;
-        $maxDepth = 50;
-        $depth = 0;
-
-        while (!empty($currentLevelUserIds) && $depth < $maxDepth) {
-            $depth++;
-
-            $nextLevelMembers = Member::query()
-                ->whereIn('introducer_id', $currentLevelUserIds)
-                ->get(['id', 'user_id', 'mobile_verified_at']);
-
-            if ($nextLevelMembers->isEmpty()) {
-                break;
-            }
-
-            $nextLevelUserIds = [];
-            foreach ($nextLevelMembers as $descendant) {
-                $uid = strtolower((string) $descendant->user_id);
-                if (isset($visited[$uid])) {
-                    // Prevent cycle loop in corrupt legacy data
-                    continue;
-                }
-                $visited[$uid] = true;
-
-                if ($descendant->mobile_verified_at !== null) {
-                    $totalVerifiedCount++;
-                }
-
-                $nextLevelUserIds[] = (string) $descendant->user_id;
-            }
-
-            $currentLevelUserIds = $nextLevelUserIds;
-        }
-
-        return $totalVerifiedCount;
+        return $this->getVerifiedConnectionsCount($member);
     }
 
     /**
@@ -124,7 +75,7 @@ class RewardRankResolver
      * Highest qualifying rank wins!
      *
      * @param int $referrals Direct verified referral count
-     * @param int $team Total verified downline team count
+     * @param int $team Total verified connections (Team Count = Verified Connections)
      */
     public function resolveForMetrics(int $referrals, int $team): array
     {
@@ -135,22 +86,25 @@ class RewardRankResolver
 
         if ($activeRules->isEmpty()) {
             return [
-                'success' => false,
+                'success' => true,
                 'status' => 'no_active_rules',
                 'eligible' => false,
                 'rank' => null,
+                'current_rank' => 'No Rank',
                 'rank_key' => null,
                 'priority' => null,
                 'referral_requirement' => null,
                 'team_requirement' => null,
                 'user_referrals' => $safeReferrals,
                 'user_team' => $safeTeam,
+                'verified_connections' => $safeTeam,
                 'reward' => 0.0000,
                 'reward_amount_usd' => 0.0000,
                 'reward_amount_exact' => '0.0000',
                 'currency' => 'USD',
                 'currency_symbol' => '$',
                 'rule_id' => null,
+                'next_rank' => null,
                 'message' => 'No active reward rank rules are configured in the system.',
             ];
         }
@@ -169,47 +123,84 @@ class RewardRankResolver
             }
         }
 
+        $activeRulesAsc = $activeRules->sortBy('priority');
+
         if (!$matchedRule) {
+            $nextRule = $activeRulesAsc->first();
+            $nextRankInfo = $nextRule ? [
+                'rank' => $nextRule->rank_name,
+                'rank_key' => $nextRule->rank_key,
+                'priority' => (int) $nextRule->priority,
+                'referral_requirement' => (int) $nextRule->referral_requirement,
+                'team_requirement' => (int) $nextRule->team_requirement,
+                'reward' => (float) $nextRule->reward_amount,
+                'reward_amount_usd' => (float) $nextRule->reward_amount,
+                'reward_amount_exact' => number_format((float) $nextRule->reward_amount, 4, '.', ''),
+                'referrals_needed' => max(0, (int) $nextRule->referral_requirement - $safeReferrals),
+                'team_needed' => max(0, (int) $nextRule->team_requirement - $safeTeam),
+                'connections_needed' => max(0, (int) $nextRule->team_requirement - $safeTeam),
+            ] : null;
+
             return [
                 'success' => true,
                 'status' => 'no_qualifying_rank',
                 'eligible' => false,
                 'rank' => null,
+                'current_rank' => 'No Rank',
                 'rank_key' => null,
                 'priority' => null,
                 'referral_requirement' => null,
                 'team_requirement' => null,
                 'user_referrals' => $safeReferrals,
                 'user_team' => $safeTeam,
+                'verified_connections' => $safeTeam,
                 'reward' => 0.0000,
                 'reward_amount_usd' => 0.0000,
                 'reward_amount_exact' => '0.0000',
                 'currency' => 'USD',
                 'currency_symbol' => '$',
                 'rule_id' => null,
+                'next_rank' => $nextRankInfo,
                 'message' => 'User metrics do not qualify for any active rank.',
             ];
         }
 
         $rewardAmt = (float) $matchedRule->reward_amount;
+        $nextRule = $activeRulesAsc->first(fn ($r) => (int) $r->priority > (int) $matchedRule->priority);
+        $nextRankInfo = $nextRule ? [
+            'rank' => $nextRule->rank_name,
+            'rank_key' => $nextRule->rank_key,
+            'priority' => (int) $nextRule->priority,
+            'referral_requirement' => (int) $nextRule->referral_requirement,
+            'team_requirement' => (int) $nextRule->team_requirement,
+            'reward' => (float) $nextRule->reward_amount,
+            'reward_amount_usd' => (float) $nextRule->reward_amount,
+            'reward_amount_exact' => number_format((float) $nextRule->reward_amount, 4, '.', ''),
+            'referrals_needed' => max(0, (int) $nextRule->referral_requirement - $safeReferrals),
+            'team_needed' => max(0, (int) $nextRule->team_requirement - $safeTeam),
+            'connections_needed' => max(0, (int) $nextRule->team_requirement - $safeTeam),
+        ] : null;
 
         return [
             'success' => true,
             'status' => 'eligible',
             'eligible' => true,
             'rank' => $matchedRule->rank_name,
+            'current_rank' => $matchedRule->rank_name,
             'rank_key' => $matchedRule->rank_key,
             'priority' => (int) $matchedRule->priority,
             'referral_requirement' => (int) $matchedRule->referral_requirement,
             'team_requirement' => (int) $matchedRule->team_requirement,
             'user_referrals' => $safeReferrals,
             'user_team' => $safeTeam,
+            'verified_connections' => $safeTeam,
             'reward' => $rewardAmt,
             'reward_amount_usd' => $rewardAmt,
             'reward_amount_exact' => number_format($rewardAmt, 4, '.', ''),
             'currency' => 'USD',
             'currency_symbol' => '$',
             'rule_id' => $matchedRule->id,
+            'next_rank' => $nextRankInfo,
             'message' => "Qualified for {$matchedRule->rank_name}.",
         ];
     }
@@ -226,7 +217,10 @@ class RewardRankResolver
                 'status' => 'invalid_member',
                 'eligible' => false,
                 'rank' => null,
+                'current_rank' => 'No Rank',
                 'reward_amount_usd' => 0.0000,
+                'reward_amount_exact' => '0.0000',
+                'next_rank' => null,
                 'message' => 'Invalid member.',
             ];
         }
@@ -238,24 +232,27 @@ class RewardRankResolver
                 'status' => 'unverified_mobile',
                 'eligible' => false,
                 'rank' => null,
+                'current_rank' => 'No Rank',
                 'rank_key' => null,
                 'priority' => null,
                 'referral_requirement' => null,
                 'team_requirement' => null,
                 'user_referrals' => 0,
                 'user_team' => 0,
+                'verified_connections' => 0,
                 'reward' => 0.0000,
                 'reward_amount_usd' => 0.0000,
                 'reward_amount_exact' => '0.0000',
                 'currency' => 'USD',
                 'currency_symbol' => '$',
                 'rule_id' => null,
+                'next_rank' => null,
                 'message' => 'Member must complete mobile verification to qualify for rank rewards.',
             ];
         }
 
         $referrals = $this->getVerifiedDirectReferralCount($member);
-        $team = $this->getVerifiedTeamCount($member);
+        $team = $this->getVerifiedConnectionsCount($member);
 
         $result = $this->resolveForMetrics($referrals, $team);
         $result['member_id'] = $member->id;

@@ -52,6 +52,8 @@ const NAV_GROUPS = [
           { label: 'Verified Members', to: '/admin/members' },
           { label: 'Unverified Members', to: '/admin/members/pending' },
           { label: 'Blocked Members', to: '/admin/members/blocked' },
+          { label: 'Security', to: '/admin/members/security' },
+          { label: 'Wallet Address', to: '/admin/members/wallet-address' },
         ],
       },
       {

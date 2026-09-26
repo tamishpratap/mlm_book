@@ -8,6 +8,7 @@ use App\Models\AdCampaign;
 use App\Models\AdCampaignActivity;
 use App\Models\AdReward;
 use App\Models\AdRewardRule;
+use App\Models\RewardRankRule;
 use App\Models\Event;
 use App\Models\EventResponse;
 use App\Models\Member;
@@ -1067,9 +1068,46 @@ class EventCampaignController extends Controller
             ], 403);
         }
 
+        $hasRankRules = RewardRankRule::active()->exists();
+
         // Organizer Preview Only Gate
         if ((int) $event->organizer_id === (int) $member->id || ($event->campaign && (int) $event->campaign->member_id === (int) $member->id) || ($event->campaign && $event->campaign->isOwner($member->id))) {
-            $activeRules = AdRewardRule::getActiveRules(AdRewardRule::TYPE_EVENT);
+            $rulesPayload = $hasRankRules
+                ? RewardRankRule::getActiveRules()->map(function (RewardRankRule $r) {
+                    $amount = (float) $r->reward_amount;
+                    return [
+                        'id' => $r->id,
+                        'rank' => $r->rank_name,
+                        'rank_key' => $r->rank_key,
+                        'priority' => $r->priority,
+                        'min_referrals' => (int) $r->referral_requirement,
+                        'team_requirement' => (int) $r->team_requirement,
+                        'label' => $r->rank_name,
+                        'reward_amount_usd' => $amount,
+                        'reward_amount_exact' => number_format($amount, 4, '.', ''),
+                        'reward_amount_formatted' => '$' . number_format($amount, 4, '.', '') . ' USD',
+                        'is_unconfigured' => false,
+                        'is_current' => false,
+                    ];
+                })->values()
+                : AdRewardRule::getActiveRules(AdRewardRule::TYPE_EVENT)->map(function (AdRewardRule $r) {
+                    $min = (int) $r->min_referrals;
+                    $max = $r->max_referrals !== null ? (int) $r->max_referrals : null;
+                    $isUnconfigured = $r->reward_amount === null || $r->reward_amount === '';
+                    $amount = !$isUnconfigured ? (float) $r->reward_amount : null;
+                    return [
+                        'id' => $r->id,
+                        'min_referrals' => $min,
+                        'max_referrals' => $max,
+                        'label' => $min . ($max !== null ? "–{$max}" : '+'),
+                        'reward_amount_usd' => $amount,
+                        'reward_amount_exact' => $amount !== null ? number_format($amount, 4, '.', '') : null,
+                        'reward_amount_formatted' => $amount !== null ? '$' . number_format($amount, 4, '.', '') . ' USD' : 'Config Required',
+                        'is_unconfigured' => $isUnconfigured,
+                        'is_current' => false,
+                    ];
+                })->values();
+
             return response()->json([
                 'success' => true,
                 'status' => 'organizer_preview_only',
@@ -1078,22 +1116,7 @@ class EventCampaignController extends Controller
                 'eligible' => false,
                 'message' => 'You cannot earn rewards from your own campaign.',
                 'reward_amount_usd' => 0.00,
-                'all_active_rules' => $activeRules->map(function (AdRewardRule $r) {
-                    $min = (int) $r->min_referrals;
-                    $max = $r->max_referrals !== null ? (int) $r->max_referrals : null;
-                    $isUnconfigured = $r->reward_amount === null || $r->reward_amount === '';
-                    return [
-                        'id' => $r->id,
-                        'min_referrals' => $min,
-                        'max_referrals' => $max,
-                        'label' => $min . ($max !== null ? "–{$max}" : '+'),
-                        'reward_amount_usd' => !$isUnconfigured ? (float) $r->reward_amount : null,
-                        'reward_amount_exact' => !$isUnconfigured ? number_format((float) $r->reward_amount, 4, '.', '') : null,
-                        'reward_amount_formatted' => !$isUnconfigured ? '$' . number_format((float) $r->reward_amount, 3) . ' USD' : 'Config Required',
-                        'is_unconfigured' => $isUnconfigured,
-                        'is_current' => false,
-                    ];
-                })->values(),
+                'all_active_rules' => $rulesPayload,
             ], 200);
         }
 
@@ -1106,25 +1129,44 @@ class EventCampaignController extends Controller
             return response()->json($result, $statusCode);
         }
 
-        $activeRules = AdRewardRule::getActiveRules(AdRewardRule::TYPE_EVENT);
-        $result['all_active_rules'] = $activeRules->map(function (AdRewardRule $r) use ($result) {
-            $min = (int) $r->min_referrals;
-            $max = $r->max_referrals !== null ? (int) $r->max_referrals : null;
-            $isCurrent = (int) ($result['matched_rule_id'] ?? 0) === (int) $r->id;
-            $isUnconfigured = $r->reward_amount === null || $r->reward_amount === '';
+        $result['all_active_rules'] = $hasRankRules
+            ? RewardRankRule::getActiveRules()->map(function (RewardRankRule $r) use ($result) {
+                $isCurrent = ($result['rank_key'] ?? '') === $r->rank_key;
+                $amount = (float) $r->reward_amount;
+                return [
+                    'id' => $r->id,
+                    'rank' => $r->rank_name,
+                    'rank_key' => $r->rank_key,
+                    'priority' => $r->priority,
+                    'min_referrals' => (int) $r->referral_requirement,
+                    'team_requirement' => (int) $r->team_requirement,
+                    'label' => $r->rank_name,
+                    'reward_amount_usd' => $amount,
+                    'reward_amount_exact' => number_format($amount, 4, '.', ''),
+                    'reward_amount_formatted' => '$' . number_format($amount, 4, '.', '') . ' USD',
+                    'is_unconfigured' => false,
+                    'is_current' => $isCurrent,
+                ];
+            })->values()
+            : AdRewardRule::getActiveRules(AdRewardRule::TYPE_EVENT)->map(function (AdRewardRule $r) use ($result) {
+                $min = (int) $r->min_referrals;
+                $max = $r->max_referrals !== null ? (int) $r->max_referrals : null;
+                $isCurrent = (int) ($result['matched_rule_id'] ?? 0) === (int) $r->id;
+                $isUnconfigured = $r->reward_amount === null || $r->reward_amount === '';
+                $amount = !$isUnconfigured ? (float) $r->reward_amount : null;
 
-            return [
-                'id' => $r->id,
-                'min_referrals' => $min,
-                'max_referrals' => $max,
-                'label' => $min . ($max !== null ? "–{$max}" : '+'),
-                'reward_amount_usd' => !$isUnconfigured ? (float) $r->reward_amount : null,
-                'reward_amount_exact' => !$isUnconfigured ? number_format((float) $r->reward_amount, 4, '.', '') : null,
-                'reward_amount_formatted' => !$isUnconfigured ? '$' . number_format((float) $r->reward_amount, 3) . ' USD' : 'Config Required',
-                'is_unconfigured' => $isUnconfigured,
-                'is_current' => $isCurrent,
-            ];
-        })->values();
+                return [
+                    'id' => $r->id,
+                    'min_referrals' => $min,
+                    'max_referrals' => $max,
+                    'label' => $min . ($max !== null ? "–{$max}" : '+'),
+                    'reward_amount_usd' => $amount,
+                    'reward_amount_exact' => $amount !== null ? number_format($amount, 4, '.', '') : null,
+                    'reward_amount_formatted' => $amount !== null ? '$' . number_format($amount, 4, '.', '') . ' USD' : 'Config Required',
+                    'is_unconfigured' => $isUnconfigured,
+                    'is_current' => $isCurrent,
+                ];
+            })->values();
 
         $campaign = $event->campaign()->first();
         $alreadyRewarded = false;
@@ -1425,8 +1467,11 @@ class EventCampaignController extends Controller
                     'ad_campaign_id' => $lockedCampaign->id,
                     'member_id' => $lockedMember->id,
                     'ad_reward_rule_id' => $snapshot['ad_reward_rule_id'] ?? null,
-                    'direct_verified_referral_count' => $snapshot['direct_verified_referral_count'] ?? 0,
-                    'rule_min_referrals' => $snapshot['min_referrals'] ?? null,
+                    'reward_rank_rule_id' => $snapshot['rule_id'] ?? null,
+                    'direct_verified_referral_count' => $snapshot['direct_verified_referral_count'] ?? $snapshot['user_referrals'] ?? 0,
+                    'team_count' => $snapshot['user_team'] ?? $snapshot['team_count'] ?? 0,
+                    'rank_at_reward' => $snapshot['rank'] ?? null,
+                    'rule_min_referrals' => $snapshot['min_referrals'] ?? $snapshot['referral_requirement'] ?? null,
                     'rule_max_referrals' => $snapshot['max_referrals'] ?? null,
                     'rule_version' => (string) ($snapshot['rule_version'] ?? ''),
                     'reward_amount_usd' => $rewardAmount,
@@ -1521,14 +1566,10 @@ class EventCampaignController extends Controller
 
         $service = app(AdDeliveryService::class);
         $campaigns = $service->getEligibleEventCampaigns($limit, $member);
-        $maxReward = AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT);
+        $maxReward = RewardRankRule::getMaximumActiveRewardAmount() ?? AdRewardRule::getMaximumActiveRewardAmount(AdRewardRule::TYPE_EVENT) ?? 0.0500;
         $maxRewardFormatted = null;
         if ($maxReward !== null) {
-            $formattedNumber = rtrim(rtrim(sprintf('%.4f', $maxReward), '0'), '.');
-            if (strpos($formattedNumber, '.') !== false && strlen(substr($formattedNumber, strpos($formattedNumber, '.') + 1)) == 1) {
-                $formattedNumber .= '0';
-            }
-            $maxRewardFormatted = '$' . $formattedNumber;
+            $maxRewardFormatted = '$' . number_format((float) $maxReward, 4, '.', '');
         }
 
         $items = $campaigns->map(function ($c) use ($maxReward, $maxRewardFormatted, $member) {

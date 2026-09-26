@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AdCampaign;
 use App\Models\AdRewardRule;
+use App\Models\RewardRankRule;
 use App\Models\Event;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -62,6 +63,14 @@ class CampaignBudgetDepletionService
                 $type = AdRewardRule::TYPE_BUSINESS_AD;
             } else {
                 $type = AdRewardRule::TYPE_EVENT;
+            }
+        }
+
+        // Check dynamic RewardRankRule first
+        if (RewardRankRule::active()->exists()) {
+            $minRankReward = RewardRankRule::getMinimumActiveRewardAmount();
+            if ($minRankReward !== null && $minRankReward > 0.0) {
+                return round((float) $minRankReward, 4);
             }
         }
 

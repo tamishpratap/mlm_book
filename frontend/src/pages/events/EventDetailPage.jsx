@@ -245,7 +245,7 @@ export function EventDetailPage() {
   const canEarnPaidEventReward = Boolean(hasPaidCampaign && isCampaignEligible && !isOrganizer && !isAlreadyRewarded);
   const isCampaignExhausted = Boolean(hasPaidCampaign && !isCampaignEligible && !isAlreadyRewarded);
   const isPaidEvent = hasPaidCampaign;
-  const earnUpToFormatted = data?.campaign?.earn_up_to_formatted || (data?.campaign?.earn_up_to_usd ? `$${Number(data.campaign.earn_up_to_usd).toFixed(2)}` : '$0.05');
+  const earnUpToFormatted = data?.campaign?.earn_up_to_formatted || (data?.campaign?.earn_up_to_usd ? `$${Number(data.campaign.earn_up_to_usd).toFixed(4)}` : '$0.0250');
 
   const goingMembers = useMemo(() => data?.going_members || [], [data?.going_members]);
   const interestedMembers = useMemo(() => data?.interested_members || [], [data?.interested_members]);
@@ -397,9 +397,9 @@ export function EventDetailPage() {
       return;
     }
 
-    const minReward = Number(campaignData?.minimum_event_reward || 0.025);
+    const minReward = Number(campaignData?.minimum_event_reward || 0.0250);
     if (!campaignData || Number(campaignData.remaining_amount || 0) < minReward) {
-      alert(`Please add funds to your event campaign before reactivating it. Minimum required: $${minReward.toFixed(2)} USD.`);
+      alert(`Please add funds to your event campaign before reactivating it. Minimum required: $${minReward.toFixed(4)} USD.`);
       setShowAddFundsModal(true);
       return;
     }
@@ -823,7 +823,7 @@ export function EventDetailPage() {
                       Promoted Event Campaign • {data?.campaign?.display_status || 'Active'}
                     </div>
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                      Remaining Budget: ${(data?.campaign?.remaining_amount ?? 0).toFixed(2)} USD • Platform promotion active
+                      Remaining Budget: ${Number(data?.campaign?.remaining_amount || 0).toFixed(4)} USD • Platform promotion active
                     </div>
                   </div>
                 </div>
@@ -973,7 +973,7 @@ export function EventDetailPage() {
                   <span>
                     Add Funds
                     {campaignData?.remaining_amount !== undefined && campaignData.remaining_amount > 0
-                      ? ` ($${Number(campaignData.remaining_amount).toFixed(2)})`
+                      ? ` ($${Number(campaignData.remaining_amount).toFixed(4)})`
                       : ''}
                   </span>
                 </button>

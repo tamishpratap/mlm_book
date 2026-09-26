@@ -75,11 +75,7 @@ function formatRewardAmount(val) {
   if (typeof val === 'string' && val.startsWith('$')) return val;
   const num = Number(val);
   if (Number.isNaN(num)) return null;
-  const s = num.toFixed(4).replace(/\.?0+$/, '');
-  const parts = s.split('.');
-  if (!parts[1]) return `$${parts[0]}.00`;
-  if (parts[1].length === 1) return `$${parts[0]}.${parts[1]}0`;
-  return `$${s}`;
+  return `$${num.toFixed(4)}`;
 }
 
 /**
@@ -253,8 +249,8 @@ export function PostCard({
   const adCampaignData = post.ad_campaign || post.campaign;
   const adEarnUpToAmount = adCampaignData?.earn_up_to_formatted ||
     post?.earn_up_to_formatted ||
-    (adCampaignData?.earn_up_to_usd ? `$${Number(adCampaignData.earn_up_to_usd).toFixed(2)}` :
-    (adCampaignData?.reward_amount_usd ? `$${Number(adCampaignData.reward_amount_usd).toFixed(2)}` : '$0.05'));
+    (adCampaignData?.earn_up_to_usd ? `$${Number(adCampaignData.earn_up_to_usd).toFixed(4)}` :
+    (adCampaignData?.reward_amount_usd ? `$${Number(adCampaignData.reward_amount_usd).toFixed(4)}` : '$0.0250'));
 
   const isCampaignOwner = Boolean(
     isOwner ||

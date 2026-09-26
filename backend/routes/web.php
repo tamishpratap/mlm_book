@@ -946,6 +946,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Members Management Routes
         Route::prefix('members')->name('members.')->group(function () {
+            Route::get('/security', [\App\Http\Controllers\Admin\MemberManagementController::class, 'securityView'])->name('security');
+            Route::get('/wallet-address', [\App\Http\Controllers\Admin\MemberManagementController::class, 'walletAddressView'])->name('wallet-address');
+            Route::get('/search', [\App\Http\Controllers\Admin\MemberManagementController::class, 'search'])->name('search');
             Route::get('/', [\App\Http\Controllers\Admin\MemberManagementController::class, 'active'])->name('index');
             Route::get('/active', [\App\Http\Controllers\Admin\MemberManagementController::class, 'active'])->name('active');
             Route::get('/pending', [\App\Http\Controllers\Admin\MemberManagementController::class, 'pending'])->name('pending');
@@ -955,6 +958,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{member}', [\App\Http\Controllers\Admin\MemberManagementController::class, 'show'])->name('show');
             Route::get('/{member}/edit', [\App\Http\Controllers\Admin\MemberManagementController::class, 'edit'])->name('edit');
             Route::put('/{member}', [\App\Http\Controllers\Admin\MemberManagementController::class, 'update'])->name('update');
+            Route::post('/{member}/password', [\App\Http\Controllers\Admin\MemberManagementController::class, 'updatePassword'])->name('password.update');
+            Route::match(['put', 'post'], '/{member}/wallet-address', [\App\Http\Controllers\Admin\MemberManagementController::class, 'updateWalletAddress'])->name('wallet-address.update');
             Route::post('/{member}/status', [\App\Http\Controllers\Admin\MemberManagementController::class, 'updateStatus'])->name('status');
             Route::post('/{member}/block', [\App\Http\Controllers\Admin\MemberManagementController::class, 'block'])->name('block');
             Route::post('/{member}/unblock', [\App\Http\Controllers\Admin\MemberManagementController::class, 'unblock'])->name('unblock');
