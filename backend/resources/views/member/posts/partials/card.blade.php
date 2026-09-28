@@ -161,8 +161,8 @@
     $origAuthor = $originalPost?->member;
     $origName = $origBiz ? $origBiz->page_name : ($origAuthor?->name ?? 'Member');
     $origAuthorUrl = $origBiz
-        ? route('member.business-pages.show', $origBiz)
-        : ($origAuthor ? route('member.people.show', $origAuthor) : null);
+        ? (\Illuminate\Support\Facades\Route::has('member.business-pages.show') ? route('member.business-pages.show', $origBiz) : url('/member/business-pages/' . ($origBiz->slug ?? $origBiz->id)))
+        : ($origAuthor ? (\Illuminate\Support\Facades\Route::has('member.people.show') ? route('member.people.show', $origAuthor) : url('/member/people/' . ($origAuthor->id ?? ''))) : null);
 
     $hasOrigAuthorPhoto = $origAuthor && $origAuthor->profile_photo
         && str_starts_with($origAuthor->profile_photo, 'uploads/profile/')
@@ -194,7 +194,7 @@
             @endif
             <div class="post-header__meta">
                 <div>
-                    <a href="{{ route('member.business-pages.show', $bizPage) }}" style="color: inherit; text-decoration: none;">
+                    <a href="{{ \Illuminate\Support\Facades\Route::has('member.business-pages.show') ? route('member.business-pages.show', $bizPage) : url('/member/business-pages/' . ($bizPage->slug ?? $bizPage->id)) }}" style="color: inherit; text-decoration: none;">
                         <strong>{{ $bizPage->page_name }}</strong>
                     </a>
                     @if ($bizPage->is_verified)
@@ -254,15 +254,15 @@
             </button>
             <div class="post-options-menu" data-post-options-menu="{{ $post->id }}" hidden>
                 @if ($bizPage && $isBizAdmin)
-                    <button class="post-options-menu__item" type="button" onclick="toggleBizPinPost('{{ route('member.business-pages.posts.pin', [$bizPage, $post]) }}', {{ $post->id }}, this)">
+                    <button class="post-options-menu__item" type="button" onclick="toggleBizPinPost('{{ \Illuminate\Support\Facades\Route::has('member.business-pages.posts.pin') ? route('member.business-pages.posts.pin', [$bizPage, $post]) : url('/member/business-pages/' . ($bizPage->slug ?? $bizPage->id) . '/posts/' . $post->id . '/pin') }}', {{ $post->id }}, this)">
                         <i data-lucide="pin" aria-hidden="true"></i>
                         <span data-biz-pin-label="{{ $post->id }}">{{ $post->is_pinned ? 'Unpin Post' : 'Pin to Top' }}</span>
                     </button>
-                    <button class="post-options-menu__item" type="button" onclick="toggleBizFeaturePost('{{ route('member.business-pages.posts.feature', [$bizPage, $post]) }}', {{ $post->id }}, this)">
+                    <button class="post-options-menu__item" type="button" onclick="toggleBizFeaturePost('{{ \Illuminate\Support\Facades\Route::has('member.business-pages.posts.feature') ? route('member.business-pages.posts.feature', [$bizPage, $post]) : url('/member/business-pages/' . ($bizPage->slug ?? $bizPage->id) . '/posts/' . $post->id . '/feature') }}', {{ $post->id }}, this)">
                         <i data-lucide="sparkles" aria-hidden="true"></i>
                         <span data-biz-feature-label="{{ $post->id }}">{{ $post->is_featured ? 'Remove Featured Tag' : 'Mark as Featured' }}</span>
                     </button>
-                    <button class="post-options-menu__item post-options-menu__item--danger" type="button" onclick="deleteBizPost('{{ route('member.business-pages.posts.destroy', [$bizPage, $post]) }}', {{ $post->id }}, this)">
+                    <button class="post-options-menu__item post-options-menu__item--danger" type="button" onclick="deleteBizPost('{{ \Illuminate\Support\Facades\Route::has('member.business-pages.posts.destroy') ? route('member.business-pages.posts.destroy', [$bizPage, $post]) : url('/member/business-pages/' . ($bizPage->slug ?? $bizPage->id) . '/posts/' . $post->id) }}', {{ $post->id }}, this)">
                         <i data-lucide="trash-2" aria-hidden="true"></i>
                         <span>Delete Post</span>
                     </button>
@@ -396,7 +396,7 @@
                     <span>Rewarded</span>
                 </span>
             @elseif ($bizPage)
-                <a href="{{ route('member.business-pages.show', $bizPage) }}" style="background-color: #f1f5f9; color: #475569; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                <a href="{{ \Illuminate\Support\Facades\Route::has('member.business-pages.show') ? route('member.business-pages.show', $bizPage) : url('/member/business-pages/' . ($bizPage->slug ?? $bizPage->id)) }}" style="background-color: #f1f5f9; color: #475569; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
                     <span>Visit Page</span>
                     <i data-lucide="external-link" style="width: 12px; height: 12px;"></i>
                 </a>

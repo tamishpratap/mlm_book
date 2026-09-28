@@ -11,7 +11,7 @@
     <p style="color: #667085; max-width: 480px; margin: 0 auto 20px;">
         You do not have permission to access this resource or perform this action.
     </p>
-    <a href="{{ route('member.dashboard') }}" class="member-button member-button--primary">
+    <a href="{{ Route::has('member.dashboard') ? route('member.dashboard') : url('/') }}" class="member-button member-button--primary">
         <i data-lucide="house" aria-hidden="true"></i> Back to Dashboard
     </a>
 </div>

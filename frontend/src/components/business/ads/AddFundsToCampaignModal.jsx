@@ -19,7 +19,7 @@ export function AddFundsToCampaignModal({
   page,
   campaign,
   availableAdFunds = 0.0,
-  platformFeePercent = 2.5,
+  platformFeePercent = 0,
   onClose,
   onCampaignUpdated,
   onOpenDepositModal,
@@ -32,7 +32,9 @@ export function AddFundsToCampaignModal({
   if (!campaign) return null;
 
   const numAmount = parseFloat(amount) || 0;
-  const numFeePercent = Number(platformFeePercent) || 2.5;
+  const numFeePercent = (platformFeePercent !== undefined && platformFeePercent !== null && !isNaN(Number(platformFeePercent)))
+    ? Number(platformFeePercent)
+    : 0;
   const feeAmount = parseFloat((numAmount * (numFeePercent / 100)).toFixed(2));
   const totalWalletDebit = parseFloat((numAmount + feeAmount).toFixed(2));
   const hasInsufficientFunds = availableAdFunds !== undefined && totalWalletDebit > Number(availableAdFunds);
@@ -342,10 +344,12 @@ export function AddFundsToCampaignModal({
               <span>Top-up Budget Addition:</span>
               <span style={{ fontWeight: 700, color: '#1e293b' }}>${numAmount.toFixed(2)} USD</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', marginBottom: '6px', color: '#64748b' }}>
-              <span>Platform Fee ({numFeePercent}%):</span>
-              <span style={{ fontWeight: 700, color: '#1e293b' }}>${feeAmount.toFixed(2)} USD</span>
-            </div>
+            {feeAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', marginBottom: '6px', color: '#64748b' }}>
+                <span>Platform Fee ({numFeePercent}%):</span>
+                <span style={{ fontWeight: 700, color: '#1e293b' }}>${feeAmount.toFixed(2)} USD</span>
+              </div>
+            )}
             <div
               style={{
                 display: 'flex',

@@ -11,7 +11,7 @@
     <p style="color: #667085; max-width: 480px; margin: 0 auto 20px;">
         The page or resource you are looking for does not exist, has been removed, or has moved.
     </p>
-    <a href="{{ route('member.dashboard') }}" class="member-button member-button--primary">
+    <a href="{{ Route::has('member.dashboard') ? route('member.dashboard') : url('/') }}" class="member-button member-button--primary">
         <i data-lucide="house" aria-hidden="true"></i> Back to Dashboard
     </a>
 </div>

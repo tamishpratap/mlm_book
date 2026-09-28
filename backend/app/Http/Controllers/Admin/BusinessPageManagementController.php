@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessPage;
 use App\Models\BusinessVerification;
+use App\Models\BusinessFollower;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -82,6 +83,13 @@ class BusinessPageManagementController extends Controller
 
     public function index(Request $request)
     {
+        $search = trim((string) $request->input('q'));
+        $verificationStatus = $request->input('verification_status');
+        $status = $request->input('status');
+        $category = $request->input('category');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+
         $query = $this->buildFilteredQuery($request)
             ->with(['owner', 'latestVerification'])
             ->withCount(['acceptedFollowers', 'posts', 'reviews']);
@@ -94,9 +102,7 @@ class BusinessPageManagementController extends Controller
         $totalCount = BusinessPage::count();
         $verifiedCount = BusinessPage::where('is_verified', true)->count();
         $pendingVerificationCount = BusinessVerification::where('status', 'pending')->count();
-        $totalFollowersCount = BusinessPage::all()->sum(function ($p) {
-            return $p->acceptedFollowers()->count();
-        });
+        $totalFollowersCount = BusinessFollower::where('status', 'accepted')->count();
 
         $categories = BusinessPage::categories();
 

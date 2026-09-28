@@ -55,7 +55,9 @@ export function CreateAdCampaignModal({
     : (Boolean(selectedPost) || (Array.isArray(availablePosts) && availablePosts.length > 0) || Boolean(initialPost));
 
   const numBudget = parseFloat(budget) || 0;
-  const numFeePercent = Number(platformFeePercent) || 2.5;
+  const numFeePercent = (platformFeePercent !== undefined && platformFeePercent !== null && !isNaN(Number(platformFeePercent)))
+    ? Number(platformFeePercent)
+    : 0;
   const feeAmount = parseFloat((numBudget * (numFeePercent / 100)).toFixed(2));
   const totalWalletDebit = parseFloat((numBudget + feeAmount).toFixed(2));
 
@@ -144,7 +146,9 @@ export function CreateAdCampaignModal({
       errs.budget = 'Budget amount is too large.';
     } else if (availableAdFunds !== undefined && totalWalletDebit > Number(availableAdFunds)) {
       const shortfall = (totalWalletDebit - Number(availableAdFunds)).toFixed(2);
-      errs.budget = `Insufficient advertising funds. Campaign Budget: $${numBudget.toFixed(2)} USD, Platform Fee (${numFeePercent}%): $${feeAmount.toFixed(2)} USD, Total Debit: $${totalWalletDebit.toFixed(2)} USD, Available: $${Number(availableAdFunds).toFixed(2)} USD. Shortfall: $${shortfall} USD. Please add funds.`;
+      errs.budget = feeAmount > 0
+        ? `Insufficient advertising funds. Campaign Budget: $${numBudget.toFixed(2)} USD, Platform Fee (${numFeePercent}%): $${feeAmount.toFixed(2)} USD, Total Debit: $${totalWalletDebit.toFixed(2)} USD, Available: $${Number(availableAdFunds).toFixed(2)} USD. Shortfall: $${shortfall} USD. Please add funds.`
+        : `Insufficient advertising funds. Campaign Budget: $${numBudget.toFixed(2)} USD, Available: $${Number(availableAdFunds).toFixed(2)} USD. Shortfall: $${shortfall} USD. Please add funds.`;
     }
 
     if (hasContent && !selectedPost && availablePosts.length > 0) {
@@ -626,10 +630,12 @@ export function CreateAdCampaignModal({
                     <span>Campaign Running Budget:</span>
                     <span style={{ fontWeight: 700, color: '#1e293b' }}>${numBudget.toFixed(2)} USD</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#475569' }}>
-                    <span>Platform Fee ({numFeePercent}%):</span>
-                    <span style={{ fontWeight: 700, color: '#2563eb' }}>+${feeAmount.toFixed(2)} USD</span>
-                  </div>
+                  {feeAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#475569' }}>
+                      <span>Platform Fee ({numFeePercent}%):</span>
+                      <span style={{ fontWeight: 700, color: '#2563eb' }}>+${feeAmount.toFixed(2)} USD</span>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px dashed #cbd5e1', fontWeight: 700, color: '#1e293b' }}>
                     <span>Total Wallet Debit:</span>
                     <span style={{ color: '#4f7df3', fontSize: '13.5px' }}>${totalWalletDebit.toFixed(2)} USD</span>
@@ -712,12 +718,14 @@ export function CreateAdCampaignModal({
                   </div>
                 </div>
 
-                <div>
-                  <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({numFeePercent}%)</div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#2563eb', marginTop: '2px' }}>
-                    +${feeAmount.toFixed(2)} USD
+                {feeAmount > 0 && (
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({numFeePercent}%)</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#2563eb', marginTop: '2px' }}>
+                      +${feeAmount.toFixed(2)} USD
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Total Wallet Debit</div>
