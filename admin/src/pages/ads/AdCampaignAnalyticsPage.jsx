@@ -255,7 +255,7 @@ export function AdCampaignAnalyticsPage() {
           </div>
 
           <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-            <span className="text-xs text-amber-300 font-semibold block">Admin Platform Fee ({metrics.campaign_platform_fee_percent || 2.5}%)</span>
+            <span className="text-xs text-amber-300 font-semibold block">Admin Platform Fee ({Number(metrics.campaign_platform_fee_percent ?? 0)}%)</span>
             <span className="text-xl font-bold text-amber-400 mt-1 block">
               ${Number(metrics.total_platform_fees || metrics.total_admin_fees || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </span>

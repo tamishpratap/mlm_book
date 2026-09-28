@@ -322,7 +322,7 @@ class AdCampaignEngagementService
         $originalBudget = (float) $campaign->budget;
         $additionalFunding = (float) $campaign->additional_funding;
         $totalFunded = (float) ($campaign->total_funded ?? ($originalBudget + $additionalFunding));
-        $feePercent = (float) ($campaign->fee_percent ?? 2.5);
+        $feePercent = (float) ($campaign->fee_percent ?? 0.0);
         $feeAmount = (float) ($campaign->fee_amount ?? round($totalFunded * ($feePercent / 100), 2));
         $spentAmount = (float) $campaign->spent_amount;
         $remainingBudget = (float) $campaign->remaining_amount;

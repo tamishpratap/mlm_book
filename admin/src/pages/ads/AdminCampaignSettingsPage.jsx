@@ -23,7 +23,7 @@ export function AdminCampaignSettingsPage() {
   const [error, setError] = useState(null);
 
   // Fee configuration
-  const [feePercent, setFeePercent] = useState('2.5');
+  const [feePercent, setFeePercent] = useState('0');
   const [testBudget, setTestBudget] = useState('30.00');
 
   const fetchSettings = useCallback(() => {
@@ -33,7 +33,7 @@ export function AdminCampaignSettingsPage() {
       .getSettings()
       .then((res) => {
         const s = res.settings || {};
-        setFeePercent(String(s.campaign_platform_fee_percent ?? 2.5));
+        setFeePercent(String(s.campaign_platform_fee_percent ?? 0));
       })
       .catch((err) => {
         setError(err.response?.data?.message || 'Failed to load campaign settings.');
@@ -50,7 +50,7 @@ export function AdminCampaignSettingsPage() {
       .then((res) => {
         if (!ignore) {
           const s = res.settings || {};
-          setFeePercent(String(s.campaign_platform_fee_percent ?? 2.5));
+          setFeePercent(String(s.campaign_platform_fee_percent ?? 0));
           setIsLoading(false);
         }
       })

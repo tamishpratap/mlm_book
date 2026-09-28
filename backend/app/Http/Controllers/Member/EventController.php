@@ -83,7 +83,7 @@ class EventController extends Controller
 
             $minActiveReward = (float) (AdRewardRule::getMinimumActiveRewardAmount(AdRewardRule::TYPE_EVENT) ?? 0.05);
             $lowBudgetThreshold = (float) Setting::get('ad_campaign_low_budget_threshold', 1.00);
-            $feePercent = (float) Setting::get('campaign_platform_fee_percent', 2.50);
+            $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
 
             $fundableQuery = Event::query()
                 ->where('organizer_id', $member->id)
@@ -283,7 +283,7 @@ class EventController extends Controller
                 'my_events_count' => $myEventsCount,
                 'fundable_events_count' => $fundableEventsCount,
                 'available_ad_funds' => $member ? round((float) ($member->p2p_wallet ?? 0.00), 2) : 0.00,
-                'platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 2.50),
+                'platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 0.00),
                 'earn_up_to_usd' => (float) $maxReward,
                 'earn_up_to_formatted' => $maxRewardFormatted,
                 'minimum_event_reward' => (float) $minActiveReward,
@@ -475,7 +475,7 @@ class EventController extends Controller
         $createCampaignFlag = $request->boolean('create_campaign');
         $isPaid = $hasBudget || $createCampaignFlag;
 
-        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 2.50);
+        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
         $feeAmount = round($campaignBudget * ($feePercent / 100), 2);
         $totalWalletDebit = round($campaignBudget + $feeAmount, 2);
 

@@ -175,7 +175,7 @@ export function CreateEventPage() {
   };
 
   const numBudget = parseFloat(campaignBudget) || 0;
-  const platformFeePercent = 2.5;
+  const platformFeePercent = 0;
   const feeAmount = parseFloat((numBudget * (platformFeePercent / 100)).toFixed(2));
   const totalWalletDebit = parseFloat((numBudget + feeAmount).toFixed(2));
   const hasInsufficientFunds = totalWalletDebit > adBalance;
@@ -211,7 +211,9 @@ export function CreateEventPage() {
 
     if (hasInsufficientFunds) {
       setError(
-        `Insufficient advertising funds. Campaign Budget: $${numBudget.toFixed(2)} USD, Platform Fee (${platformFeePercent}%): $${feeAmount.toFixed(2)} USD, Total Required: $${totalWalletDebit.toFixed(2)} USD, Available: $${adBalance.toFixed(2)} USD. Shortfall: $${shortfall} USD. Please deposit funds first.`
+        feeAmount > 0
+          ? `Insufficient advertising funds. Campaign Budget: $${numBudget.toFixed(2)} USD, Platform Fee (${platformFeePercent}%): $${feeAmount.toFixed(2)} USD, Total Required: $${totalWalletDebit.toFixed(2)} USD, Available: $${adBalance.toFixed(2)} USD. Shortfall: $${shortfall} USD. Please deposit funds first.`
+          : `Insufficient advertising funds. Campaign Budget: $${numBudget.toFixed(2)} USD, Total Required: $${totalWalletDebit.toFixed(2)} USD, Available: $${adBalance.toFixed(2)} USD. Shortfall: $${shortfall} USD. Please deposit funds first.`
       );
       return;
     }
@@ -719,10 +721,12 @@ export function CreateEventPage() {
                 <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Campaign Budget</span>
                 <strong>${numBudget.toFixed(2)} USD</strong>
               </div>
-              <div>
-                <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Platform Fee ({platformFeePercent}%)</span>
-                <strong>${feeAmount.toFixed(2)} USD</strong>
-              </div>
+              {feeAmount > 0 && (
+                <div>
+                  <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Platform Fee ({platformFeePercent}%)</span>
+                  <strong>${feeAmount.toFixed(2)} USD</strong>
+                </div>
+              )}
               <div>
                 <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Total Required</span>
                 <strong style={{ color: '#4f46e5' }}>${totalWalletDebit.toFixed(2)} USD</strong>
