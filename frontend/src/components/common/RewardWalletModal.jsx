@@ -35,7 +35,6 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
   const [otpInput, setOtpInput] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
-  const [demoOtp, setDemoOtp] = useState('');
   const [walletLoading, setWalletLoading] = useState(false);
   const [walletError, setWalletError] = useState('');
   const [walletSuccess, setWalletSuccess] = useState('');
@@ -148,9 +147,6 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
         setOtpSent(true);
         setOtpCooldown(60);
         setWalletSuccess(res.message || 'Verification code sent to your registered email.');
-        if (res.demo_otp) {
-          setDemoOtp(res.demo_otp);
-        }
       } else {
         setWalletError(res.message || 'Failed to send verification code.');
       }
@@ -185,7 +181,6 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
         setIsEditingAddress(false);
         setOtpSent(false);
         setOtpInput('');
-        setDemoOtp('');
         loadWallet();
       } else {
         setWalletError(res.message || 'Failed to verify OTP.');
@@ -782,24 +777,6 @@ export function RewardWalletModal({ isOpen, onClose, onOpenVerification }) {
                         <label style={{ fontSize: '12.5px', fontWeight: 700, color: '#166534' }}>
                           Enter 6-Digit Email Code
                         </label>
-                        {demoOtp && (
-                          <button
-                            type="button"
-                            onClick={() => setOtpInput(demoOtp)}
-                            style={{
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              color: '#047857',
-                              backgroundColor: '#dcfce7',
-                              border: '1px solid #86efac',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Auto-fill Demo Code: {demoOtp}
-                          </button>
-                        )}
                       </div>
                       <input
                         type="text"

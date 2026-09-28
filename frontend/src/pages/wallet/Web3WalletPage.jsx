@@ -34,7 +34,6 @@ export function Web3WalletPage() {
   const [otpInput, setOtpInput] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
-  const [demoOtp, setDemoOtp] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
@@ -112,9 +111,6 @@ export function Web3WalletPage() {
         setOtpSent(true);
         setOtpCooldown(60);
         setActionSuccess(res.message || 'Verification code sent to your registered email.');
-        if (res.demo_otp) {
-          setDemoOtp(res.demo_otp);
-        }
       } else {
         setActionError(res.message || 'Failed to send verification code.');
       }
@@ -149,7 +145,6 @@ export function Web3WalletPage() {
         setIsEditingAddress(false);
         setOtpSent(false);
         setOtpInput('');
-        setDemoOtp('');
         // Reload wallet details and update Auth context
         loadWalletDetails();
         accountApi.getSettings().then((d) => {
@@ -686,24 +681,6 @@ export function Web3WalletPage() {
                     <label style={{ fontSize: '13px', fontWeight: 700, color: '#166534' }}>
                       Enter 6-Digit Email Code
                     </label>
-                    {demoOtp && (
-                      <button
-                        type="button"
-                        onClick={() => setOtpInput(demoOtp)}
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          color: '#047857',
-                          backgroundColor: '#dcfce7',
-                          border: '1px solid #86efac',
-                          padding: '2px 8px',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Auto-fill Demo Code: {demoOtp}
-                      </button>
-                    )}
                   </div>
                   <input
                     type="text"
