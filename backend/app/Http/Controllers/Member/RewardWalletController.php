@@ -252,8 +252,8 @@ class RewardWalletController extends Controller
             'channel' => 'email',
         ];
 
-        // Include demo OTP in local/demo environment for automated tests and developer testing
-        if (app()->environment('local', 'development', 'testing')) {
+        // Include demo OTP in testing environment for automated test suites
+        if (app()->environment('testing')) {
             $responsePayload['demo_otp'] = $result['code'];
             $responsePayload['is_demo'] = true;
         }
