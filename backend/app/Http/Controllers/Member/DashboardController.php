@@ -18,9 +18,10 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var Member|null $currentMember */
         $currentMember = auth('member')->user();
 
-        if (!$currentMember) {
+        if (!$currentMember instanceof Member) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated.',
