@@ -130,7 +130,7 @@ class AutopayWithdrawal extends Command
                 $value->txnid = $txHash;
                 $value->txn_remarks = 'AutopayWithdrawal executed successfully';
                 $value->status = 'Approved';
-                $value->payment_date = date('Y-m-d H:i:s');
+                $value->payment_date = now();
                 $value->save();
                 
             } else {
