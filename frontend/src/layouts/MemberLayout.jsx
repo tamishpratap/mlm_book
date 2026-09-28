@@ -53,7 +53,9 @@ export function MemberLayout() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const isDashboard = location.pathname === '/member/dashboard' || location.pathname === '/';
+  const isFullWidthHome =
+    location.pathname === '/member/home' ||
+    location.pathname === '/';
 
   const isThreeColumn = [
     '/member/socials',
@@ -70,7 +72,7 @@ export function MemberLayout() {
     '/member/search',
   ].some((p) => location.pathname.startsWith(p));
 
-  const shellClass = isDashboard
+  const shellClass = isFullWidthHome
     ? 'page-shell--full'
     : isThreeColumn
     ? ''

@@ -17,6 +17,7 @@ import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 
 // Member Pages
+import HomePage from '../pages/dashboard/HomePage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import SocialsFeedPage from '../pages/socials/SocialsFeedPage';
 import SavedPostsPage from '../pages/socials/SavedPostsPage';
@@ -86,11 +87,14 @@ export function AppRoutes() {
   return (
     <Routes>
       {/* Root redirect */}
-      <Route path="/" element={<Navigate to="/member/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/member/home" replace />} />
+      <Route path="/member" element={<Navigate to="/member/home" replace />} />
 
       {/* Public Auth Routes */}
       <Route element={<PublicMemberRoute />}>
         <Route element={<AuthLayout />}>
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/member/login" element={<LoginPage />} />
           <Route path="/member/register" element={<RegisterPage />} />
           <Route path="/member/google-introducer" element={<GoogleIntroducerPage />} />
@@ -103,6 +107,7 @@ export function AppRoutes() {
       {/* Protected Member Routes */}
       <Route element={<ProtectedMemberRoute />}>
         <Route element={<MemberLayout />}>
+          <Route path="/member/home" element={<HomePage />} />
           <Route path="/member/dashboard" element={<DashboardPage />} />
           <Route path="/member/socials" element={<SocialsFeedPage />} />
           <Route path="/member/stories" element={<StoriesPage />} />

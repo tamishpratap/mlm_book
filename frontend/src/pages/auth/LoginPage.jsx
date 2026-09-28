@@ -168,7 +168,7 @@ export function LoginPage() {
 
     try {
       await login(formData);
-      const destination = location.state?.from?.pathname || '/member/dashboard';
+      const destination = location.state?.from?.pathname || '/member/home';
       navigate(destination, { replace: true });
     } catch (err) {
       let errorMessage = 'An error occurred while logging in. Please try again.';

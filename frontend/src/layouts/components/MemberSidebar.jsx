@@ -4,6 +4,7 @@ import { ArrowDownToLine } from "lucide-react";
 import {
   ChevronRight,
   House,
+  LayoutDashboard,
   Sparkles,
   UserRound,
   UsersRound,
@@ -48,6 +49,12 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
   const isItemActive = (path, exact = false) => {
     if (exact) {
       return location.pathname === path;
+    }
+    if (path === '/member/home') {
+      return location.pathname === '/member/home';
+    }
+    if (path === '/member/dashboard') {
+      return location.pathname === '/member/dashboard';
     }
     if (path === '/member/profile') {
       return location.pathname === '/member/profile' || location.pathname === '/member/profile/edit';
@@ -123,12 +130,20 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
 
         <nav className="side-nav" aria-label="Sidebar navigation">
           <NavLink
-            to="/member/dashboard"
-            className={getSideNavClass('/member/dashboard', true)}
+            to="/member/home"
+            className={getSideNavClass('/member/home', true)}
             onClick={onCloseMobile}
           >
             <House size={18} />
             <span>Home</span>
+          </NavLink>
+          <NavLink
+            to="/member/dashboard"
+            className={getSideNavClass('/member/dashboard', true)}
+            onClick={onCloseMobile}
+          >
+            <LayoutDashboard size={18} />
+            <span>Analytics Dashboard</span>
           </NavLink>
           <NavLink
             to="/member/socials"

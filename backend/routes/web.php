@@ -65,6 +65,14 @@ Route::get('/auth/google/introducer', function (Request $request) {
     return redirect('/member/google-introducer?' . http_build_query($request->all()));
 })->name('member.google.introducer');
 
+// Redirect root /register to the frontend React registration page
+Route::get('/register', function (\Illuminate\Http\Request $request) {
+    $frontendUrl = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : '');
+    $query = $request->getQueryString();
+    $target = ($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/member/register' . ($query ? '?' . $query : '');
+    return redirect($target);
+});
+
 // Public Community Invite URL
 Route::get('/community/invite/{code}', [CommunityInviteController::class, 'show'])
     ->name('member.community.invite.show');
