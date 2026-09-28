@@ -67,7 +67,7 @@ return [
     | WHATSAPP_TO_NUMBER, or the fallback official business number.
     |
     */
-    'verification_number' => env('WHATSAPP_VERIFICATION_NUMBER', env('WHATSAPP_TO_NUMBER', '+918439992660')),
+    'verification_number' => env('WHATSAPP_VERIFICATION_NUMBER', env('WHATSAPP_TO_NUMBER', '+447473962940')),
 
     /*
     |--------------------------------------------------------------------------
