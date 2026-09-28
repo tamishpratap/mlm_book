@@ -47,7 +47,7 @@ class EventCampaignController extends Controller
                 'message' => 'This event does not have an active campaign foundation yet.',
                 'campaign' => null,
                 'available_ad_funds' => round((float) ($member?->fresh()->p2p_wallet ?? 0.00), 2),
-                'platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 2.50),
+                'platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 0.00),
             ], 200);
         }
 
@@ -55,7 +55,7 @@ class EventCampaignController extends Controller
             'success' => true,
             'campaign' => $this->transformCampaign($campaign),
             'available_ad_funds' => round((float) ($member?->fresh()->p2p_wallet ?? 0.00), 2),
-            'platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 2.50),
+            'platform_fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 0.00),
         ]);
     }
 
@@ -141,7 +141,7 @@ class EventCampaignController extends Controller
                     return $existingInTx;
                 }
 
-                $feePercent = (float) Setting::get('campaign_platform_fee_percent', 2.50);
+                $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
 
                 // Initialize draft campaign foundation: ZERO wallet debit, ZERO fee charge, ZERO reward credit
                 return AdCampaign::create([
@@ -276,7 +276,7 @@ class EventCampaignController extends Controller
         ?string $idempotencyKey,
         Request $request
     ): JsonResponse {
-        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 2.50);
+        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
         $feeAmount = round($campaignBudget * ($feePercent / 100), 2);
         $totalWalletDebit = round($campaignBudget + $feeAmount, 2);
 
@@ -473,7 +473,7 @@ class EventCampaignController extends Controller
                 'spent_amount' => 0.00,
                 'remaining_amount' => 0.00,
                 'currency' => 'USD',
-                'fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 2.50),
+                'fee_percent' => (float) Setting::get('campaign_platform_fee_percent', 0.00),
                 'fee_amount' => 0.00,
                 'wallet_debit' => 0.00,
                 'status' => AdCampaign::STATUS_DRAFT,
@@ -481,7 +481,7 @@ class EventCampaignController extends Controller
             ]);
         }
 
-        $feePercent = (float) ($campaign->fee_percent ?? Setting::get('campaign_platform_fee_percent', 2.50));
+        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
         $feeAmount = round($topUpAmount * ($feePercent / 100), 2);
         $totalWalletDebit = round($topUpAmount + $feeAmount, 2);
 

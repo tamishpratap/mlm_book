@@ -33,7 +33,7 @@ export function CreateAdCampaignModal({
   availablePosts = [],
   hasPageContent = null,
   availableAdFunds = 0.00,
-  platformFeePercent = 2.5,
+  platformFeePercent = 0,
   onAddFundClick = null,
   onOpenExistingCampaign = null,
   onClose,

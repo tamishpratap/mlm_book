@@ -41,7 +41,7 @@ export function EventsPage({ defaultTab }) {
   const [myEventsCount, setMyEventsCount] = useState(0);
   const [fundableEventsCount, setFundableEventsCount] = useState(0);
   const [availableAdFunds, setAvailableAdFunds] = useState(parseFloat(currentUser?.p2p_wallet ?? currentUser?.fund_wallet ?? currentUser?.ad_balance ?? 0));
-  const [platformFeePercent, setPlatformFeePercent] = useState(2.5);
+  const [platformFeePercent, setPlatformFeePercent] = useState(0);
   const [totalEventsCount, setTotalEventsCount] = useState(0);
   const [categories, setCategories] = useState([]);
   const [lastPage, setLastPage] = useState(1);

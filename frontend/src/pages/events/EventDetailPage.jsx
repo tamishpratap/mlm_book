@@ -217,7 +217,7 @@ export function EventDetailPage() {
   // Campaign & Funding Modal State
   const [campaignData, setCampaignData] = useState(null);
   const [availableAdFunds, setAvailableAdFunds] = useState(0);
-  const [platformFeePercent, setPlatformFeePercent] = useState(2.5);
+  const [platformFeePercent, setPlatformFeePercent] = useState(0);
   const [showAddFundsModal, setShowAddFundsModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [campaignActionLoading, setCampaignActionLoading] = useState(false);

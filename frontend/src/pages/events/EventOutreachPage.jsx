@@ -1240,7 +1240,7 @@ export function EventOutreachPage() {
           event={event}
           campaign={campaignAnalytics?.campaign}
           availableAdFunds={data?.available_ad_funds}
-          platformFeePercent={campaignAnalytics?.budget_metrics?.fee_percent || 2.5}
+          platformFeePercent={campaignAnalytics?.budget_metrics?.fee_percent ?? 0}
           onClose={() => setShowAddFundsModal(false)}
           onCampaignUpdated={handleCampaignFunded}
         />

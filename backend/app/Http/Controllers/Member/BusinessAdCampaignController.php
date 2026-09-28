@@ -305,7 +305,7 @@ class BusinessAdCampaignController extends Controller
         ]);
 
         $topUpAmount = round((float) $validated['amount'], 2);
-        $feePercent = (float) ($campaign->fee_percent ?? Setting::get('campaign_platform_fee_percent', 0.00));
+        $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
         $feeAmount = round($topUpAmount * ($feePercent / 100), 2);
         $totalWalletDebit = round($topUpAmount + $feeAmount, 2);
 
@@ -437,7 +437,7 @@ class BusinessAdCampaignController extends Controller
         DB::transaction(function () use ($campaign, $member, $validated, &$updateData) {
             if (isset($validated['budget'])) {
                 $newBudget = round((float) $validated['budget'], 2);
-                $feePercent = (float) ($campaign->fee_percent ?? Setting::get('campaign_platform_fee_percent', 0.00));
+                $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
                 $newFeeAmount = round($newBudget * ($feePercent / 100), 2);
                 $newTotalDebit = round($newBudget + $newFeeAmount, 2);
 
