@@ -11,14 +11,21 @@ export function MemberFilterBar({
   onResetFilters,
   loading = false,
   showStatusFilter = true,
+  currentMode = 'active',
 }) {
-  const statusOptions = [
-    { label: 'All Members', value: 'all' },
-    { label: 'Verified Members', value: 'verified' },
-    { label: 'Unverified Members', value: 'unverified' },
-    { label: 'Active (Last 7 Days)', value: 'active' },
-    { label: 'Inactive', value: 'inactive' },
-  ];
+  const statusOptions = currentMode === 'pending'
+    ? [
+        { label: 'All Unverified', value: '' },
+        { label: 'Verification Requested', value: 'requested' },
+        { label: 'Awaiting Request', value: 'not_requested' },
+      ]
+    : [
+        { label: 'All Members', value: 'all' },
+        { label: 'Verified Members', value: 'verified' },
+        { label: 'Unverified Members', value: 'unverified' },
+        { label: 'Active (Last 7 Days)', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+      ];
 
   const hasActiveFilters = Boolean(
     filters.q || filters.status || filters.country || filters.date_from || filters.date_to

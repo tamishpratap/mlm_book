@@ -66,9 +66,9 @@ export function MembersListPage({ defaultMode }) {
     switch (mode) {
       case 'pending':
         return {
-          title: 'WhatsApp Verification Queue',
-          subtitle: 'Review and approve members who sent "Hi" on WhatsApp from their registered phone number.',
-          breadcrumbs: [{ label: 'Members', to: '/admin/members' }, { label: 'WhatsApp Verification Queue' }],
+          title: 'Unverified Members Queue',
+          subtitle: 'Review, verify, and manage all newly registered and pending verification members.',
+          breadcrumbs: [{ label: 'Members', to: '/admin/members' }, { label: 'Unverified Members' }],
         };
       case 'blocked':
         return {
@@ -216,8 +216,8 @@ export function MembersListPage({ defaultMode }) {
 
   const handleApproveMember = (member) => {
     confirmHelper.confirm({
-      header: 'Approve WhatsApp Verification',
-      message: `Approve WhatsApp verification for ${member.name} (${member.user_id})? Please verify that you received their "Hi" message from registered number ${member.phone}.`,
+      header: 'Approve Member Verification',
+      message: `Approve verification for ${member.name} (${member.user_id})? Registered number: ${member.phone || 'N/A'}.`,
       icon: 'pi pi-check-circle text-emerald-500',
       acceptLabel: 'Approve Verification',
       rejectLabel: 'Cancel',
@@ -418,30 +418,34 @@ export function MembersListPage({ defaultMode }) {
 
   const actionsBodyTemplate = (rowData) => {
     const isBlocked = Boolean(rowData.blocked_at || rowData.is_blocked || mode === 'blocked');
-    const isPending = Boolean(!rowData.mobile_verified_at && rowData.mobile_verification_requested_at);
+    const isVerified = Boolean(rowData.mobile_verified_at || rowData.is_verified);
+    const hasVerificationRequest = Boolean(rowData.mobile_verification_requested_at);
+    const isUnverified = !isVerified;
 
     return (
       <div className="inline-flex items-center justify-end gap-1.5 sm:gap-2">
-        {mode === 'pending' && isPending && (
+        {mode === 'pending' && isUnverified && (
           <>
             <button
               type="button"
               onClick={() => handleApproveMember(rowData)}
               disabled={actionLoading}
               className="p-1.5 rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
-              title="Approve WhatsApp Verification"
+              title="Approve / Verify Member"
             >
               <CheckCircle2 className="w-4 h-4" />
             </button>
-            <button
-              type="button"
-              onClick={() => handleRejectMember(rowData)}
-              disabled={actionLoading}
-              className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer"
-              title="Dismiss Verification Request"
-            >
-              <XCircle className="w-4 h-4" />
-            </button>
+            {hasVerificationRequest && (
+              <button
+                type="button"
+                onClick={() => handleRejectMember(rowData)}
+                disabled={actionLoading}
+                className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer"
+                title="Dismiss Verification Request"
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+            )}
           </>
         )}
 
@@ -530,7 +534,8 @@ export function MembersListPage({ defaultMode }) {
           onApplyFilters={handleApplyFilters}
           onResetFilters={handleResetFilters}
           loading={loading}
-          showStatusFilter={mode === 'active'}
+          showStatusFilter={mode === 'active' || mode === 'pending'}
+          currentMode={mode}
         />
 
         {/* Bulk Actions */}
@@ -597,10 +602,14 @@ export function MembersListPage({ defaultMode }) {
                 <Column
                   header="Requested At"
                   body={(r) => (
-                    <span className="text-xs text-slate-600 font-medium" title={r.mobile_verification_requested_at}>
-                      {r.mobile_verification_requested_at
-                        ? new Date(r.mobile_verification_requested_at).toLocaleString()
-                        : 'N/A'}
+                    <span className="text-xs font-medium" title={r.mobile_verification_requested_at}>
+                      {r.mobile_verification_requested_at ? (
+                        <span className="text-slate-700">{new Date(r.mobile_verification_requested_at).toLocaleString()}</span>
+                      ) : (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500">
+                          Awaiting Request
+                        </span>
+                      )}
                     </span>
                   )}
                   sortable
@@ -609,13 +618,16 @@ export function MembersListPage({ defaultMode }) {
               )}
               <Column header="Location" body={locationBodyTemplate} />
               <Column header="Status" body={statusBodyTemplate} />
-              {mode !== 'pending' && (
-                <Column
-                  field="created_at_human"
-                  header="Joined Date"
-                  body={(r) => r.created_at_formatted || r.created_at_human || 'Recently'}
-                />
-              )}
+              <Column
+                field="created_at"
+                header="Joined Date"
+                body={(r) => (
+                  <span className="text-xs text-slate-600">
+                    {r.created_at_formatted || r.created_at_human || (r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Recently')}
+                  </span>
+                )}
+                sortable
+              />
               <Column
                 header="Actions"
                 body={actionsBodyTemplate}
