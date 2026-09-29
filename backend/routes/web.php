@@ -1008,9 +1008,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/wallet-address', [\App\Http\Controllers\Admin\MemberManagementController::class, 'walletAddressView'])->name('wallet-address');
             Route::get('/search', [\App\Http\Controllers\Admin\MemberManagementController::class, 'search'])->name('search');
             Route::get('/', [\App\Http\Controllers\Admin\MemberManagementController::class, 'active'])->name('index');
+            Route::get('/all', [\App\Http\Controllers\Admin\MemberManagementController::class, 'all'])->name('all');
             Route::get('/active', [\App\Http\Controllers\Admin\MemberManagementController::class, 'active'])->name('active');
             Route::get('/pending', [\App\Http\Controllers\Admin\MemberManagementController::class, 'pending'])->name('pending');
             Route::get('/blocked', [\App\Http\Controllers\Admin\MemberManagementController::class, 'blocked'])->name('blocked');
+            Route::get('/{member}/open-panel', [\App\Http\Controllers\Admin\MemberManagementController::class, 'redirectToMemberPanel'])->name('open-panel');
             Route::get('/export/{format?}', [\App\Http\Controllers\Admin\MemberManagementController::class, 'export'])->name('export');
             Route::post('/bulk-action', [\App\Http\Controllers\Admin\MemberManagementController::class, 'bulkAction'])->name('bulk-action');
             Route::get('/{member}', [\App\Http\Controllers\Admin\MemberManagementController::class, 'show'])->name('show');
