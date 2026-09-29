@@ -16,6 +16,177 @@ use Illuminate\Support\Str;
 class MemberManagementController extends Controller
 {
     /**
+     * Display a listing of ALL platform members regardless of verification or account status.
+     */
+    public function all(Request $request)
+    {
+        $request->validate([
+            'date_from' => 'nullable|date_format:Y-m-d',
+            'date_to'   => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
+        ]);
+
+        $search = trim((string) $request->input('q'));
+        $verificationStatus = $request->input('verification_status') ?: $request->input('status');
+        $accountStatus = $request->input('account_status');
+        $country = $request->input('country');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+
+        $query = Member::query();
+
+        // 1. Search Filter (User ID, Name, Email, Phone, City, Country)
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('user_id', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('city', 'like', "%{$search}%")
+                  ->orWhere('country', 'like', "%{$search}%");
+            });
+        }
+
+        // 2. Verification Status Filter
+        if ($verificationStatus === 'verified') {
+            $query->whereNotNull('mobile_verified_at');
+        } elseif ($verificationStatus === 'unverified') {
+            $query->whereNull('mobile_verified_at');
+        } elseif ($verificationStatus === 'pending') {
+            $query->whereNull('mobile_verified_at')->whereNotNull('mobile_verification_requested_at');
+        }
+
+        // 3. Account Status Filter (active / blocked)
+        if ($accountStatus === 'blocked') {
+            $query->whereNotNull('blocked_at');
+        } elseif ($accountStatus === 'active' || $accountStatus === 'unblocked') {
+            $query->whereNull('blocked_at');
+        }
+
+        // 4. Country Filter
+        if (!empty($country)) {
+            $query->where('country', $country);
+        }
+
+        // 5. Date Range Filter
+        if (!empty($dateFrom)) {
+            $startDate = Carbon::parse($dateFrom)->startOfDay();
+            $endDate = !empty($dateTo) ? Carbon::parse($dateTo)->endOfDay() : Carbon::parse($dateFrom)->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } elseif (!empty($dateTo)) {
+            $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+        }
+
+        $perPage = $request->integer('per_page', 15);
+        $members = $query->latest('created_at')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        // Metrics Summary across the entire platform
+        $totalCount = Member::count();
+        $verifiedCount = Member::whereNotNull('mobile_verified_at')->count();
+        $unverifiedCount = Member::whereNull('mobile_verified_at')->count();
+        $activeCount = Member::whereNull('blocked_at')->whereNotNull('mobile_verified_at')->count();
+        $pendingCount = Member::whereNull('blocked_at')->whereNull('mobile_verified_at')->count();
+        $blockedCount = Member::whereNotNull('blocked_at')->count();
+        $activeTodayCount = Member::where('last_seen_at', '>=', now()->subHours(24))->count();
+
+        // Distinct Countries for Filter Dropdown
+        $countries = Member::whereNotNull('country')
+            ->where('country', '!=', '')
+            ->distinct()
+            ->pluck('country');
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'members' => $members,
+                'total' => $members->total(),
+                'totalCount' => $totalCount,
+                'verifiedCount' => $verifiedCount,
+                'unverifiedCount' => $unverifiedCount,
+                'activeCount' => $activeCount,
+                'pendingCount' => $pendingCount,
+                'blockedCount' => $blockedCount,
+                'activeTodayCount' => $activeTodayCount,
+                'countries' => $countries,
+                'metrics' => [
+                    'totalCount' => $totalCount,
+                    'verifiedCount' => $verifiedCount,
+                    'unverifiedCount' => $unverifiedCount,
+                    'activeCount' => $activeCount,
+                    'pendingCount' => $pendingCount,
+                    'blockedCount' => $blockedCount,
+                    'activeTodayCount' => $activeTodayCount,
+                ],
+            ]);
+        }
+
+        return view('admin.members.index', compact(
+            'members',
+            'search',
+            'country',
+            'dateFrom',
+            'dateTo',
+            'totalCount',
+            'verifiedCount',
+            'unverifiedCount',
+            'activeCount',
+            'pendingCount',
+            'blockedCount',
+            'activeTodayCount',
+            'countries'
+        ));
+    }
+
+    /**
+     * Establish a secure member session for the authenticated admin to open the Member Panel.
+     */
+    public function openMemberPanel(Request $request, Member $member)
+    {
+        $admin = auth('admin')->user();
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized administrator access.'], 403);
+        }
+
+        // Establish member session securely
+        \Illuminate\Support\Facades\Auth::guard('member')->login($member);
+        $request->session()->save();
+
+        $frontendUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url', 'https://mlmbookai.com')), '/');
+        $targetUrl = $frontendUrl . '/member/dashboard';
+
+        return response()->json([
+            'success' => true,
+            'message' => "Secure session established for member {$member->name} ({$member->user_id}).",
+            'redirect_url' => $targetUrl,
+            'member' => [
+                'id' => $member->id,
+                'name' => $member->name,
+                'user_id' => $member->user_id,
+                'email' => $member->email,
+                'is_blocked' => $member->isBlocked(),
+                'is_verified' => $member->isMobileVerified(),
+            ],
+        ]);
+    }
+
+    /**
+     * Redirect authenticated admin directly to member panel dashboard.
+     */
+    public function redirectToMemberPanel(Request $request, Member $member)
+    {
+        $admin = auth('admin')->user();
+        if (!$admin) {
+            abort(403, 'Unauthorized administrator access.');
+        }
+
+        \Illuminate\Support\Facades\Auth::guard('member')->login($member);
+        $request->session()->save();
+
+        $frontendUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url', 'https://mlmbookai.com')), '/');
+        return redirect()->away($frontendUrl . '/member/dashboard');
+    }
+
+    /**
      * Display a listing of Active (verified) members.
      */
     public function active(Request $request)
@@ -795,7 +966,22 @@ class MemberManagementController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        if ($type === 'pending' || $type === 'unverified') {
+        if ($type === 'all') {
+            $query = Member::query();
+            if ($status === 'verified') {
+                $query->whereNotNull('mobile_verified_at');
+            } elseif ($status === 'unverified') {
+                $query->whereNull('mobile_verified_at');
+            } elseif ($status === 'pending') {
+                $query->whereNull('mobile_verified_at')->whereNotNull('mobile_verification_requested_at');
+            }
+            if ($request->input('account_status') === 'blocked') {
+                $query->whereNotNull('blocked_at');
+            } elseif ($request->input('account_status') === 'active' || $request->input('account_status') === 'unblocked') {
+                $query->whereNull('blocked_at');
+            }
+            $filename = 'all_members_export_' . date('Y_m_d_His') . '.csv';
+        } elseif ($type === 'pending' || $type === 'unverified') {
             $query = Member::query()->whereNull('blocked_at')->whereNull('mobile_verified_at');
             if ($status === 'requested' || $status === 'pending') {
                 $query->whereNotNull('mobile_verification_requested_at');

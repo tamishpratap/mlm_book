@@ -10,6 +10,7 @@ import { NotFoundPage } from '../pages/common/NotFoundPage';
 import { UnauthorizedPage } from '../pages/common/UnauthorizedPage';
 
 // Members Module Pages
+import { AllMembersPage } from '../pages/members/AllMembersPage';
 import { MembersListPage } from '../pages/members/MembersListPage';
 import { MemberDetailsPage } from '../pages/members/MemberDetailsPage';
 import { MemberEditPage } from '../pages/members/MemberEditPage';
@@ -110,6 +111,7 @@ export function AppRoutes() {
         <Route path="dashboard" element={<DashboardPage />} />
 
         {/* Members Management Module */}
+        <Route path="members/all" element={<AllMembersPage />} />
         <Route path="members" element={<MembersListPage defaultMode="active" />} />
         <Route path="members/active" element={<Navigate to="/admin/members" replace />} />
         <Route path="members/pending" element={<MembersListPage defaultMode="pending" />} />
