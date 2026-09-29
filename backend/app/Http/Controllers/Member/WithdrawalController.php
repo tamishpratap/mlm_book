@@ -65,7 +65,7 @@ class WithdrawalController extends Controller
                 'phone' => $member->phone,
                 'wallet' => (float) ($member->wallet ?? 0.00),
                 'wallet_address' => $member->wallet_address ?? '',
-                'ad_balance' => (float) ($member->p2p_wallet ?? 0.00),
+                'ad_balance' => round((float) ($member->fresh()->p2p_wallet ?? $member->fresh()->ad_balance ?? 0.00), 4),
                 'reward_balance' => (float) ($member->wallet ?? 0.00),
                 'reward_wallet_address' => $member->wallet_address ?? '',
                 'reward_wallet_verified' => $member->hasVerifiedRewardWallet(),
@@ -253,7 +253,7 @@ class WithdrawalController extends Controller
             }
 
             // 2. Condition: Negative amount & zero amount check
-            $availableFund = round((float) ($lockedMember->p2p_wallet ?? 0.00), 2);
+            $availableFund = round((float) ($lockedMember->p2p_wallet ?? $lockedMember->ad_balance ?? 0.00), 4);
 
             if ($availableFund <= 0) {
                 return response()->json([
