@@ -124,11 +124,13 @@ Route::prefix('admin')->group(function () {
         Route::prefix('members')->group(function () {
             Route::get('/search', [MemberManagementController::class, 'search']);
             Route::get('/', [MemberManagementController::class, 'active']);
+            Route::get('/all', [MemberManagementController::class, 'all']);
             Route::get('/active', [MemberManagementController::class, 'active']);
             Route::get('/pending', [MemberManagementController::class, 'pending']);
             Route::get('/blocked', [MemberManagementController::class, 'blocked']);
             Route::get('/export/{format?}', [MemberManagementController::class, 'export']);
             Route::post('/bulk-action', [MemberManagementController::class, 'bulkAction']);
+            Route::post('/{member}/open-panel', [MemberManagementController::class, 'openMemberPanel']);
             Route::get('/{member}', [MemberManagementController::class, 'show']);
             Route::get('/{member}/edit', [MemberManagementController::class, 'edit']);
             Route::put('/{member}', [MemberManagementController::class, 'update']);

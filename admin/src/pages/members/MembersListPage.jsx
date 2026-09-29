@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Eye, UserX, CheckCircle2, Trash2, UserPlus, XCircle } from 'lucide-react';
+import { Eye, UserX, CheckCircle2, Trash2, UserPlus, XCircle, ExternalLink } from 'lucide-react';
 import { Button } from 'primereact/button';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -24,7 +24,9 @@ export function MembersListPage({ defaultMode }) {
 
   // Determine mode from pathname or prop
   const mode = defaultMode || (
-    location.pathname.includes('/pending')
+    location.pathname.includes('/all')
+      ? 'all'
+      : location.pathname.includes('/pending')
       ? 'pending'
       : location.pathname.includes('/blocked')
       ? 'blocked'
@@ -37,6 +39,7 @@ export function MembersListPage({ defaultMode }) {
   const [error, setError] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [openingMemberId, setOpeningMemberId] = useState(null);
 
   // Pagination & Counts
   const [totalRecords, setTotalRecords] = useState(0);
@@ -56,6 +59,7 @@ export function MembersListPage({ defaultMode }) {
     return {
       q: params.get('q') || '',
       status: params.get('status') || '',
+      account_status: params.get('account_status') || '',
       country: params.get('country') || '',
       date_from: params.get('date_from') || '',
       date_to: params.get('date_to') || '',
@@ -64,6 +68,12 @@ export function MembersListPage({ defaultMode }) {
 
   const getPageMeta = () => {
     switch (mode) {
+      case 'all':
+        return {
+          title: 'All Members Directory',
+          subtitle: 'Comprehensive overview and status management for all platform members.',
+          breadcrumbs: [{ label: 'Members', to: '/admin/members/all' }, { label: 'All Members' }],
+        };
       case 'pending':
         return {
           title: 'Unverified Members Queue',
@@ -99,6 +109,7 @@ export function MembersListPage({ defaultMode }) {
       per_page: pageSize,
       q: searchParams.get('q') || undefined,
       status: searchParams.get('status') || undefined,
+      account_status: searchParams.get('account_status') || undefined,
       country: searchParams.get('country') || undefined,
       date_from: searchParams.get('date_from') || undefined,
       date_to: searchParams.get('date_to') || undefined,
@@ -106,7 +117,9 @@ export function MembersListPage({ defaultMode }) {
 
     try {
       let response;
-      if (mode === 'pending') {
+      if (mode === 'all') {
+        response = await membersApi.getAllMembers(queryParams);
+      } else if (mode === 'pending') {
         response = await membersApi.getPendingMembers(queryParams);
       } else if (mode === 'blocked') {
         response = await membersApi.getBlockedMembers(queryParams);
@@ -161,6 +174,7 @@ export function MembersListPage({ defaultMode }) {
     setFilters({
       q: params.get('q') || '',
       status: params.get('status') || '',
+      account_status: params.get('account_status') || '',
       country: params.get('country') || '',
       date_from: params.get('date_from') || '',
       date_to: params.get('date_to') || '',
@@ -172,6 +186,7 @@ export function MembersListPage({ defaultMode }) {
     const searchParams = new URLSearchParams();
     if (filters.q) searchParams.set('q', filters.q);
     if (filters.status) searchParams.set('status', filters.status);
+    if (filters.account_status) searchParams.set('account_status', filters.account_status);
     if (filters.country) searchParams.set('country', filters.country);
     if (filters.date_from) searchParams.set('date_from', filters.date_from);
     if (filters.date_to) searchParams.set('date_to', filters.date_to);
@@ -181,7 +196,7 @@ export function MembersListPage({ defaultMode }) {
   };
 
   const handleResetFilters = () => {
-    setFilters({ q: '', status: '', country: '', date_from: '', date_to: '' });
+    setFilters({ q: '', status: '', account_status: '', country: '', date_from: '', date_to: '' });
     navigate({ search: '' }, { replace: true });
     setCurrentPage(1);
   };
@@ -199,6 +214,7 @@ export function MembersListPage({ defaultMode }) {
         type: mode,
         q: filters.q || undefined,
         status: filters.status || undefined,
+        account_status: filters.account_status || undefined,
         country: filters.country || undefined,
         date_from: filters.date_from || undefined,
         date_to: filters.date_to || undefined,
@@ -211,6 +227,23 @@ export function MembersListPage({ defaultMode }) {
       showError(err.message || 'Failed to export CSV.');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleOpenMemberPanel = async (member) => {
+    setOpeningMemberId(member.id);
+    try {
+      const res = await membersApi.openMemberPanel(member.id);
+      if (res?.redirect_url) {
+        showSuccess(res.message || `Member panel session created for ${member.name}. Opening...`);
+        window.open(res.redirect_url, '_blank', 'noopener,noreferrer');
+      } else {
+        showError('No redirect URL returned by server.');
+      }
+    } catch (err) {
+      showError(err.message || 'Failed to open Member Panel session.');
+    } finally {
+      setOpeningMemberId(null);
     }
   };
 
@@ -402,10 +435,12 @@ export function MembersListPage({ defaultMode }) {
       <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
         <StatusBadge
           status={isVerified ? 'verified' : isPending ? 'pending' : 'unverified'}
-          label={isVerified ? 'VERIFIED MEMBER' : isPending ? 'PENDING VERIFICATION' : 'UNVERIFIED MEMBER'}
+          label={isVerified ? 'VERIFIED' : isPending ? 'PENDING' : 'UNVERIFIED'}
         />
-        {isBlocked && (
-          <StatusBadge status="blocked" label="BLOCKED MEMBER" />
+        {isBlocked ? (
+          <StatusBadge status="blocked" label="BLOCKED" />
+        ) : (
+          <StatusBadge status="verified" label="ACTIVE" />
         )}
         {rowData.is_online && (
           <span className="bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.2 rounded-full uppercase">
@@ -424,7 +459,19 @@ export function MembersListPage({ defaultMode }) {
 
     return (
       <div className="inline-flex items-center justify-end gap-1.5 sm:gap-2">
-        {mode === 'pending' && isUnverified && (
+        {/* Open Member Panel (Impersonation session) */}
+        <button
+          type="button"
+          onClick={() => handleOpenMemberPanel(rowData)}
+          disabled={actionLoading || openingMemberId === rowData.id}
+          className="p-1.5 rounded-md text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+          title={`Open ${rowData.name}'s Member Panel`}
+          aria-label="Open Member Panel"
+        >
+          <ExternalLink className={`w-4 h-4 ${openingMemberId === rowData.id ? 'animate-pulse text-indigo-600' : ''}`} />
+        </button>
+
+        {(mode === 'pending' || mode === 'all') && isUnverified && (
           <>
             <button
               type="button"
@@ -534,7 +581,7 @@ export function MembersListPage({ defaultMode }) {
           onApplyFilters={handleApplyFilters}
           onResetFilters={handleResetFilters}
           loading={loading}
-          showStatusFilter={mode === 'active' || mode === 'pending'}
+          showStatusFilter={mode === 'active' || mode === 'pending' || mode === 'all'}
           currentMode={mode}
         />
 
@@ -632,7 +679,7 @@ export function MembersListPage({ defaultMode }) {
                 header="Actions"
                 body={actionsBodyTemplate}
                 headerStyle={{ textAlign: 'right' }}
-                style={{ width: mode === 'pending' ? '11rem' : '8rem', textAlign: 'right' }}
+                style={{ width: (mode === 'pending' || mode === 'all') ? '12rem' : '10rem', textAlign: 'right' }}
               />
             </DataTable>
           </div>

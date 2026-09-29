@@ -7,6 +7,12 @@ import { buildFormData } from './utils/uploadHelper';
  */
 export const membersApi = {
   /**
+   * Fetch all members list with filters regardless of status.
+   * Route: GET /admin/members/all
+   */
+  getAllMembers: (params = {}, signal) => http.get('/members/all', params, { signal }),
+
+  /**
    * Fetch active members list with filters.
    * Route: GET /admin/members or /admin/members/active
    */
@@ -23,6 +29,12 @@ export const membersApi = {
    * Route: GET /admin/members/blocked
    */
   getBlockedMembers: (params = {}, signal) => http.get('/members/blocked', params, { signal }),
+
+  /**
+   * Securely establish member session and obtain redirect URL for Member Panel.
+   * Route: POST /admin/members/{member}/open-panel
+   */
+  openMemberPanel: (memberId) => http.post(`/members/${memberId}/open-panel`),
 
   /**
    * Fetch detailed member profile & related collections.
