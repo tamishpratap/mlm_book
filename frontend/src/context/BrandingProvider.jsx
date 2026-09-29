@@ -15,7 +15,18 @@ const DEFAULT_BRANDING = {
 };
 
 /**
- * Dynamically updates document title and favicon <link> in document.head.
+ * Safely updates an existing meta tag's content attribute without creating duplicates.
+ */
+function setExistingMetaContent(selector, content) {
+  if (!content || typeof document === 'undefined') return;
+  const el = document.querySelector(selector);
+  if (el) {
+    el.setAttribute('content', content);
+  }
+}
+
+/**
+ * Dynamically updates document title, favicon, and SEO meta tags in document.head.
  */
 function updateDocumentBranding(branding) {
   if (typeof document === 'undefined' || !branding) return;
@@ -44,10 +55,30 @@ function updateDocumentBranding(branding) {
     }
   }
 
-  // 2. Dynamic Title synchronization
+  // 2. Dynamic Title and OG / Twitter Title synchronization
   if (branding.site_name && branding.site_name !== 'MLM Book') {
     if (document.title.includes('MLM Book')) {
       document.title = document.title.replace('MLM Book', branding.site_name);
+    }
+    setExistingMetaContent('meta[property="og:site_name"]', branding.site_name);
+    setExistingMetaContent('meta[property="og:title"]', document.title);
+    setExistingMetaContent('meta[name="twitter:title"]', document.title);
+  }
+
+  // 3. Dynamic Description synchronization
+  if (branding.site_description && branding.site_description !== DEFAULT_BRANDING.site_description) {
+    setExistingMetaContent('meta[name="description"]', branding.site_description);
+    setExistingMetaContent('meta[property="og:description"]', branding.site_description);
+    setExistingMetaContent('meta[name="twitter:description"]', branding.site_description);
+  }
+
+  // 4. Dynamic OG / Twitter Image synchronization
+  const rawLogo = branding.site_logo_url || branding.site_logo;
+  if (rawLogo) {
+    const resolvedLogo = getBrandingAssetUrl(rawLogo, BRAND_LOGO);
+    if (resolvedLogo && (resolvedLogo.startsWith('http://') || resolvedLogo.startsWith('https://'))) {
+      setExistingMetaContent('meta[property="og:image"]', resolvedLogo);
+      setExistingMetaContent('meta[name="twitter:image"]', resolvedLogo);
     }
   }
 }

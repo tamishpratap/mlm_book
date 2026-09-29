@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import businessApi from '../../../api/businessApi';
 import { getMediaUrl } from '../../../utils/assetHelper';
+import { formatAdAmount } from '../../../utils/adFormatters';
 
 const USDT_PRESETS = [10, 25, 50, 100, 250, 500];
 
@@ -198,7 +199,7 @@ export function AddFundView({ page = null, onDepositSubmitted = null, showHistor
             Available Ad Funds
           </span>
           <div style={{ fontSize: '22px', fontWeight: 900, color: '#2563eb', marginTop: '2px' }}>
-            ${memberAdBalance.toFixed(2)} USD
+            ${formatAdAmount(memberAdBalance)} USD
           </div>
         </div>
       </div>

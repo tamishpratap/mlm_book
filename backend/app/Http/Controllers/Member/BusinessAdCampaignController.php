@@ -71,6 +71,9 @@ class BusinessAdCampaignController extends Controller
 
         $campaigns->getCollection()->transform(function (AdCampaign $c) {
             $c->ctr = $c->ctr;
+            $totalFunded = (float) ($c->total_funded ?? ((float) $c->budget + (float) ($c->additional_funding ?? 0.00)));
+            $spent = (float) ($c->spent_amount ?? 0.00);
+            $c->remaining_amount = max(0.00, round($totalFunded - $spent, 4));
             return $c;
         });
 
@@ -79,8 +82,13 @@ class BusinessAdCampaignController extends Controller
         $totalClicks = AdClick::whereIn('ad_campaign_id', $pageCampaignIds)->count();
         $avgCtr = $totalImpressions > 0 ? round(($totalClicks / $totalImpressions) * 100, 2) : 0.00;
 
-        $availableAdFunds = round((float) ($member->p2p_wallet ?? 0.00), 2);
+        $freshMember = $member->fresh() ?? $member;
+        $availableAdFunds = round((float) ($freshMember->p2p_wallet ?? $freshMember->ad_balance ?? 0.00), 4);
         $campaignFeePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
+
+        $totalBudget = round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('budget'), 4);
+        $totalSpent = round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('spent_amount'), 4);
+        $totalRemaining = max(0.00, round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('remaining_amount'), 4));
 
         $metrics = [
             'total_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->count(),
@@ -92,9 +100,9 @@ class BusinessAdCampaignController extends Controller
             'approved_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_APPROVED)->count(),
             'paused_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PAUSED)->count(),
             'completed_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_COMPLETED)->count(),
-            'total_budget' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('budget'), 2),
-            'total_spent' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('spent_amount'), 2),
-            'total_remaining' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('remaining_amount'), 2),
+            'total_budget' => $totalBudget,
+            'total_spent' => $totalSpent,
+            'total_remaining' => $totalRemaining,
             'total_impressions' => $totalImpressions,
             'total_clicks' => $totalClicks,
             'average_ctr' => $avgCtr,
@@ -184,10 +192,10 @@ class BusinessAdCampaignController extends Controller
             }
         }
 
-        $campaignBudget = round((float) $validated['budget'], 2);
+        $campaignBudget = round((float) $validated['budget'], 4);
         $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
-        $feeAmount = round($campaignBudget * ($feePercent / 100), 2);
-        $totalWalletDebit = round($campaignBudget + $feeAmount, 2);
+        $feeAmount = round($campaignBudget * ($feePercent / 100), 4);
+        $totalWalletDebit = round($campaignBudget + $feeAmount, 4);
 
         // Atomic budget reservation and fee debit from member's available ad balance
         $campaign = DB::transaction(function () use ($member, $businessPage, $validated, $campaignBudget, $feePercent, $feeAmount, $totalWalletDebit) {
@@ -210,7 +218,7 @@ class BusinessAdCampaignController extends Controller
             $availableFunds = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
             if ($availableFunds < $totalWalletDebit) {
-                $shortfall = round($totalWalletDebit - $availableFunds, 2);
+                $shortfall = round($totalWalletDebit - $availableFunds, 4);
                 $insufficientMsg = $feeAmount > 0
                     ? "Insufficient advertising funds. Campaign Budget: \${$campaignBudget} USD, Platform Fee ({$feePercent}%): \${$feeAmount} USD, Total Required: \${$totalWalletDebit} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please add funds."
                     : "Insufficient advertising funds. Campaign Budget: \${$campaignBudget} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please add funds.";
@@ -220,7 +228,7 @@ class BusinessAdCampaignController extends Controller
             }
 
             // Deduct total debit (budget + platform fee) from member's Fund Wallet (p2p_wallet)
-            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 2);
+            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 4);
             $lockedMember->save();
 
             return AdCampaign::create([
@@ -307,10 +315,10 @@ class BusinessAdCampaignController extends Controller
             'amount.min' => 'Minimum top-up amount is $1.00 USD.',
         ]);
 
-        $topUpAmount = round((float) $validated['amount'], 2);
+        $topUpAmount = round((float) $validated['amount'], 4);
         $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
-        $feeAmount = round($topUpAmount * ($feePercent / 100), 2);
-        $totalWalletDebit = round($topUpAmount + $feeAmount, 2);
+        $feeAmount = round($topUpAmount * ($feePercent / 100), 4);
+        $totalWalletDebit = round($topUpAmount + $feeAmount, 4);
 
         $updatedCampaign = DB::transaction(function () use ($campaign, $member, $topUpAmount, $feeAmount, $totalWalletDebit) {
             /** @var Member $lockedMember */
@@ -318,7 +326,7 @@ class BusinessAdCampaignController extends Controller
             $availableFunds = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
             if ($availableFunds < $totalWalletDebit) {
-                $shortfall = round($totalWalletDebit - $availableFunds, 2);
+                $shortfall = round($totalWalletDebit - $availableFunds, 4);
                 $insufficientTopUpMsg = $feeAmount > 0
                     ? "Insufficient advertising funds to add funds. Top-up Amount: \${$topUpAmount} USD, Platform Fee: \${$feeAmount} USD, Total Required: \${$totalWalletDebit} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please deposit funds first."
                     : "Insufficient advertising funds to add funds. Top-up Amount: \${$topUpAmount} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please deposit funds first.";
@@ -328,17 +336,17 @@ class BusinessAdCampaignController extends Controller
             }
 
             // Deduct total debit (top-up + fee) from member's Fund Wallet (p2p_wallet)
-            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 2);
+            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 4);
             $lockedMember->save();
 
             /** @var AdCampaign $lockedCampaign */
             $lockedCampaign = AdCampaign::where('id', $campaign->id)->lockForUpdate()->first();
 
-            $newAdditional = round((float) ($lockedCampaign->additional_funding ?? 0.00) + $topUpAmount, 2);
-            $newTotalFunded = round((float) $lockedCampaign->budget + $newAdditional, 2);
-            $newRemaining = round((float) ($lockedCampaign->remaining_amount ?? 0.00) + $topUpAmount, 2);
-            $newFeeAmount = round((float) ($lockedCampaign->fee_amount ?? 0.00) + $feeAmount, 2);
-            $newWalletDebit = round((float) ($lockedCampaign->wallet_debit ?? 0.00) + $totalWalletDebit, 2);
+            $newAdditional = round((float) ($lockedCampaign->additional_funding ?? 0.00) + $topUpAmount, 4);
+            $newTotalFunded = round((float) $lockedCampaign->budget + $newAdditional, 4);
+            $newRemaining = round((float) ($lockedCampaign->remaining_amount ?? 0.00) + $topUpAmount, 4);
+            $newFeeAmount = round((float) ($lockedCampaign->fee_amount ?? 0.00) + $feeAmount, 4);
+            $newWalletDebit = round((float) ($lockedCampaign->wallet_debit ?? 0.00) + $totalWalletDebit, 4);
 
             $lockedCampaign->additional_funding = $newAdditional;
             $lockedCampaign->total_funded = $newTotalFunded;
@@ -363,7 +371,7 @@ class BusinessAdCampaignController extends Controller
             'success' => true,
             'message' => "Successfully added \${$topUpAmount} USD to campaign '{$campaign->campaign_name}'. New running budget: \${$updatedCampaign->remaining_amount} USD.",
             'campaign' => $updatedCampaign->fresh(['post', 'owner:id,name,user_id,email', 'businessPage:id,page_name,slug']),
-            'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? 0.00), 2),
+            'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? $member->fresh()->ad_balance ?? 0.00), 4),
         ]);
     }
 
@@ -439,13 +447,13 @@ class BusinessAdCampaignController extends Controller
 
         DB::transaction(function () use ($campaign, $member, $validated, &$updateData) {
             if (isset($validated['budget'])) {
-                $newBudget = round((float) $validated['budget'], 2);
+                $newBudget = round((float) $validated['budget'], 4);
                 $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
-                $newFeeAmount = round($newBudget * ($feePercent / 100), 2);
-                $newTotalDebit = round($newBudget + $newFeeAmount, 2);
+                $newFeeAmount = round($newBudget * ($feePercent / 100), 4);
+                $newTotalDebit = round($newBudget + $newFeeAmount, 4);
 
-                $oldTotalDebit = (float) ($campaign->wallet_debit ?: round((float) $campaign->budget + ((float) $campaign->budget * ($feePercent / 100)), 2));
-                $deltaDebit = round($newTotalDebit - $oldTotalDebit, 2);
+                $oldTotalDebit = (float) ($campaign->wallet_debit ?: round((float) $campaign->budget + ((float) $campaign->budget * ($feePercent / 100)), 4));
+                $deltaDebit = round($newTotalDebit - $oldTotalDebit, 4);
 
                 if ($deltaDebit > 0) {
                     /** @var Member $lockedMember */
@@ -453,7 +461,7 @@ class BusinessAdCampaignController extends Controller
                     $available = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
                     if ($available < $deltaDebit) {
-                        $shortfall = round($deltaDebit - $available, 2);
+                        $shortfall = round($deltaDebit - $available, 4);
                         throw ValidationException::withMessages([
                             'budget' => [
                                 "Insufficient advertising funds to increase budget. Additional required (budget + fee): \${$deltaDebit} USD, Available: \${$available} USD. Shortfall: \${$shortfall} USD."
@@ -461,19 +469,20 @@ class BusinessAdCampaignController extends Controller
                         ]);
                     }
 
-                    $lockedMember->p2p_wallet = round($available - $deltaDebit, 2);
+                    $lockedMember->p2p_wallet = round($available - $deltaDebit, 4);
                     $lockedMember->save();
                 } elseif ($deltaDebit < 0) {
                     $refund = abs($deltaDebit);
                     /** @var Member $lockedMember */
                     $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
                     if ($lockedMember) {
-                        $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $refund, 2);
+                        $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $refund, 4);
                         $lockedMember->save();
                     }
                 }
 
                 $updateData['budget'] = $newBudget;
+                $updateData['total_funded'] = $newBudget;
                 $updateData['remaining_amount'] = $newBudget;
                 $updateData['fee_percent'] = $feePercent;
                 $updateData['fee_amount'] = $newFeeAmount;
@@ -773,7 +782,7 @@ class BusinessAdCampaignController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Campaign closed successfully. $' . number_format($refundedAmount, 2) . ' USD refunded to your P2P Fund Wallet.',
+            'message' => 'Campaign closed successfully. $' . number_format($refundedAmount, 4) . ' USD refunded to your P2P Fund Wallet.',
             'refunded_amount' => $refundedAmount,
             'campaign' => $freshCampaign,
         ]);
@@ -1942,7 +1951,7 @@ class BusinessAdCampaignController extends Controller
         $pageCampaignIds = AdCampaign::where('business_page_id', $businessPage->id)->pluck('id');
         $totalImpressions = AdImpression::whereIn('ad_campaign_id', $pageCampaignIds)->count();
         $totalClicks = AdClick::whereIn('ad_campaign_id', $pageCampaignIds)->count();
-        $totalRewardsPaid = round((float) AdReward::whereIn('ad_campaign_id', $pageCampaignIds)->where('status', AdReward::STATUS_CREDITED)->sum('reward_amount_usd'), 2);
+        $totalRewardsPaid = round((float) AdReward::whereIn('ad_campaign_id', $pageCampaignIds)->where('status', AdReward::STATUS_CREDITED)->sum('reward_amount_usd'), 4);
         $totalVerifiedVisits = AdReward::whereIn('ad_campaign_id', $pageCampaignIds)->where('status', AdReward::STATUS_CREDITED)->count();
         $avgCtr = $totalImpressions > 0 ? round(($totalClicks / $totalImpressions) * 100, 2) : 0.00;
 
@@ -1956,12 +1965,12 @@ class BusinessAdCampaignController extends Controller
             'approved_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_APPROVED)->count(),
             'paused_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PAUSED)->count(),
             'completed_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_COMPLETED)->count(),
-            'total_budget' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('budget'), 2),
-            'total_platform_fees' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('fee_amount'), 2),
-            'total_wallet_debits' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('wallet_debit'), 2),
+            'total_budget' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('budget'), 4),
+            'total_platform_fees' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('fee_amount'), 4),
+            'total_wallet_debits' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('wallet_debit'), 4),
             'total_rewards_paid' => $totalRewardsPaid,
-            'total_spent' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('spent_amount'), 2),
-            'total_remaining' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('remaining_amount'), 2),
+            'total_spent' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('spent_amount'), 4),
+            'total_remaining' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('remaining_amount'), 4),
             'total_verified_visits' => $totalVerifiedVisits,
             'total_reward_count' => $totalVerifiedVisits,
             'total_impressions' => $totalImpressions,
@@ -1998,8 +2007,9 @@ class BusinessAdCampaignController extends Controller
         $impressionsCount = AdImpression::where('ad_campaign_id', $campaign->id)->count();
         $clicksCount = AdClick::where('ad_campaign_id', $campaign->id)->count();
         $rewardsCount = AdReward::where('ad_campaign_id', $campaign->id)->where('status', AdReward::STATUS_CREDITED)->count();
-        $rewardsPaid = round((float) ($campaign->spent_amount ?? 0.00), 2);
-        $remainingBudget = round((float) ($campaign->remaining_amount ?? 0.00), 2);
+        $totalFunded = round((float) ($campaign->total_funded ?? $campaign->budget ?? 0.00), 4);
+        $rewardsPaid = round((float) ($campaign->spent_amount ?? 0.00), 4);
+        $remainingBudget = max(0.00, round($totalFunded - $rewardsPaid, 4));
         $ctr = $impressionsCount > 0 ? round(($clicksCount / $impressionsCount) * 100, 2) : 0.00;
 
         return response()->json([
@@ -2007,6 +2017,8 @@ class BusinessAdCampaignController extends Controller
             'campaign' => $campaign->load(['post', 'owner:id,name,user_id,email', 'approver:id,name,email']),
             'metrics' => [
                 'budget' => (float) $campaign->budget,
+                'additional_funding' => (float) ($campaign->additional_funding ?? 0.00),
+                'total_funded' => $totalFunded,
                 'fee_percent' => (float) ($campaign->fee_percent ?? 2.50),
                 'fee_amount' => (float) ($campaign->fee_amount ?? 0.00),
                 'wallet_debit' => (float) ($campaign->wallet_debit ?? 0.00),
@@ -2021,9 +2033,11 @@ class BusinessAdCampaignController extends Controller
                 'ctr' => $ctr,
                 'financial_reconciliation' => [
                     'initial_campaign_budget' => (float) $campaign->budget,
+                    'additional_funding' => (float) ($campaign->additional_funding ?? 0.00),
+                    'total_funded' => $totalFunded,
                     'rewards_paid' => $rewardsPaid,
                     'remaining_campaign_budget' => $remainingBudget,
-                    'reconciles_exactly' => round((float) $campaign->budget, 2) === round($rewardsPaid + $remainingBudget, 2),
+                    'reconciles_exactly' => round($totalFunded, 4) === round($rewardsPaid + $remainingBudget, 4),
                 ],
             ],
         ]);
