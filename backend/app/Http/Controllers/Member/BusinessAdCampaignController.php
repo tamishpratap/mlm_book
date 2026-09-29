@@ -84,8 +84,11 @@ class BusinessAdCampaignController extends Controller
 
         $metrics = [
             'total_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->count(),
-            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_ACTIVE)->count(),
-            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PENDING_REVIEW)->count(),
+            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->whereIn('status', [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED])->count(),
+            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where(function ($q) {
+                $q->where('status', AdCampaign::STATUS_PENDING_REVIEW)
+                  ->orWhere('approval_status', AdCampaign::APPROVAL_PENDING);
+            })->count(),
             'approved_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_APPROVED)->count(),
             'paused_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PAUSED)->count(),
             'completed_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_COMPLETED)->count(),
@@ -1945,8 +1948,11 @@ class BusinessAdCampaignController extends Controller
 
         $metrics = [
             'total_campaigns' => $pageCampaignIds->count(),
-            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_ACTIVE)->count(),
-            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PENDING_REVIEW)->count(),
+            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->whereIn('status', [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED])->count(),
+            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where(function ($q) {
+                $q->where('status', AdCampaign::STATUS_PENDING_REVIEW)
+                  ->orWhere('approval_status', AdCampaign::APPROVAL_PENDING);
+            })->count(),
             'approved_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_APPROVED)->count(),
             'paused_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PAUSED)->count(),
             'completed_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_COMPLETED)->count(),
