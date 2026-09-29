@@ -367,6 +367,7 @@ class NotificationManagementController extends Controller
             'success' => true,
             'unread_count' => $unreadCount,
             'count' => $unreadCount,
+            'admin_sound_url' => $this->getAdminSoundUrl(),
             'notifications' => $notifications,
         ]);
     }
@@ -502,5 +503,170 @@ class NotificationManagementController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Resolve admin notification sound URL.
+     */
+    public function getAdminSoundUrl(): string
+    {
+        $custom = \App\Models\Setting::get('admin_notification_sound');
+        if (!empty($custom)) {
+            $path = public_path($custom);
+            if (file_exists($path)) {
+                return url($custom) . '?v=' . filemtime($path);
+            }
+        }
+        $defaultPath = public_path('sounds/notification.mp3');
+        $v = file_exists($defaultPath) ? filemtime($defaultPath) : 1;
+        return url('sounds/notification.mp3') . '?v=' . $v;
+    }
+
+    /**
+     * Resolve member notification sound URL.
+     */
+    public function getMemberSoundUrl(): string
+    {
+        $custom = \App\Models\Setting::get('member_notification_sound');
+        if (!empty($custom)) {
+            $path = public_path($custom);
+            if (file_exists($path)) {
+                return url($custom) . '?v=' . filemtime($path);
+            }
+        }
+        $defaultPath = public_path('sounds/notification.mp3');
+        $v = file_exists($defaultPath) ? filemtime($defaultPath) : 1;
+        return url('sounds/notification.mp3') . '?v=' . $v;
+    }
+
+    /**
+     * Retrieve configured notification sounds for Admin and Member.
+     */
+    public function getSoundSettings()
+    {
+        $adminSoundPath = \App\Models\Setting::get('admin_notification_sound');
+        $memberSoundPath = \App\Models\Setting::get('member_notification_sound');
+
+        $adminIsCustom = false;
+        $adminFilename = 'notification.mp3 (Default)';
+        if (!empty($adminSoundPath) && file_exists(public_path($adminSoundPath))) {
+            $adminIsCustom = true;
+            $adminFilename = basename($adminSoundPath);
+        }
+
+        $memberIsCustom = false;
+        $memberFilename = 'notification.mp3 (Default)';
+        if (!empty($memberSoundPath) && file_exists(public_path($memberSoundPath))) {
+            $memberIsCustom = true;
+            $memberFilename = basename($memberSoundPath);
+        }
+
+        return response()->json([
+            'success' => true,
+            'settings' => [
+                'admin_sound' => [
+                    'path' => $adminSoundPath ?: 'sounds/notification.mp3',
+                    'url' => $this->getAdminSoundUrl(),
+                    'filename' => $adminFilename,
+                    'is_custom' => $adminIsCustom,
+                ],
+                'member_sound' => [
+                    'path' => $memberSoundPath ?: 'sounds/notification.mp3',
+                    'url' => $this->getMemberSoundUrl(),
+                    'filename' => $memberFilename,
+                    'is_custom' => $memberIsCustom,
+                ],
+            ],
+            'supported_formats' => ['mp3', 'wav', 'ogg', 'aac', 'm4a'],
+            'max_size_mb' => 10,
+        ]);
+    }
+
+    /**
+     * Update notification sound settings independently for Member and Admin.
+     */
+    public function updateSoundSettings(Request $request)
+    {
+        $request->validate([
+            'member_sound' => 'nullable|file|mimes:mp3,wav,ogg,aac,m4a|max:10240',
+            'admin_sound' => 'nullable|file|mimes:mp3,wav,ogg,aac,m4a|max:10240',
+            'reset_member_sound' => 'nullable|boolean',
+            'reset_admin_sound' => 'nullable|boolean',
+        ]);
+
+        $soundsDir = public_path('sounds');
+        if (!file_exists($soundsDir)) {
+            mkdir($soundsDir, 0755, true);
+        }
+
+        $messages = [];
+
+        // 1. Process Member Sound Update / Reset
+        if ($request->boolean('reset_member_sound')) {
+            $oldPath = \App\Models\Setting::get('member_notification_sound');
+            if ($oldPath && $oldPath !== 'sounds/notification.mp3') {
+                $fullOld = public_path($oldPath);
+                if (file_exists($fullOld) && !str_ends_with($fullOld, 'notification.mp3')) {
+                    @unlink($fullOld);
+                }
+            }
+            \App\Models\Setting::set('member_notification_sound', null, 'notifications');
+            $messages[] = 'Member notification sound reset to default.';
+        } elseif ($request->hasFile('member_sound')) {
+            $file = $request->file('member_sound');
+            $oldPath = \App\Models\Setting::get('member_notification_sound');
+            if ($oldPath && $oldPath !== 'sounds/notification.mp3') {
+                $fullOld = public_path($oldPath);
+                if (file_exists($fullOld) && !str_ends_with($fullOld, 'notification.mp3')) {
+                    @unlink($fullOld);
+                }
+            }
+
+            $ext = strtolower($file->getClientOriginalExtension()) ?: 'mp3';
+            $filename = 'member_notification_' . time() . '_' . Str::random(8) . '.' . $ext;
+            $file->move($soundsDir, $filename);
+
+            \App\Models\Setting::set('member_notification_sound', 'sounds/' . $filename, 'notifications');
+            $messages[] = 'Member notification sound updated successfully.';
+        }
+
+        // 2. Process Admin Sound Update / Reset
+        if ($request->boolean('reset_admin_sound')) {
+            $oldPath = \App\Models\Setting::get('admin_notification_sound');
+            if ($oldPath && $oldPath !== 'sounds/notification.mp3') {
+                $fullOld = public_path($oldPath);
+                if (file_exists($fullOld) && !str_ends_with($fullOld, 'notification.mp3')) {
+                    @unlink($fullOld);
+                }
+            }
+            \App\Models\Setting::set('admin_notification_sound', null, 'notifications');
+            $messages[] = 'Admin notification sound reset to default.';
+        } elseif ($request->hasFile('admin_sound')) {
+            $file = $request->file('admin_sound');
+            $oldPath = \App\Models\Setting::get('admin_notification_sound');
+            if ($oldPath && $oldPath !== 'sounds/notification.mp3') {
+                $fullOld = public_path($oldPath);
+                if (file_exists($fullOld) && !str_ends_with($fullOld, 'notification.mp3')) {
+                    @unlink($fullOld);
+                }
+            }
+
+            $ext = strtolower($file->getClientOriginalExtension()) ?: 'mp3';
+            $filename = 'admin_notification_' . time() . '_' . Str::random(8) . '.' . $ext;
+            $file->move($soundsDir, $filename);
+
+            \App\Models\Setting::set('admin_notification_sound', 'sounds/' . $filename, 'notifications');
+            $messages[] = 'Admin notification sound updated successfully.';
+        }
+
+        $message = !empty($messages) ? implode(' ', $messages) : 'Notification sound settings saved.';
+
+        $soundSettings = $this->getSoundSettings()->getData(true);
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'settings' => $soundSettings['settings'] ?? [],
+        ]);
     }
 }

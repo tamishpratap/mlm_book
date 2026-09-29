@@ -73,6 +73,7 @@ import { PermissionMatrixPage } from '../pages/roles/PermissionMatrixPage';
 import { NotificationsListPage } from '../pages/notifications/NotificationsListPage';
 import { BroadcastComposerPage } from '../pages/notifications/BroadcastComposerPage';
 import { NotificationDetailsPage } from '../pages/notifications/NotificationDetailsPage';
+import { NotificationSoundPage } from '../pages/notifications/NotificationSoundPage';
 
 // Analytics & BI Module Pages
 import { AnalyticsPage } from '../pages/analytics/AnalyticsPage';
@@ -191,6 +192,7 @@ export function AppRoutes() {
         {/* Notifications & Communication Center */}
         <Route path="notifications" element={<NotificationsListPage />} />
         <Route path="notifications/broadcast" element={<BroadcastComposerPage />} />
+        <Route path="notifications/sound" element={<NotificationSoundPage />} />
         <Route path="notifications/:id" element={<NotificationDetailsPage />} />
 
         {/* Analytics & BI Module */}
