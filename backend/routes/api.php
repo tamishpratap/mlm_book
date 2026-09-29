@@ -85,8 +85,11 @@ use App\Http\Middleware\EnsureMemberMobileVerified;
 |
 */
 
-// Global Public Branding Endpoint
+// Global Public Branding & Contact Endpoints
 Route::get('/branding', [SettingManagementController::class, 'getBranding']);
+Route::get('/contact-info', [SettingManagementController::class, 'getPublicSettings']);
+Route::get('/public-settings', [SettingManagementController::class, 'getPublicSettings']);
+Route::post('/contact', [SettingManagementController::class, 'submitContact']);
 
 Route::prefix('admin')->group(function () {
     // Guest Admin Auth Endpoints
@@ -413,6 +416,9 @@ Route::prefix('member')->name('api.member.')->group(function () {
     // 0. Public Platform Branding & Meta
     // ---------------------------------------------------------------------
     Route::get('/branding', [SettingManagementController::class, 'getBranding'])->name('branding');
+    Route::get('/contact-info', [SettingManagementController::class, 'getPublicSettings'])->name('contact.info');
+    Route::get('/public-settings', [SettingManagementController::class, 'getPublicSettings'])->name('public.settings');
+    Route::post('/contact', [SettingManagementController::class, 'submitContact'])->name('contact.submit');
 
     // ---------------------------------------------------------------------
     // 1. Guest Authentication & Onboarding
