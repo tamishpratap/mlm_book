@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { getMediaUrl } from '../../../utils/assetHelper';
+import { formatAdAmount } from '../../../utils/adFormatters';
 
 export function AdCampaignsOverview({ adCampaigns }) {
   const metrics = adCampaigns?.metrics || {};
@@ -88,7 +89,7 @@ export function AdCampaignsOverview({ adCampaigns }) {
           </div>
           <div>
             <div className="dash-camp-pill-val">
-              ${totalBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${formatAdAmount(totalBudget)}
             </div>
             <div className="dash-camp-pill-lbl">Total Budget Funded</div>
           </div>
@@ -153,10 +154,12 @@ export function AdCampaignsOverview({ adCampaigns }) {
             const mediaUrl = c.promoted_post?.media_path
               ? getMediaUrl(c.promoted_post.media_path)
               : null;
-            const budgetNum = Number(c.budget || 0);
+            const origBudget = Number(c.budget || 0);
+            const addFunding = Number(c.additional_funding || 0);
+            const totalFunded = Number(c.total_funded || 0) || (origBudget + addFunding);
             const spentNum = Number(c.spent_amount || 0);
-            const remainingNum = Number(c.remaining_amount || 0);
-            const spentPct = budgetNum > 0 ? Math.min(100, Math.round((spentNum / budgetNum) * 100)) : 0;
+            const remainingNum = Math.max(0, parseFloat((totalFunded - spentNum).toFixed(4)));
+            const spentPct = totalFunded > 0 ? Math.min(100, Math.round((spentNum / totalFunded) * 100)) : 0;
 
             return (
               <div key={c.id} className="dash-campaign-item">
@@ -194,10 +197,10 @@ export function AdCampaignsOverview({ adCampaigns }) {
                 <div className="dash-campaign-budget-col">
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '5px' }}>
                     <span style={{ color: '#475569' }}>
-                      Spent: <strong>${spentNum.toFixed(2)}</strong> / ${budgetNum.toFixed(2)} USD
+                      Spent: <strong>${formatAdAmount(spentNum)}</strong> / ${formatAdAmount(totalFunded)} USD
                     </span>
                     <span style={{ fontWeight: 700, color: '#16a34a' }}>
-                      ${remainingNum.toFixed(2)} rem.
+                      ${formatAdAmount(remainingNum)} rem.
                     </span>
                   </div>
                   <div style={{ height: '7px', width: '100%', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>

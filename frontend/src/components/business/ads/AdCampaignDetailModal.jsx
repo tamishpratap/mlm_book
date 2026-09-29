@@ -47,6 +47,7 @@ import businessApi from '../../../api/businessApi';
 import { getAvatarUrl, getMediaUrl } from '../../../utils/assetHelper';
 import { VerifiedBadge } from '../../../components/common/VerifiedBadge';
 import { ModalPortal } from '../../common/ModalPortal';
+import { formatAdAmount } from '../../../utils/adFormatters';
 import '../../../styles/member-business-pages.css';
 
 export function AdCampaignDetailModal({
@@ -732,9 +733,9 @@ export function AdCampaignDetailModal({
     : 0;
   const feeAmount = currentCampaign.fee_amount !== undefined && currentCampaign.fee_amount !== null && !isNaN(Number(currentCampaign.fee_amount))
     ? parseFloat(currentCampaign.fee_amount)
-    : (feePercent > 0 ? Math.round(totalFunded * (feePercent / 100) * 100) / 100 : 0);
+    : (feePercent > 0 ? Math.round(totalFunded * (feePercent / 100) * 10000) / 10000 : 0);
   const spent = parseFloat(currentCampaign.spent_amount) || 0;
-  const remaining = parseFloat(currentCampaign.remaining_amount) || Math.max(0, totalFunded - spent);
+  const remaining = Math.max(0, parseFloat((totalFunded - spent).toFixed(4)));
 
   const isLow = Boolean(currentCampaign.is_budget_low);
   const isExhausted = Boolean(currentCampaign.is_budget_exhausted || status === 'budget_exhausted');
@@ -1241,7 +1242,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Original Budget</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#4f7df3', marginTop: '4px' }}>
-                      ${origBudget.toFixed(2)}
+                      ${formatAdAmount(origBudget)}
                     </div>
                   </div>
 
@@ -1249,7 +1250,7 @@ export function AdCampaignDetailModal({
                     <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Top-Up Added</span>
                       <div style={{ fontSize: '16px', fontWeight: 800, color: '#16a34a', marginTop: '4px' }}>
-                        +${additionalFunding.toFixed(2)}
+                        +${formatAdAmount(additionalFunding)}
                       </div>
                     </div>
                   )}
@@ -1257,7 +1258,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Total Funded</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b', marginTop: '4px' }}>
-                      ${totalFunded.toFixed(2)}
+                      ${formatAdAmount(totalFunded)}
                     </div>
                   </div>
 
@@ -1265,7 +1266,7 @@ export function AdCampaignDetailModal({
                     <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({feePercent}%)</span>
                       <div style={{ fontSize: '16px', fontWeight: 800, color: '#64748b', marginTop: '4px' }}>
-                        ${feeAmount.toFixed(2)}
+                        ${formatAdAmount(feeAmount)}
                       </div>
                     </div>
                   )}
@@ -1273,7 +1274,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Rewards Paid</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#dc2626', marginTop: '4px' }}>
-                      ${spent.toFixed(4)}
+                      ${formatAdAmount(spent)}
                     </div>
                   </div>
 
@@ -1287,7 +1288,7 @@ export function AdCampaignDetailModal({
                         marginTop: '4px',
                       }}
                     >
-                      ${remaining.toFixed(4)}
+                      ${formatAdAmount(remaining)}
                     </div>
                   </div>
                 </div>
@@ -3364,7 +3365,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Total Funded</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b', marginTop: '3px' }}>
-                      ${(engagementSummary.financials?.total_funded || totalFunded).toFixed(2)}
+                      ${formatAdAmount(engagementSummary.financials?.total_funded || totalFunded)}
                     </div>
                   </div>
 
@@ -3372,7 +3373,7 @@ export function AdCampaignDetailModal({
                     <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({feePercent}%)</span>
                       <div style={{ fontSize: '16px', fontWeight: 800, color: '#64748b', marginTop: '3px' }}>
-                        ${(engagementSummary.financials?.platform_fee_amount || feeAmount).toFixed(2)}
+                        ${formatAdAmount(engagementSummary.financials?.platform_fee_amount || feeAmount)}
                       </div>
                     </div>
                   )}
@@ -3380,14 +3381,14 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Authoritative Rewards Paid</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#dc2626', marginTop: '3px' }}>
-                      ${engagementSummary.total_rewards_paid.toFixed(4)}
+                      ${formatAdAmount(engagementSummary.total_rewards_paid)}
                     </div>
                   </div>
 
                   <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Current Running Budget</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: isExhausted ? '#b91c1c' : '#15803d', marginTop: '3px' }}>
-                      ${(engagementSummary.financials?.remaining_budget || remaining).toFixed(4)}
+                      ${formatAdAmount(engagementSummary.financials?.remaining_budget || remaining)}
                     </div>
                   </div>
                 </div>

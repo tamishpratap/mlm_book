@@ -16,6 +16,7 @@ import { MemberDetailsPage } from '../pages/members/MemberDetailsPage';
 import { MemberEditPage } from '../pages/members/MemberEditPage';
 import { MemberSecurityPage } from '../pages/members/MemberSecurityPage';
 import { MemberWalletAddressPage } from '../pages/members/MemberWalletAddressPage';
+import { PhoneNumberChangeRequestsPage } from '../pages/members/PhoneNumberChangeRequestsPage';
 
 // Posts & Timeline Moderation Module Pages
 import { PostsListPage } from '../pages/posts/PostsListPage';
@@ -118,6 +119,7 @@ export function AppRoutes() {
         <Route path="members/blocked" element={<MembersListPage defaultMode="blocked" />} />
         <Route path="members/security" element={<MemberSecurityPage />} />
         <Route path="members/wallet-address" element={<MemberWalletAddressPage />} />
+        <Route path="members/phone-change-requests" element={<PhoneNumberChangeRequestsPage />} />
         <Route path="members/:id" element={<MemberDetailsPage />} />
         <Route path="members/:id/edit" element={<MemberEditPage />} />
 

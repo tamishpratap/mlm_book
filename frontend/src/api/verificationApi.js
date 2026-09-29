@@ -46,6 +46,45 @@ export const verificationApi = {
     });
     return response.data;
   },
+  /**
+   * Update phone number for an unverified member
+   * @param {string} phone
+   */
+  async updateUnverifiedPhone(phone) {
+    const response = await apiClient.put('/account/unverified-phone', {
+      phone,
+    });
+    return response.data;
+  },
+
+  /**
+   * Submit a phone change request for an already-verified member
+   * @param {string} newPhone
+   */
+  async requestPhoneChange(newPhone) {
+    const response = await apiClient.post('/account/phone-change-request', {
+      new_phone: newPhone,
+    });
+    return response.data;
+  },
+
+  /**
+   * Confirm sending the WhatsApp message for a phone change request
+   * @param {number|string} requestId
+   */
+  async confirmPhoneChangeWhatsApp(requestId) {
+    const response = await apiClient.post(`/account/phone-change-request/${requestId}/confirm-whatsapp`);
+    return response.data;
+  },
+
+  /**
+   * Cancel a pending phone change request
+   * @param {number|string} requestId
+   */
+  async cancelPhoneChangeRequest(requestId) {
+    const response = await apiClient.delete(`/account/phone-change-request/${requestId}`);
+    return response.data;
+  },
 };
 
 export default verificationApi;

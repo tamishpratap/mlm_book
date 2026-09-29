@@ -31,5 +31,6 @@ export { default as rewardManagementApi } from './rewardManagementApi';
 export { default as eventCampaignsApi } from './eventCampaignsApi';
 export { default as fundsApi } from './fundsApi';
 export { default as withdrawalsApi } from './withdrawalsApi';
+export { default as phoneChangeRequestsApi } from './phoneChangeRequestsApi';
 export { default as analyticsApi } from './analyticsApi';
 export { default as systemApi } from './systemApi';

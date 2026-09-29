@@ -50,9 +50,9 @@ class AdDepositController extends Controller
                 'instructions' => $instructions,
                 'disclaimer' => $disclaimer,
                 'is_available' => $isAvailable,
-                'member_fund_wallet' => (float) ($member ? ($member->p2p_wallet ?? 0.00) : 0.00),
-                'member_p2p_wallet' => (float) ($member ? ($member->p2p_wallet ?? 0.00) : 0.00),
-                'member_ad_balance' => (float) ($member ? ($member->p2p_wallet ?? 0.00) : 0.00),
+                'member_fund_wallet' => round((float) ($member ? ($member->p2p_wallet ?? $member->ad_balance ?? 0.00) : 0.00), 4),
+                'member_p2p_wallet' => round((float) ($member ? ($member->p2p_wallet ?? $member->ad_balance ?? 0.00) : 0.00), 4),
+                'member_ad_balance' => round((float) ($member ? ($member->p2p_wallet ?? $member->ad_balance ?? 0.00) : 0.00), 4),
             ],
         ]);
     }
@@ -244,10 +244,10 @@ class AdDepositController extends Controller
 
                 $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
                 if ($feePercent > 0.00) {
-                    $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 2);
-                    $feeAmount = round($verifiedAmount - $netAmount, 2);
+                    $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 4);
+                    $feeAmount = round($verifiedAmount - $netAmount, 4);
                 } else {
-                    $netAmount = $verifiedAmount;
+                    $netAmount = round($verifiedAmount, 4);
                     $feeAmount = 0.00;
                 }
 
@@ -281,7 +281,7 @@ class AdDepositController extends Controller
                 ]);
 
                 // Atomically credit Member Fund Wallet (p2p_wallet) with Net Amount
-                $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $netAmount, 2);
+                $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $netAmount, 4);
                 $lockedMember->save();
 
                 return $newDeposit;
@@ -289,15 +289,18 @@ class AdDepositController extends Controller
 
             $creditedAmount = (float) ($deposit->net_amount_inr ?? $deposit->expected_usd_amount ?? $verifiedAmount);
 
+            $freshMember = $member->fresh() ?? $member;
+            $fundBalance = round((float) ($freshMember->p2p_wallet ?? $freshMember->ad_balance ?? 0.00), 4);
+
             return response()->json([
                 'success' => true,
                 'verified' => true,
                 'status' => 'approved',
                 'message' => "USDT (BEP-20) transaction verified on-chain! \${$creditedAmount} USD has been credited to your Fund Wallet.",
                 'deposit' => $deposit->load(['businessPage:id,page_name,slug']),
-                'member_fund_wallet' => (float) $member->fresh()->p2p_wallet,
-                'member_p2p_wallet' => (float) $member->fresh()->p2p_wallet,
-                'member_ad_balance' => (float) $member->fresh()->p2p_wallet,
+                'member_fund_wallet' => $fundBalance,
+                'member_p2p_wallet' => $fundBalance,
+                'member_ad_balance' => $fundBalance,
                 'credited_amount' => $creditedAmount,
                 'tx_explorer_url' => $explorerUrl,
             ], 201);
@@ -366,7 +369,7 @@ class AdDepositController extends Controller
         return response()->json([
             'success' => true,
             'deposits' => $deposits,
-            'member_ad_balance' => (float) ($member->p2p_wallet ?? 0.00),
+            'member_ad_balance' => round((float) ($member->fresh()->p2p_wallet ?? $member->fresh()->ad_balance ?? 0.00), 4),
         ]);
     }
 }

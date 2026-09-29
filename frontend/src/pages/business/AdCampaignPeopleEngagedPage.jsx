@@ -55,6 +55,7 @@ import MemberAvatar from '../../components/common/MemberAvatar';
 import { getAvatarUrl, getInitials, getMediaUrl } from '../../utils/assetHelper';
 import { AddFundsToCampaignModal } from '../../components/business/ads/AddFundsToCampaignModal';
 import { AddFundModal } from '../../components/business/ads/AddFundModal';
+import { formatAdAmount, formatAdCurrency } from '../../utils/adFormatters';
 
 export function AdCampaignPeopleEngagedPage() {
   const { slug, campaignId } = useParams();
@@ -343,8 +344,7 @@ export function AdCampaignPeopleEngagedPage() {
 
   // Helper formatting functions
   const formatMoney = (val) => {
-    const num = parseFloat(val) || 0;
-    return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return formatAdCurrency(val, true);
   };
 
   const getCleanWhatsAppNumber = (phoneStr) => {
@@ -457,9 +457,9 @@ export function AdCampaignPeopleEngagedPage() {
     Boolean(campaign.is_budget_exhausted || campaign.status === 'budget_exhausted')
   );
 
-  const totalFundedAmount = parseFloat(summary.financials?.total_funded || campaign.total_funded || campaign.budget || 0);
-  const spentAmount = parseFloat(summary.financials?.spent_amount || campaign.spent_amount || 0);
-  const remainingAmount = parseFloat(summary.financials?.remaining_budget || campaign.remaining_amount || 0);
+  const totalFundedAmount = parseFloat(summary.financials?.total_funded ?? campaign.total_funded ?? campaign.budget ?? 0);
+  const spentAmount = parseFloat(summary.financials?.spent_amount ?? campaign.spent_amount ?? summary.total_rewards_paid ?? 0);
+  const remainingAmount = Math.max(0, parseFloat((totalFundedAmount - spentAmount).toFixed(4)));
   const budgetSpentPct = totalFundedAmount > 0 ? Math.min(100, Math.round((spentAmount / totalFundedAmount) * 100)) : 0;
 
   return (
@@ -841,7 +841,7 @@ export function AdCampaignPeopleEngagedPage() {
             </div>
             <div>
               <strong style={{ fontSize: '20px', fontWeight: 800, color: '#15803d', display: 'block', lineHeight: 1.1 }}>
-                {formatMoney(summary.total_rewards_paid)}
+                {formatMoney(summary.total_rewards_paid ?? spentAmount ?? 0)}
               </strong>
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Total Rewards Paid</span>
             </div>
@@ -976,7 +976,7 @@ export function AdCampaignPeopleEngagedPage() {
                       Total Dynamic Rewards Credited
                     </span>
                     <span style={{ fontSize: '14px', fontWeight: 700, color: '#2563eb' }}>
-                      {formatMoney(summary.total_rewards_paid || 0)}
+                      {formatMoney(summary.total_rewards_paid ?? spentAmount ?? 0)}
                     </span>
                   </div>
 
@@ -995,7 +995,7 @@ export function AdCampaignPeopleEngagedPage() {
                       Remaining Campaign Budget
                     </span>
                     <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                      {formatMoney(summary.remaining_budget || 0)}
+                      {formatMoney(remainingAmount)}
                     </span>
                   </div>
                 </div>

@@ -323,7 +323,7 @@ class AdCampaignEngagementService
         $additionalFunding = (float) $campaign->additional_funding;
         $totalFunded = (float) ($campaign->total_funded ?? ($originalBudget + $additionalFunding));
         $feePercent = (float) ($campaign->fee_percent ?? 0.0);
-        $feeAmount = (float) ($campaign->fee_amount ?? round($totalFunded * ($feePercent / 100), 2));
+        $feeAmount = (float) ($campaign->fee_amount ?? round($totalFunded * ($feePercent / 100), 4));
         $spentAmount = (float) $campaign->spent_amount;
         $remainingBudget = (float) $campaign->remaining_amount;
 
@@ -367,14 +367,14 @@ class AdCampaignEngagementService
             'reward_qualified_count' => $rewardQualifiedCount,
             'total_rewards_count' => $effectiveRewardCount,
             'total_rewards_paid' => $totalRewardsPaid,
-            'remaining_budget' => round($remainingBudget, 2),
+            'remaining_budget' => round($remainingBudget, 4),
             'verified_members_count' => $verifiedMembersCount,
             'financials' => [
-                'original_budget' => round($originalBudget, 2),
-                'additional_funding' => round($additionalFunding, 2),
-                'total_funded' => round($totalFunded, 2),
+                'original_budget' => round($originalBudget, 4),
+                'additional_funding' => round($additionalFunding, 4),
+                'total_funded' => round($totalFunded, 4),
                 'platform_fee_percent' => $feePercent,
-                'platform_fee_amount' => round($feeAmount, 2),
+                'platform_fee_amount' => round($feeAmount, 4),
                 'spent_amount' => round($spentAmount, 4),
                 'remaining_budget' => round($remainingBudget, 4),
             ],
@@ -554,7 +554,7 @@ class AdCampaignEngagementService
                 'reward_status' => $rewardStatus,
                 'is_rewarded' => $reward !== null && $reward->status === AdReward::STATUS_CREDITED,
                 'reward_amount_usd' => $rewardAmount,
-                'reward_formatted' => $rewardAmount > 0 ? '+$' . number_format($rewardAmount, 4, '.', '') . ' USD' : '$0.00',
+                'reward_formatted' => $rewardAmount > 0 ? '+$' . number_format($rewardAmount, 4, '.', '') . ' USD' : '$0.0000 USD',
             ],
             'reward_detail' => $reward ? [
                 'id' => $reward->id,
