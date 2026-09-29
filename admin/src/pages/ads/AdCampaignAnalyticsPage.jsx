@@ -237,7 +237,7 @@ export function AdCampaignAnalyticsPage() {
               Financial Accounting & Platform Revenue Reconciliation
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Exact mathematical separation between Advertiser Wallet Debits, Platform Fee Revenue, and Verified User Reward Depletions.
+              Exact mathematical tracking of Advertiser Wallet Debits and Verified User Reward Depletions.
             </p>
           </div>
           <div className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 rounded-full text-xs font-semibold text-emerald-300 w-fit">
@@ -245,7 +245,7 @@ export function AdCampaignAnalyticsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-4 bg-white/5 rounded-xl border border-white/10">
             <span className="text-xs text-slate-400 font-semibold block">Campaign Running Budget</span>
             <span className="text-xl font-bold text-white mt-1 block">
@@ -255,19 +255,11 @@ export function AdCampaignAnalyticsPage() {
           </div>
 
           <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-            <span className="text-xs text-amber-300 font-semibold block">Admin Platform Fee ({Number(metrics.campaign_platform_fee_percent ?? 0)}%)</span>
-            <span className="text-xl font-bold text-amber-400 mt-1 block">
-              ${Number(metrics.total_platform_fees || metrics.total_admin_fees || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </span>
-            <span className="text-[11px] text-amber-200/70">Retained as platform revenue</span>
-          </div>
-
-          <div className="p-4 bg-white/5 rounded-xl border border-white/10">
             <span className="text-xs text-sky-300 font-semibold block">Total Wallet Debited</span>
             <span className="text-xl font-bold text-sky-400 mt-1 block">
               ${Number(metrics.total_wallet_debits || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </span>
-            <span className="text-[11px] text-sky-200/70">Budget + Admin Platform Fee</span>
+            <span className="text-[11px] text-sky-200/70">Total advertiser funds debited</span>
           </div>
 
           <div className="p-4 bg-white/5 rounded-xl border border-white/10">

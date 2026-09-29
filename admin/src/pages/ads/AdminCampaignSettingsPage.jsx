@@ -173,7 +173,7 @@ export function AdminCampaignSettingsPage() {
               <div>
                 <h3 className="text-base font-bold text-slate-900 m-0">Platform Fee Configuration</h3>
                 <p className="text-xs text-slate-500 m-0 mt-0.5">
-                  Set the administrative platform fee applied on top of advertiser campaign budgets.
+                  Set the campaign platform fee applied on top of advertiser campaign budgets.
                 </p>
               </div>
             </div>

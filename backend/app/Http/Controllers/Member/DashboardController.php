@@ -194,8 +194,8 @@ class DashboardController extends Controller
             $adCampaignsSummary = [
                 'metrics' => [
                     'total_campaigns' => $allCampaigns->count(),
-                    'active_campaigns' => $allCampaigns->where('status', AdCampaign::STATUS_ACTIVE)->count(),
-                    'pending_review' => $allCampaigns->where('status', AdCampaign::STATUS_PENDING_REVIEW)->count(),
+                    'active_campaigns' => $allCampaigns->whereIn('status', [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED])->count(),
+                    'pending_review' => $allCampaigns->filter(fn($c) => $c->status === AdCampaign::STATUS_PENDING_REVIEW || $c->approval_status === AdCampaign::APPROVAL_PENDING)->count(),
                     'approved_campaigns' => $allCampaigns->where('status', AdCampaign::STATUS_APPROVED)->count(),
                     'paused_campaigns' => $allCampaigns->where('status', AdCampaign::STATUS_PAUSED)->count(),
                     'completed_campaigns' => $allCampaigns->where('status', AdCampaign::STATUS_COMPLETED)->count(),

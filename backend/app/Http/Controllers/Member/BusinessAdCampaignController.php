@@ -84,8 +84,11 @@ class BusinessAdCampaignController extends Controller
 
         $metrics = [
             'total_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->count(),
-            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_ACTIVE)->count(),
-            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PENDING_REVIEW)->count(),
+            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->whereIn('status', [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED])->count(),
+            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where(function ($q) {
+                $q->where('status', AdCampaign::STATUS_PENDING_REVIEW)
+                  ->orWhere('approval_status', AdCampaign::APPROVAL_PENDING);
+            })->count(),
             'approved_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_APPROVED)->count(),
             'paused_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PAUSED)->count(),
             'completed_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_COMPLETED)->count(),
@@ -1945,8 +1948,11 @@ class BusinessAdCampaignController extends Controller
 
         $metrics = [
             'total_campaigns' => $pageCampaignIds->count(),
-            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_ACTIVE)->count(),
-            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PENDING_REVIEW)->count(),
+            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->whereIn('status', [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED])->count(),
+            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where(function ($q) {
+                $q->where('status', AdCampaign::STATUS_PENDING_REVIEW)
+                  ->orWhere('approval_status', AdCampaign::APPROVAL_PENDING);
+            })->count(),
             'approved_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_APPROVED)->count(),
             'paused_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PAUSED)->count(),
             'completed_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_COMPLETED)->count(),
@@ -2038,119 +2044,65 @@ class BusinessAdCampaignController extends Controller
             ], 403);
         }
 
-        // Authoritative query: ONLY successfully credited rewards for this specific campaign
-        $query = AdReward::query()
-            ->where('ad_campaign_id', $campaign->id)
-            ->where('status', AdReward::STATUS_CREDITED)
-            ->with(['member:id,name,user_id,email,phone,profile_photo,mobile_verified_at,city,country']);
+        $engagementService = app(AdCampaignEngagementService::class);
 
-        // Prevent manipulation to expose unrewarded interactions
-        if (in_array($request->input('reward_status'), ['not_rewarded', 'pending', 'failed', 'rejected']) ||
-            in_array($request->input('action'), ['interested', 'clicked', 'clicks', 'visited_landing_page'])) {
-            $query->whereRaw('0 = 1');
-        }
-
-        // 1. Keyword search (name, user_id, email, phone, or member_id)
-        if ($request->filled('q')) {
-            $search = trim((string) $request->input('q'));
-            $query->where(function ($sq) use ($search) {
-                $sq->whereHas('member', function ($mq) use ($search) {
-                    $mq->where('name', 'like', "%{$search}%")
-                        ->orWhere('user_id', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                });
-                if (is_numeric($search)) {
-                    $sq->orWhere('ad_rewards.member_id', (int) $search);
-                }
-            });
-        }
-
-        // 2. Mobile verification filter
-        $verifiedOnly = $request->boolean('verified_only') || $request->input('verification') === 'verified';
-        $verificationFilter = $request->input('verification', $verifiedOnly ? 'verified' : 'all');
-        if ($verificationFilter === 'verified') {
-            $query->whereHas('member', fn ($mq) => $mq->whereNotNull('mobile_verified_at'));
-        } elseif ($verificationFilter === 'unverified') {
-            $query->whereHas('member', fn ($mq) => $mq->whereNull('mobile_verified_at'));
-        }
-
-        // 3. Date filtering
-        $datePreset = $request->input('date_preset', 'all');
-        if ($datePreset === 'today') {
-            $query->where('ad_rewards.created_at', '>=', now()->startOfDay());
-        } elseif ($datePreset === 'yesterday') {
-            $query->whereBetween('ad_rewards.created_at', [
-                now()->subDay()->startOfDay(),
-                now()->subDay()->endOfDay(),
-            ]);
-        } elseif ($datePreset === 'last_7_days') {
-            $query->where('ad_rewards.created_at', '>=', now()->subDays(7)->startOfDay());
-        } elseif ($datePreset === 'last_30_days') {
-            $query->where('ad_rewards.created_at', '>=', now()->subDays(30)->startOfDay());
-        } elseif ($datePreset === 'custom' || $request->filled('start_date') || $request->filled('end_date') || $request->filled('date_from') || $request->filled('date_to')) {
-            $startDate = $request->input('start_date', $request->input('date_from'));
-            $endDate = $request->input('end_date', $request->input('date_to'));
-            if ($startDate && $endDate && strtotime($startDate) > strtotime($endDate)) {
-                $temp = $startDate;
-                $startDate = $endDate;
-                $endDate = $temp;
-            }
-            if ($startDate) {
-                $query->where('ad_rewards.created_at', '>=', date('Y-m-d 00:00:00', strtotime($startDate)));
-            }
-            if ($endDate) {
-                $query->where('ad_rewards.created_at', '<=', date('Y-m-d 23:59:59', strtotime($endDate)));
-            }
-        }
-
-        // 4. Member ID filter (if specified)
-        if ($request->filled('member_id')) {
-            $query->where('ad_rewards.member_id', $request->input('member_id'));
-        }
-
-        // 5. Sorting
-        $sort = $request->input('sort', 'newest');
-        if ($sort === 'oldest') {
-            $query->orderBy('ad_rewards.created_at', 'asc')->orderBy('ad_rewards.id', 'asc');
-        } elseif ($sort === 'name_asc') {
-            $query->join('members', 'ad_rewards.member_id', '=', 'members.id')
-                ->select('ad_rewards.*')
-                ->orderBy('members.name', 'asc');
-        } elseif ($sort === 'highest_reward' || $sort === 'reward_desc') {
-            $query->orderByDesc('ad_rewards.reward_amount_usd')->orderByDesc('ad_rewards.created_at');
-        } elseif ($sort === 'lowest_reward' || $sort === 'reward_asc') {
-            $query->orderBy('ad_rewards.reward_amount_usd', 'asc')->orderBy('ad_rewards.created_at', 'asc');
-        } else {
-            $query->orderByDesc('ad_rewards.created_at')->orderByDesc('ad_rewards.id');
-        }
+        $filters = [
+            'action' => $request->input('action', 'all'),
+            'reward_status' => $request->input('reward_status', 'all'),
+            'verification' => $request->input('verification', $request->boolean('verified_only') ? 'verified' : 'all'),
+            'date_preset' => $request->input('date_preset', 'all'),
+            'start_date' => $request->input('start_date', $request->input('date_from')),
+            'end_date' => $request->input('end_date', $request->input('date_to')),
+            'sort' => $request->input('sort', 'newest'),
+            'q' => trim((string) $request->input('q')),
+            'member_id' => $request->input('member_id'),
+        ];
 
         // Server-Side Pagination
         $page = max(1, (int) $request->input('page', 1));
         $perPage = min(50, max(1, (int) $request->input('per_page', 15)));
 
-        $paginated = $query->paginate($perPage, ['ad_rewards.*'], 'page', $page);
+        $query = $engagementService->getActivitiesQuery($campaign, $filters);
 
-        $data = collect($paginated->items())->map(function (AdReward $reward) {
-            $member = $reward->member;
-            $rewardAmount = (float) ($reward->reward_amount_usd ?? 0.00);
+        // Filtered unique members count
+        $filteredUniqueMembers = (clone $query)
+            ->whereNotNull('ad_campaign_activities.member_id')
+            ->distinct('ad_campaign_activities.member_id')
+            ->count('ad_campaign_activities.member_id');
+
+        $paginated = $query->paginate($perPage, ['ad_campaign_activities.*'], 'page', $page);
+
+        // Preload credited rewards for members in this page to display reward details accurately
+        $memberIds = collect($paginated->items())->pluck('member_id')->filter()->unique()->toArray();
+        $creditedRewardsByMember = AdReward::where('ad_campaign_id', $campaign->id)
+            ->where('status', AdReward::STATUS_CREDITED)
+            ->whereIn('member_id', $memberIds)
+            ->get()
+            ->keyBy('member_id');
+
+        $data = collect($paginated->items())->map(function (AdCampaignActivity $act) use ($creditedRewardsByMember) {
+            $member = $act->member;
+            $actReward = $act->reward ?: ($act->member_id ? ($creditedRewardsByMember[$act->member_id] ?? null) : null);
+            $rewardAmount = $actReward ? (float) ($actReward->reward_amount_usd ?? 0.00) : 0.00;
 
             return [
-                'id' => 'reward_' . $reward->id,
-                'activity_id' => $reward->id,
-                'event_id' => $reward->qualifying_event_id,
-                'type' => 'reward',
-                'action' => 'Rewarded Visit',
-                'action_label' => 'Rewarded Visit',
+                'id' => 'act_' . $act->id,
+                'activity_id' => $act->id,
+                'event_id' => $act->qualifying_event_id,
+                'type' => $act->action,
+                'action' => $act->action,
+                'action_label' => $act->action_label ?: ucfirst(str_replace('_', ' ', $act->action)),
                 'reward_amount_usd' => $rewardAmount,
                 'reward_amount_exact' => number_format($rewardAmount, 4, '.', ''),
-                'status' => $reward->status,
-                'created_at' => $reward->created_at?->toIso8601String(),
-                'timestamp' => $reward->created_at?->timestamp ?? 0,
+                'reward_formatted' => $rewardAmount > 0 ? '+$' . number_format($rewardAmount, 4, '.', '') . ' USD' : '$0.00',
+                'status' => $actReward ? $actReward->status : ($act->action === AdCampaignActivity::ACTION_FAILED ? 'failed' : 'completed'),
+                'created_at' => $act->created_at?->toIso8601String(),
+                'timestamp' => $act->created_at?->timestamp ?? 0,
                 'user' => $member ? [
                     'id' => $member->id,
                     'name' => $member->name,
                     'username' => $member->user_id,
+                    'user_id' => $member->user_id,
                     'email' => $member->email,
                     'phone' => $member->phone,
                     'profile_photo' => $member->profile_photo,
@@ -2161,21 +2113,21 @@ class BusinessAdCampaignController extends Controller
                     'country' => $member->country,
                 ] : [
                     'id' => null,
-                    'name' => 'Verified Member',
+                    'name' => 'Platform Visitor',
                     'username' => null,
+                    'user_id' => null,
                     'email' => null,
                     'phone' => null,
                     'profile_photo' => null,
                     'avatar' => null,
                     'avatar_url' => null,
-                    'is_verified' => true,
+                    'is_verified' => false,
                     'city' => null,
                     'country' => null,
                 ],
             ];
         });
 
-        $engagementService = app(AdCampaignEngagementService::class);
         $summary = $engagementService->getSummary($campaign);
 
         return response()->json([
@@ -2189,7 +2141,7 @@ class BusinessAdCampaignController extends Controller
                 'per_page' => $paginated->perPage(),
                 'total' => $paginated->total(),
                 'last_page' => $paginated->lastPage(),
-                'filtered_unique_members' => $paginated->total(),
+                'filtered_unique_members' => $filteredUniqueMembers,
             ],
             'summary' => $summary,
         ]);
