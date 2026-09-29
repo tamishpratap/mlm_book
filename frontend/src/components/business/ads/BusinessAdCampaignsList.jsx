@@ -247,7 +247,21 @@ export function BusinessAdCampaignsList({
             </div>
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#d97706', marginTop: '8px' }}>
-            {metrics.active_campaigns || 0} / {metrics.pending_review || 0}
+            {(() => {
+              let activeCount = Number(metrics.active_campaigns ?? 0);
+              const approvedCount = Number(metrics.approved_campaigns ?? 0);
+              if (activeCount === 0 && approvedCount > 0) {
+                activeCount = approvedCount;
+              }
+              if (activeCount === 0 && Array.isArray(campaigns) && campaigns.length > 0) {
+                const runningInList = campaigns.filter((c) => c.status === 'active' || c.status === 'approved').length;
+                if (runningInList > 0) {
+                  activeCount = runningInList;
+                }
+              }
+              const pendingCount = Number(metrics.pending_review ?? 0);
+              return `${activeCount} / ${pendingCount}`;
+            })()}
           </div>
           <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>Active vs in-review ads</div>
         </div>

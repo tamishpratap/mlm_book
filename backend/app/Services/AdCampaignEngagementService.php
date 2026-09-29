@@ -182,15 +182,29 @@ class AdCampaignEngagementService
         $rewardStatus = $filters['reward_status'] ?? 'all';
         if ($rewardStatus !== 'all' && !empty($rewardStatus)) {
             if ($rewardStatus === 'rewarded') {
-                $query->where(function ($q) {
+                $query->where(function ($q) use ($campaign) {
                     $q->where('ad_campaign_activities.action', AdCampaignActivity::ACTION_REWARDED)
-                        ->orWhereHas('reward', fn ($rq) => $rq->where('status', AdReward::STATUS_CREDITED));
+                        ->orWhereHas('reward', fn ($rq) => $rq->where('status', AdReward::STATUS_CREDITED))
+                        ->orWhereExists(function ($sub) use ($campaign) {
+                            $sub->select(DB::raw(1))
+                                ->from('ad_rewards')
+                                ->whereColumn('ad_rewards.member_id', 'ad_campaign_activities.member_id')
+                                ->where('ad_rewards.ad_campaign_id', $campaign->id)
+                                ->where('ad_rewards.status', AdReward::STATUS_CREDITED);
+                        });
                 });
             } elseif ($rewardStatus === 'not_rewarded') {
                 $query->where('ad_campaign_activities.action', '!=', AdCampaignActivity::ACTION_REWARDED)
                     ->where(function ($q) {
                         $q->whereNull('ad_campaign_activities.ad_reward_id')
                             ->orWhereDoesntHave('reward', fn ($rq) => $rq->where('status', AdReward::STATUS_CREDITED));
+                    })
+                    ->whereNotExists(function ($sub) use ($campaign) {
+                        $sub->select(DB::raw(1))
+                            ->from('ad_rewards')
+                            ->whereColumn('ad_rewards.member_id', 'ad_campaign_activities.member_id')
+                            ->where('ad_rewards.ad_campaign_id', $campaign->id)
+                            ->where('ad_rewards.status', AdReward::STATUS_CREDITED);
                     });
             } elseif ($rewardStatus === 'failed') {
                 $query->where(function ($q) {
@@ -209,6 +223,10 @@ class AdCampaignEngagementService
                         ->orWhere('user_id', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
                         ->orWhere('phone', 'like', "%{$search}%");
+
+                    if (is_numeric($search)) {
+                        $mq->orWhere('members.id', (int) $search);
+                    }
                 });
 
                 if (is_numeric($search)) {
@@ -266,12 +284,19 @@ class AdCampaignEngagementService
         $sort = $filters['sort'] ?? $filters['sort_by'] ?? 'newest';
         if ($sort === 'oldest') {
             return $query->orderBy('ad_campaign_activities.created_at', 'asc')->orderBy('ad_campaign_activities.id', 'asc');
+        } elseif ($sort === 'name_asc') {
+            return $query->leftJoin('members', 'ad_campaign_activities.member_id', '=', 'members.id')
+                ->select('ad_campaign_activities.*')
+                ->orderBy('members.name', 'asc')
+                ->orderByDesc('ad_campaign_activities.created_at');
         } elseif ($sort === 'highest_reward') {
             return $query->leftJoin('ad_rewards', 'ad_campaign_activities.ad_reward_id', '=', 'ad_rewards.id')
+                ->select('ad_campaign_activities.*')
                 ->orderByDesc('ad_rewards.reward_amount_usd')
                 ->orderByDesc('ad_campaign_activities.created_at');
         } elseif ($sort === 'lowest_reward') {
             return $query->leftJoin('ad_rewards', 'ad_campaign_activities.ad_reward_id', '=', 'ad_rewards.id')
+                ->select('ad_campaign_activities.*')
                 ->orderBy('ad_rewards.reward_amount_usd', 'asc')
                 ->orderBy('ad_campaign_activities.created_at', 'asc');
         }
@@ -672,78 +697,37 @@ class AdCampaignEngagementService
                     'Latest Activity At',
                 ]);
 
-                $rewardQuery = AdReward::where('ad_campaign_id', $campaign->id)
-                    ->where('status', AdReward::STATUS_CREDITED)
-                    ->with('member');
+                $matchingMemberIds = $this->getActivitiesQuery($campaign, $filters)
+                    ->whereNotNull('ad_campaign_activities.member_id')
+                    ->pluck('ad_campaign_activities.member_id')
+                    ->unique()
+                    ->filter();
 
                 if (!empty($selectedMemberIds)) {
-                    $rewardQuery->whereIn('member_id', $selectedMemberIds);
+                    $matchingMemberIds = $matchingMemberIds->intersect($selectedMemberIds);
                 }
 
-                if (!empty($filters['search']) || !empty($filters['q'])) {
-                    $search = trim((string) ($filters['search'] ?? $filters['q']));
-                    $rewardQuery->where(function ($sq) use ($search) {
-                        $sq->whereHas('member', function ($mq) use ($search) {
-                            $mq->where('name', 'like', "%{$search}%")
-                                ->orWhere('user_id', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%")
-                                ->orWhere('phone', 'like', "%{$search}%");
-                        });
-                        if (is_numeric($search)) {
-                            $sq->orWhere('ad_rewards.member_id', (int) $search);
-                        }
-                    });
-                }
+                $memberIdsList = $matchingMemberIds->values()->toArray();
 
-                $verification = $filters['verification'] ?? (!empty($filters['verified_only']) ? 'verified' : 'all');
-                if ($verification === 'verified') {
-                    $rewardQuery->whereHas('member', fn ($mq) => $mq->whereNotNull('mobile_verified_at'));
-                } elseif ($verification === 'unverified') {
-                    $rewardQuery->whereHas('member', fn ($mq) => $mq->whereNull('mobile_verified_at'));
-                }
+                $membersQuery = Member::whereIn('id', $memberIdsList);
 
-                $datePreset = $filters['date_preset'] ?? 'all';
-                if ($datePreset === 'today') {
-                    $rewardQuery->where('ad_rewards.created_at', '>=', now()->startOfDay());
-                } elseif ($datePreset === 'yesterday') {
-                    $rewardQuery->whereBetween('ad_rewards.created_at', [
-                        now()->subDay()->startOfDay(),
-                        now()->subDay()->endOfDay(),
-                    ]);
-                } elseif ($datePreset === 'last_7_days') {
-                    $rewardQuery->where('ad_rewards.created_at', '>=', now()->subDays(7)->startOfDay());
-                } elseif ($datePreset === 'last_30_days') {
-                    $rewardQuery->where('ad_rewards.created_at', '>=', now()->subDays(30)->startOfDay());
-                } elseif ($datePreset === 'custom' || (!empty($filters['start_date']) || !empty($filters['end_date']) || !empty($filters['date_from']) || !empty($filters['date_to']))) {
-                    $startDate = $filters['start_date'] ?? $filters['date_from'] ?? null;
-                    $endDate = $filters['end_date'] ?? $filters['date_to'] ?? null;
-                    if ($startDate && $endDate && strtotime($startDate) > strtotime($endDate)) {
-                        $temp = $startDate;
-                        $startDate = $endDate;
-                        $endDate = $temp;
-                    }
-                    if ($startDate) {
-                        $rewardQuery->where('ad_rewards.created_at', '>=', date('Y-m-d 00:00:00', strtotime($startDate)));
-                    }
-                    if ($endDate) {
-                        $rewardQuery->where('ad_rewards.created_at', '<=', date('Y-m-d 23:59:59', strtotime($endDate)));
-                    }
-                }
-
-                $rewardQuery->chunk(100, function ($rewards) use ($handle, $campaign) {
-                    $memberIds = $rewards->pluck('member_id')->filter()->unique()->toArray();
+                $membersQuery->chunk(100, function ($members) use ($handle, $campaign) {
+                    $chunkMemberIds = $members->pluck('id')->toArray();
                     $memberActivities = AdCampaignActivity::where('ad_campaign_id', $campaign->id)
-                        ->whereIn('member_id', $memberIds)
+                        ->whereIn('member_id', $chunkMemberIds)
                         ->get()
                         ->groupBy('member_id');
 
-                    foreach ($rewards as $reward) {
-                        $member = $reward->member;
-                        if (!$member) {
-                            continue;
-                        }
+                    $memberRewards = AdReward::where('ad_campaign_id', $campaign->id)
+                        ->where('status', AdReward::STATUS_CREDITED)
+                        ->whereIn('member_id', $chunkMemberIds)
+                        ->get()
+                        ->keyBy('member_id');
 
+                    foreach ($members as $member) {
                         $acts = $memberActivities->get($member->id, collect());
+                        $reward = $memberRewards->get($member->id);
+
                         $interestedCount = $acts->where('action', AdCampaignActivity::ACTION_INTERESTED)->count();
                         $clickCount = $acts->where('action', AdCampaignActivity::ACTION_CLICKED)->count();
                         $landingVisitCount = $acts->where('action', AdCampaignActivity::ACTION_VISITED_LANDING_PAGE)->count();
@@ -751,6 +735,7 @@ class AdCampaignEngagementService
                         $latestActivity = $acts->sortByDesc('created_at')->first();
 
                         $location = array_filter([$member->city, $member->country]);
+                        $isRewarded = $reward !== null;
 
                         fputcsv($handle, [
                             $member->id,
@@ -763,13 +748,13 @@ class AdCampaignEngagementService
                             $acts->count() ?: 1,
                             $interestedCount,
                             $clickCount,
-                            $landingVisitCount ?: 1,
-                            'Rewarded',
-                            number_format((float) $reward->reward_amount_usd, 4, '.', ''),
-                            $reward->tier_label ?: 'Standard Slab',
-                            (int) $reward->direct_verified_referral_count,
-                            $firstActivity?->created_at ? $firstActivity->created_at->toDateTimeString() : $reward->created_at?->toDateTimeString(),
-                            $latestActivity?->created_at ? $latestActivity->created_at->toDateTimeString() : $reward->created_at?->toDateTimeString(),
+                            $landingVisitCount,
+                            $isRewarded ? 'Rewarded' : 'Not Rewarded',
+                            $isRewarded ? number_format((float) $reward->reward_amount_usd, 4, '.', '') : '0.0000',
+                            $reward?->tier_label ?: ($isRewarded ? 'Standard Slab' : 'N/A'),
+                            $reward ? (int) $reward->direct_verified_referral_count : 0,
+                            $firstActivity?->created_at ? $firstActivity->created_at->toDateTimeString() : ($reward?->created_at?->toDateTimeString() ?? ''),
+                            $latestActivity?->created_at ? $latestActivity->created_at->toDateTimeString() : ($reward?->created_at?->toDateTimeString() ?? ''),
                         ]);
                     }
                 });
