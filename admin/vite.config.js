@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
+const backendUrl = process.env.VITE_BACKEND_URL || 'https://mlmbookai.com';
+
 // https://vite.dev/config/
 export default defineConfig({
   base: '/admin/',
@@ -13,25 +15,25 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://mlmbookai.com',
+        target: backendUrl,
         changeOrigin: true,
         secure: false,
       },
       '/sanctum': {
-        target: 'https://mlmbookai.com',
+        target: backendUrl,
         changeOrigin: true,
         secure: false,
       },
       '/uploads': {
-        target: 'https://mlmbookai.com',
+        target: backendUrl,
         changeOrigin: true,
       },
       '/logo': {
-        target: 'https://mlmbookai.com',
+        target: backendUrl,
         changeOrigin: true,
       },
       '/storage': {
-        target: 'https://mlmbookai.com',
+        target: backendUrl,
         changeOrigin: true,
       },
     },

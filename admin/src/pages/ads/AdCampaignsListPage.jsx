@@ -880,12 +880,6 @@ export function AdCampaignsListPage() {
                   </span>
                 </div>
                 <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-400 block font-medium">Admin Fee ({detailCampaign.fee_percent || 2.5}%)</span>
-                  <span className="text-sm font-bold text-amber-600">
-                    ${Number(detailCampaign.fee_amount || 0).toFixed(2)}
-                  </span>
-                </div>
-                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
                   <span className="text-slate-400 block font-medium">Total Wallet Debit</span>
                   <span className="text-sm font-bold text-sky-600">
                     ${Number(detailCampaign.wallet_debit || detailCampaign.budget || 0).toFixed(2)}
