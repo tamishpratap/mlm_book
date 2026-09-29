@@ -2007,6 +2007,7 @@ export function AdCampaignDetailModal({
                           onClick={() => {
                             setSearchInputValue('');
                             setEngagementSearch('');
+                            setEngagementPage(1);
                           }}
                         />
                       </span>
@@ -2031,7 +2032,10 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setEngagementActionFilter('all')}
+                          onClick={() => {
+                            setEngagementActionFilter('all');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
@@ -2055,7 +2059,10 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setRewardStatusFilter('all')}
+                          onClick={() => {
+                            setRewardStatusFilter('all');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
@@ -2079,7 +2086,10 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setVerificationFilter('all')}
+                          onClick={() => {
+                            setVerificationFilter('all');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
@@ -2103,7 +2113,12 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setDatePreset('all')}
+                          onClick={() => {
+                            setDatePreset('all');
+                            setCustomStartDate('');
+                            setCustomEndDate('');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
@@ -2127,7 +2142,10 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setSortOrder('newest')}
+                          onClick={() => {
+                            setSortOrder('newest');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
