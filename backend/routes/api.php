@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\EventRewardRuleController;
 use App\Http\Controllers\Admin\EventCampaignManagementController;
 use App\Http\Controllers\Admin\RewardManagementController;
 use App\Http\Controllers\Admin\WithdrawalManagementController;
+use App\Http\Controllers\Admin\PhoneNumberChangeRequestController;
 
 // Member Controllers
 use App\Http\Controllers\Member\MemberAuthController;
@@ -143,6 +144,14 @@ Route::prefix('admin')->group(function () {
             Route::post('/{member}/reject-mobile-verification', [MemberManagementController::class, 'reject']);
             Route::post('/{member}/communities/{community}/remove', [MemberManagementController::class, 'removeCommunity']);
             Route::delete('/{member}', [MemberManagementController::class, 'destroy']);
+        });
+
+        // Phone Number Change Requests
+        Route::prefix('phone-change-requests')->group(function () {
+            Route::get('/', [PhoneNumberChangeRequestController::class, 'index']);
+            Route::get('/{id}', [PhoneNumberChangeRequestController::class, 'show']);
+            Route::post('/{id}/approve', [PhoneNumberChangeRequestController::class, 'approve']);
+            Route::post('/{id}/reject', [PhoneNumberChangeRequestController::class, 'reject']);
         });
 
         // Posts & Moderation
@@ -571,6 +580,10 @@ Route::prefix('member')->name('api.member.')->group(function () {
             Route::post('/introducer', [AccountController::class, 'claimIntroducer']);
             Route::get('/security', [AccountController::class, 'security']);
             Route::get('/verification-status', [AccountVerificationController::class, 'getVerificationStatus']);
+            Route::put('/unverified-phone', [AccountVerificationController::class, 'updateUnverifiedPhone']);
+            Route::post('/phone-change-request', [AccountVerificationController::class, 'requestPhoneChange']);
+            Route::post('/phone-change-request/{id}/confirm-whatsapp', [AccountVerificationController::class, 'confirmPhoneChangeWhatsApp']);
+            Route::delete('/phone-change-request/{id}', [AccountVerificationController::class, 'cancelPhoneChangeRequest']);
             Route::post('/verification/initiate', [AccountVerificationController::class, 'initiateWhatsAppVerification']);
             Route::post('/verification/submit-hi', [AccountVerificationController::class, 'submitWhatsAppVerificationRequest']);
             Route::put('/password', [AccountController::class, 'updatePassword']);

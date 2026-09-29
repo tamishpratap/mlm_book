@@ -119,6 +119,38 @@ class Member extends Authenticatable
         return $this->hasMany(WithdrawalRequest::class, 'member_id');
     }
 
+    public function phoneChangeRequests(): HasMany
+    {
+        return $this->hasMany(PhoneNumberChangeRequest::class, 'member_id');
+    }
+
+    public function phoneNumberChangeRequests(): HasMany
+    {
+        return $this->hasMany(PhoneNumberChangeRequest::class, 'member_id');
+    }
+
+    public function latestPhoneNumberChangeRequest(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PhoneNumberChangeRequest::class, 'member_id')->latestOfMany();
+    }
+
+    public function pendingPhoneNumberChangeRequest(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PhoneNumberChangeRequest::class, 'member_id')
+            ->where('status', 'pending')
+            ->latestOfMany();
+    }
+
+    public function latestPendingPhoneChangeRequest(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->pendingPhoneNumberChangeRequest();
+    }
+
+    public function hasPendingPhoneChangeRequest(): bool
+    {
+        return $this->phoneChangeRequests()->where('status', 'pending')->exists();
+    }
+
 
     protected $appends = [
         'avatar_url',
