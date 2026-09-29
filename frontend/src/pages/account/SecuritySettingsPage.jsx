@@ -7,6 +7,7 @@ import {
   Settings,
   Info,
   CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 import accountApi from '../../api/accountApi';
 import useAuth from '../../hooks/useAuth';
@@ -181,6 +182,7 @@ export function SecuritySettingsPage() {
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <fieldset disabled={isUpdating} style={{ border: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '18px' }}>
           {/* Current Password */}
           <div>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
@@ -263,6 +265,7 @@ export function SecuritySettingsPage() {
               </button>
             </div>
           </div>
+          </fieldset>
 
           <div className="security-form-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid #f0f0f0' }}>
             <button
@@ -270,7 +273,11 @@ export function SecuritySettingsPage() {
               className="member-button member-button--primary"
               disabled={isUpdating}
             >
-              <ShieldCheck size={16} aria-hidden="true" />
+              {isUpdating ? (
+                <Loader2 size={16} className="spin-icon" aria-hidden="true" />
+              ) : (
+                <ShieldCheck size={16} aria-hidden="true" />
+              )}
               <span>{isUpdating ? 'Updating...' : 'Update Password'}</span>
             </button>
           </div>

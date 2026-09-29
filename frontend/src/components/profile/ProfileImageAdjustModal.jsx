@@ -10,6 +10,7 @@ import {
   Move,
   Trash2,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 
 
@@ -736,7 +737,11 @@ export function ProfileImageAdjustModal({
               disabled={isUploading}
               style={{ minWidth: '130px' }}
             >
-              <Check size={16} />
+              {isUploading ? (
+                <Loader2 size={16} className="spin-icon" />
+              ) : (
+                <Check size={16} />
+              )}
               <span>{isUploading ? 'Saving...' : isAvatar ? 'Save Photo' : 'Save Cover'}</span>
             </button>
           </div>

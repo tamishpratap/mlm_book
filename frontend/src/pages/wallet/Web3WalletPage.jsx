@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Award,
   TrendingUp,
+  Loader2,
 } from 'lucide-react';
 import accountApi from '../../api/accountApi';
 import useAuth from '../../hooks/useAuth';
@@ -729,7 +730,11 @@ export function Web3WalletPage() {
                       gap: '6px',
                     }}
                   >
-                    <Send size={14} />
+                    {isSubmitting ? (
+                      <Loader2 size={14} className="spin-icon" />
+                    ) : (
+                      <Send size={14} />
+                    )}
                     <span>{isSubmitting ? 'Sending Code...' : 'Send Email OTP'}</span>
                   </button>
                 ) : (
@@ -752,7 +757,11 @@ export function Web3WalletPage() {
                         gap: '6px',
                       }}
                     >
-                      <Check size={15} />
+                      {isSubmitting ? (
+                        <Loader2 size={15} className="spin-icon" />
+                      ) : (
+                        <Check size={15} />
+                      )}
                       <span>{isSubmitting ? 'Verifying...' : 'Verify Wallet'}</span>
                     </button>
 

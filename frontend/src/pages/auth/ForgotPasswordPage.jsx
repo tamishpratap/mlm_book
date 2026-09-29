@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import authApi from '../../api/authApi';
 import useBranding from '../../hooks/useBranding';
 import { BRAND_LOGO } from '../../utils/assetHelper';
+import { Loader2 } from 'lucide-react';
 
 export function ForgotPasswordPage() {
   const { logoUrl, siteName } = useBranding();
@@ -171,6 +172,7 @@ export function ForgotPasswordPage() {
                     autoComplete="email"
                     required
                     autoFocus
+                    disabled={isSubmitting}
                     aria-invalid={emailError ? 'true' : 'false'}
                     aria-describedby={emailError ? 'member-email-error' : undefined}
                   />
@@ -184,7 +186,11 @@ export function ForgotPasswordPage() {
               </div>
 
               <button className="member-auth-submit" type="submit" disabled={isSubmitting}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+                {isSubmitting ? (
+                  <Loader2 className="spin-icon" size={18} aria-hidden="true" />
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+                )}
                 <span>{isSubmitting ? 'Sending Link…' : 'Send Reset Link'}</span>
               </button>
             </form>

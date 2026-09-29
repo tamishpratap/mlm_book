@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Loader2 } from 'lucide-react';
 import { ModalPortal } from '../../common/ModalPortal';
 
 export function DeleteConfirmModal({
@@ -92,11 +92,18 @@ export function DeleteConfirmModal({
           <button
             type="button"
             className="member-button"
-            style={confirmButtonStyle || { background: 'var(--color-danger, #ff4168)', color: '#ffffff' }}
+            style={confirmButtonStyle || { background: 'var(--color-danger, #ff4168)', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             onClick={onConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? loadingLabel : confirmLabel}
+            {isDeleting ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Loader2 size={14} className="spin-icon" />
+                <span>{loadingLabel}</span>
+              </span>
+            ) : (
+              confirmLabel
+            )}
           </button>
         </div>
       </div>

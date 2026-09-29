@@ -4,6 +4,7 @@ import useAuth from '../../hooks/useAuth';
 import useBranding from '../../hooks/useBranding';
 import authApi from '../../api/authApi';
 import { BRAND_LOGO } from '../../utils/assetHelper';
+import { Loader2 } from 'lucide-react';
 
 export function VerifyEmailPage() {
   const { refreshUser } = useAuth();
@@ -313,6 +314,7 @@ export function VerifyEmailPage() {
                     onChange={handleOtpChange}
                     required
                     autoFocus
+                    disabled={isVerifying}
                     spellCheck="false"
                     aria-invalid={error ? 'true' : 'false'}
                     aria-describedby={error ? 'member-verify-otp-error' : undefined}
@@ -325,7 +327,11 @@ export function VerifyEmailPage() {
               </div>
 
               <button className="member-auth-submit member-verify-submit" type="submit" disabled={isVerifying || otp.length !== 6}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                {isVerifying ? (
+                  <Loader2 className="spin-icon" size={18} aria-hidden="true" />
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                )}
                 <span>{isVerifying ? 'Verifying…' : 'Verify Email & Create Account'}</span>
               </button>
             </form>
@@ -338,7 +344,9 @@ export function VerifyEmailPage() {
                     type="submit"
                     className="member-verify-resend-btn"
                     disabled={cooldown > 0 || isResending}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                   >
+                    {isResending && <Loader2 className="spin-icon" size={13} aria-hidden="true" />}
                     <span>
                       {isResending
                         ? 'Sending…'
@@ -351,8 +359,12 @@ export function VerifyEmailPage() {
               </div>
 
               <form onSubmit={handleCancelRegistration} className="member-verify-cancel-form">
-                <button type="submit" className="member-verify-cancel-btn" disabled={isCanceling}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                <button type="submit" className="member-verify-cancel-btn" disabled={isCanceling} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  {isCanceling ? (
+                    <Loader2 className="spin-icon" size={14} aria-hidden="true" />
+                  ) : (
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                  )}
                   <span>{isCanceling ? 'Cancelling…' : 'Change email or Start Over'}</span>
                 </button>
               </form>

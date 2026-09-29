@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Mail } from 'lucide-react';
+import { ArrowLeft, Save, Mail, Loader2 } from 'lucide-react';
 import profileApi from '../../api/profileApi';
 import useAuth from '../../hooks/useAuth';
 import { getAvatarUrl, getCoverUrl } from '../../utils/assetHelper';
@@ -212,6 +212,7 @@ export function EditProfilePage() {
           </header>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <fieldset disabled={isSaving} style={{ border: 'none', padding: 0, margin: 0 }}>
             <div className="edit-profile-form-grid">
               {/* Full Name */}
               <div style={{ gridColumn: 'span 2' }}>
@@ -361,13 +362,18 @@ export function EditProfilePage() {
                 )}
               </div>
             </div>
+            </fieldset>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid #f0f0f0', flexWrap: 'wrap' }}>
               <Link to="/member/profile" className="member-button member-button--secondary">
                 Cancel
               </Link>
               <button type="submit" className="member-button member-button--primary" disabled={isSaving}>
-                <Save size={15} aria-hidden="true" />
+                {isSaving ? (
+                  <Loader2 size={15} className="spin-icon" aria-hidden="true" />
+                ) : (
+                  <Save size={15} aria-hidden="true" />
+                )}
                 <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
               </button>
             </div>

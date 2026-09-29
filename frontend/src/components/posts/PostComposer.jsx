@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Image, Send, X, Megaphone, Crop, Plus } from 'lucide-react';
+import { Image, Send, X, Megaphone, Crop, Plus, Loader2 } from 'lucide-react';
 import postApi from '../../api/postApi';
 import communityApi from '../../api/communityApi';
 import businessApi from '../../api/businessApi';
@@ -394,6 +394,7 @@ export function PostComposer({
                 type="button"
                 aria-label="Close"
                 onClick={() => setIsCreateModalOpen(false)}
+                disabled={isSubmitting}
                 style={{
                   position: 'absolute',
                   right: '16px',
@@ -406,7 +407,7 @@ export function PostComposer({
                   border: 'none',
                   display: 'grid',
                   placeItems: 'center',
-                  cursor: 'pointer',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   color: '#475569',
                 }}
               >
@@ -468,6 +469,7 @@ export function PostComposer({
                 name="body"
                 maxLength={5000}
                 rows={4}
+                disabled={isSubmitting}
                 placeholder={
                   placeholder ||
                   (businessPage
@@ -677,7 +679,11 @@ export function PostComposer({
                   justifyContent: 'center',
                 }}
               >
-                <Send size={16} aria-hidden="true" />
+                {isSubmitting ? (
+                  <Loader2 size={16} className="spin-icon" aria-hidden="true" />
+                ) : (
+                  <Send size={16} aria-hidden="true" />
+                )}
                 <span>{isSubmitting ? 'Posting...' : 'Post'}</span>
               </button>
             </footer>

@@ -1471,6 +1471,7 @@ export function DepositPage() {
                     onChange={(e) => setManualAmount(e.target.value)}
                     placeholder="50"
                     required
+                    disabled={isVerifyingManual || isSubmittingManual}
                     style={{
                       width: '100%',
                       padding: '0.75rem 4rem 0.75rem 1rem',
@@ -1494,6 +1495,7 @@ export function DepositPage() {
                     <button
                       key={preset}
                       type="button"
+                      disabled={isVerifyingManual || isSubmittingManual}
                       onClick={() => setManualAmount(String(preset))}
                       style={{
                         padding: '0.35rem 0.75rem',
@@ -1503,7 +1505,7 @@ export function DepositPage() {
                         color: parseFloat(manualAmount) === preset ? '#176bff' : '#4b5563',
                         fontWeight: 600,
                         fontSize: '0.82rem',
-                        cursor: 'pointer',
+                        cursor: (isVerifyingManual || isSubmittingManual) ? 'not-allowed' : 'pointer',
                       }}
                     >
                       ${preset}
@@ -1659,6 +1661,7 @@ export function DepositPage() {
                   onChange={(e) => setManualTxHash(e.target.value)}
                   placeholder="0x123abc456def..."
                   required
+                  disabled={isVerifyingManual || isSubmittingManual}
                   style={{
                     width: '100%',
                     padding: '0.75rem 1rem',

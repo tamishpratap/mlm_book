@@ -23,6 +23,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import authApi from '../../api/authApi';
 import useBranding from '../../hooks/useBranding';
 import { BRAND_LOGO } from '../../utils/assetHelper';
+import { Loader2 } from 'lucide-react';
 
 const COUNTRY_CODES = [
   { code: '+91', label: 'India (+91)' },
@@ -666,8 +667,9 @@ export function RegisterPage() {
                     <span>{introducerMessage || 'The selected Introducer ID does not exist.'}</span>
                   </p>
                 ) : introducerStatus === 'checking' ? (
-                  <span className="member-register-confirm-help" id="introducerIdFeedback">
-                    Verifying Introducer details…
+                  <span className="member-register-confirm-help" id="introducerIdFeedback" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <Loader2 className="spin-icon" size={13} aria-hidden="true" />
+                    <span>Verifying Introducer details…</span>
                   </span>
                 ) : (
                   <span className="member-register-confirm-help" id="introducerIdFeedback">
@@ -691,6 +693,7 @@ export function RegisterPage() {
                     autoComplete="name"
                     required
                     autoFocus
+                    disabled={isSubmitting}
                     aria-invalid={errors.name ? 'true' : 'false'}
                     aria-describedby={errors.name ? 'member-name-error' : undefined}
                   />
@@ -726,6 +729,7 @@ export function RegisterPage() {
                     name="country_code"
                     value={formData.country_code}
                     onChange={handleCountryCodeChange}
+                    disabled={isSubmitting}
                     aria-label="Country Code"
                     style={{
                       border: 'none',
@@ -761,6 +765,7 @@ export function RegisterPage() {
                     placeholder="Enter WhatsApp / mobile number"
                     autoComplete="tel-national"
                     required
+                    disabled={isSubmitting}
                     aria-invalid={errors.phone || phoneStatus === 'taken' || phoneStatus === 'invalid' ? 'true' : 'false'}
                     aria-describedby="member-phone-feedback"
                     style={{ border: 'none', paddingLeft: '0', flex: 1 }}
@@ -795,6 +800,11 @@ export function RegisterPage() {
                       </div>
                     )}
                   </div>
+                ) : phoneStatus === 'checking' ? (
+                  <span className="member-register-confirm-help" id="member-phone-feedback" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <Loader2 className="spin-icon" size={13} aria-hidden="true" />
+                    <span>Checking phone number availability…</span>
+                  </span>
                 ) : phoneStatus === 'available' ? (
                   <div
                     id="member-phone-feedback"
@@ -827,6 +837,7 @@ export function RegisterPage() {
                     placeholder="Enter your email address"
                     autoComplete="email"
                     required
+                    disabled={isSubmitting}
                     aria-invalid={errors.email ? 'true' : 'false'}
                     aria-describedby={errors.email ? 'member-register-email-error' : undefined}
                   />
@@ -853,12 +864,14 @@ export function RegisterPage() {
                     placeholder="Create a strong password"
                     autoComplete="new-password"
                     required
+                    disabled={isSubmitting}
                     aria-invalid={errors.password ? 'true' : 'false'}
                     aria-describedby={errors.password ? 'member-register-password-error' : 'member-password-help'}
                   />
                   <button
                     className={`member-auth-password-toggle ${showPassword ? 'is-visible' : ''}`}
                     type="button"
+                    disabled={isSubmitting}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     aria-controls="password"
                     onClick={() => setShowPassword((prev) => !prev)}
@@ -899,7 +912,11 @@ export function RegisterPage() {
 
 
               <button className="member-auth-submit" type="submit" disabled={isSubmitting}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></svg>
+                {isSubmitting ? (
+                  <Loader2 className="spin-icon" size={18} aria-hidden="true" />
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></svg>
+                )}
                 <span>{isSubmitting ? 'Creating account…' : 'Create account'}</span>
               </button>
 

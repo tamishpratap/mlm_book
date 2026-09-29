@@ -9,6 +9,7 @@ import {
   FileText,
   ExternalLink,
   ArrowLeft,
+  Loader2,
 } from 'lucide-react';
 import directMessageApi from '../../api/directMessageApi';
 import VerifiedBadge from '../../components/common/VerifiedBadge';
@@ -615,6 +616,7 @@ export function DirectMessagesPage() {
                 onChange={(e) => setMessageText(e.target.value)}
                 placeholder="Type a message..."
                 className="chat-input"
+                disabled={isSending}
                 style={{
                   flex: 1,
                   border: '1px solid #d1d5db',
@@ -643,7 +645,11 @@ export function DirectMessagesPage() {
                 }}
                 disabled={isSending || (!messageText.trim() && !attachmentFile)}
               >
-                <Send size={16} />
+                {isSending ? (
+                  <Loader2 size={16} className="spin-icon" />
+                ) : (
+                  <Send size={16} />
+                )}
               </button>
             </form>
           </>
