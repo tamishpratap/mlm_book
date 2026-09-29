@@ -1394,23 +1394,31 @@ export function AdCampaignPeopleEngagedPage() {
 
                       {/* Activity Type */}
                       <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
-                        <span
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            backgroundColor: '#ecfdf5',
-                            color: '#065f46',
-                            border: '1px solid #a7f3d0',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                          }}
-                        >
-                          <CheckCircle2 size={13} color="#059669" />
-                          <span>{item.action_label || 'Rewarded Visit'}</span>
-                        </span>
+                        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
+                          <span
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              backgroundColor: '#ecfdf5',
+                              color: '#065f46',
+                              border: '1px solid #a7f3d0',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                            }}
+                          >
+                            <CheckCircle2 size={13} color="#059669" />
+                            <span>{item.action_label || 'Rewarded Visit'}</span>
+                          </span>
+                          {(item.reward_formatted || item.reward_amount_usd > 0 || item.action === 'rewarded') && (
+                            <span style={{ fontSize: '11px', color: '#059669', fontWeight: 700, paddingLeft: '4px' }}>
+                              {item.reward_formatted || `+$${Number(item.reward_amount_usd || 0.025).toFixed(4)} USD`}
+                              {item.tier_label ? ` (${item.tier_label})` : ''}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Contact Options (Mobile/WhatsApp Number + Action Buttons) */}
@@ -1658,7 +1666,7 @@ export function AdCampaignPeopleEngagedPage() {
                     </div>
 
                     {/* Right: Rewarded Visit Badge */}
-                    <div style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                    <div style={{ flexShrink: 0, marginLeft: 'auto', textAlign: 'right' }}>
                       <span
                         style={{
                           padding: '3px 8px',
@@ -1677,6 +1685,12 @@ export function AdCampaignPeopleEngagedPage() {
                         <CheckCircle2 size={12} color="#059669" />
                         <span>{item.action_label || 'Rewarded Visit'}</span>
                       </span>
+                      {(item.reward_formatted || item.reward_amount_usd > 0 || item.action === 'rewarded') && (
+                        <div style={{ fontSize: '11px', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
+                          {item.reward_formatted || `+$${Number(item.reward_amount_usd || 0.025).toFixed(4)} USD`}
+                          {item.tier_label ? ` (${item.tier_label})` : ''}
+                        </div>
+                      )}
                     </div>
                   </div>
 

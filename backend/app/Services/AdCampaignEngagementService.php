@@ -473,15 +473,45 @@ class AdCampaignEngagementService
             }
         }
 
-        $rewardAmount = $reward ? (float) ($reward->reward_amount_usd ?? 0.00) : 0.00;
-        $rewardStatus = $reward && $reward->status === AdReward::STATUS_CREDITED 
+        // Authoritative reward amount resolution for the member summary
+        $rewardAmount = 0.00;
+        if ($reward && (float) $reward->reward_amount_usd > 0) {
+            $rewardAmount = (float) $reward->reward_amount_usd;
+        } elseif ($rewardedCount > 0) {
+            $rewardAct = $activities->firstWhere('action', AdCampaignActivity::ACTION_REWARDED);
+            if ($rewardAct && isset($rewardAct->metadata['reward_amount_usd'])) {
+                $rewardAmount = (float) $rewardAct->metadata['reward_amount_usd'];
+            } else {
+                $rewardAmount = (float) ($campaign->fixed_verified_visit_reward ?: 0.0250);
+            }
+        }
+
+        $rewardStatus = ($reward && $reward->status === AdReward::STATUS_CREDITED) || $rewardedCount > 0 
             ? 'rewarded' 
             : ($failedCount > 0 ? 'failed' : ($activities->isNotEmpty() || $reward ? 'not_rewarded' : 'no_activity'));
 
         // 4. Map timeline events
-        $timeline = $activities->map(function (AdCampaignActivity $act) {
-            $actReward = $act->reward;
-            $amt = $actReward ? (float) ($actReward->reward_amount_usd ?? 0.00) : 0.00;
+        $timeline = $activities->map(function (AdCampaignActivity $act) use ($reward, $campaign) {
+            $actReward = $act->reward ?: $reward;
+            $metaReward = isset($act->metadata['reward_amount_usd']) ? (float) $act->metadata['reward_amount_usd'] : 0.00;
+            $metaTier = $act->metadata['tier_label'] ?? null;
+            $metaReferrals = $act->metadata['direct_verified_referral_count'] ?? null;
+
+            $amt = 0.00;
+            if ($actReward && (float) $actReward->reward_amount_usd > 0) {
+                $amt = (float) $actReward->reward_amount_usd;
+            } elseif ($metaReward > 0) {
+                $amt = $metaReward;
+            } elseif ($act->action === AdCampaignActivity::ACTION_REWARDED) {
+                $amt = (float) ($campaign->fixed_verified_visit_reward ?: 0.0250);
+            }
+
+            $tier = $actReward?->tier_label ?? $metaTier;
+            if (!$tier && ($amt > 0 || $act->action === AdCampaignActivity::ACTION_REWARDED)) {
+                $tier = '0+';
+            }
+
+            $directReferrals = $actReward ? (int) $actReward->direct_verified_referral_count : (int) ($metaReferrals ?? 0);
 
             return [
                 'id' => $act->id,
@@ -490,8 +520,8 @@ class AdCampaignEngagementService
                 'action_label' => $act->action_label ?? ucfirst(str_replace('_', ' ', $act->action)),
                 'reward_amount_usd' => $amt,
                 'reward_formatted' => $amt > 0 ? '+$' . number_format($amt, 4, '.', '') . ' USD' : '$0.00',
-                'tier_label' => $actReward?->tier_label,
-                'direct_verified_referral_count' => $actReward?->direct_verified_referral_count,
+                'tier_label' => $tier,
+                'direct_verified_referral_count' => $directReferrals,
                 'metadata' => $act->metadata,
                 'created_at' => $act->created_at?->toIso8601String(),
                 'timestamp' => $act->created_at?->timestamp ?? 0,
