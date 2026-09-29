@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\MemberEmailVerificationOtp;
 use App\Models\Member;
 use App\Models\MemberVerificationOtp;
+use App\Models\PhoneNumberChangeRequest;
 use App\Services\MemberOtpService;
 use App\Services\WhatsAppService;
 use Illuminate\Database\QueryException;
@@ -36,6 +37,29 @@ class AccountVerificationController extends Controller
         $phone = $fresh->phone;
         $maskedPhone = $phone ? app(\App\Services\MemberPhoneNumberService::class)->mask($phone) : null;
 
+        $pendingChange = $fresh->latestPendingPhoneChangeRequest;
+        $pendingChangePayload = null;
+        if ($pendingChange) {
+            $changeWhatsAppUrl = $this->getWhatsAppChangeRequestDeepLink(
+                $destination,
+                $fresh,
+                $pendingChange->old_phone,
+                $pendingChange->new_phone
+            );
+            $pendingChangePayload = [
+                'id' => $pendingChange->id,
+                'old_phone' => $pendingChange->old_phone,
+                'masked_old_phone' => app(\App\Services\MemberPhoneNumberService::class)->mask($pendingChange->old_phone),
+                'new_phone' => $pendingChange->new_phone,
+                'masked_new_phone' => app(\App\Services\MemberPhoneNumberService::class)->mask($pendingChange->new_phone),
+                'status' => $pendingChange->status,
+                'whatsapp_verified_at' => $pendingChange->whatsapp_verified_at?->toIso8601String(),
+                'is_whatsapp_verified' => $pendingChange->isWhatsAppVerified(),
+                'whatsapp_url' => $changeWhatsAppUrl,
+                'created_at' => $pendingChange->created_at?->toIso8601String(),
+            ];
+        }
+
         return response()->json([
             'success' => true,
             'is_verified' => $fresh->isMobileVerified(),
@@ -47,6 +71,8 @@ class AccountVerificationController extends Controller
             'mobile_verification_requested_at' => $fresh->mobile_verification_requested_at?->toIso8601String(),
             'whatsapp_destination' => $destination,
             'whatsapp_url' => $whatsAppUrl,
+            'has_pending_phone_change' => $pendingChange !== null,
+            'pending_phone_change_request' => $pendingChangePayload,
             'member' => $fresh,
         ]);
     }
@@ -532,4 +558,336 @@ class AccountVerificationController extends Controller
 
         return 'https://wa.me/' . $cleanDigits . '?text=' . rawurlencode($message);
     }
+
+    /**
+     * Update phone number for an unverified member.
+     */
+    public function updateUnverifiedPhone(Request $request)
+    {
+        /** @var Member $member */
+        $member = auth('member')->user();
+        $fresh = $member->fresh();
+
+        if ($fresh->isMobileVerified()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your phone number is already verified. To change a verified phone number, please submit a Phone Change Request.',
+                'errors' => ['phone' => ['Your phone number is already verified.']],
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^\+?[0-9\s\-()]{7,20}$/',
+            ],
+        ], [
+            'phone.regex' => 'Please enter a valid mobile number with country code (e.g. +91 9876543210).',
+        ]);
+
+        $rawPhone = preg_replace('/[^\d+]/', '', $validated['phone']);
+        if (! str_starts_with($rawPhone, '+')) {
+            $rawPhone = '+' . $rawPhone;
+        }
+
+        $digitsOnly = preg_replace('/\D/', '', $rawPhone);
+        if (strlen($digitsOnly) < 7 || strlen($digitsOnly) > 15) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please enter a valid phone number with 7 to 15 digits.',
+                'errors' => ['phone' => ['Please enter a valid phone number with 7 to 15 digits.']],
+            ], 422);
+        }
+
+        // Check uniqueness in members table
+        $duplicate = Member::where('phone', $rawPhone)->where('id', '!=', $fresh->id)->exists();
+        if ($duplicate) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This phone number is already registered to another account.',
+                'errors' => ['phone' => ['This phone number is already registered to another account.']],
+            ], 422);
+        }
+
+        // Update phone and reset verification request timestamp
+        $fresh->update([
+            'phone' => $rawPhone,
+            'mobile_verification_requested_at' => null,
+        ]);
+
+        $updated = $fresh->fresh();
+        $destination = $this->getWhatsAppDestination();
+        $whatsAppUrl = $this->getWhatsAppDeepLink($destination, $updated);
+        $maskedPhone = app(\App\Services\MemberPhoneNumberService::class)->mask($updated->phone);
+
+        Log::info('Member updated unverified phone number', [
+            'member_id' => $updated->id,
+            'user_id' => $updated->user_id,
+            'new_phone' => $maskedPhone,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Phone number updated successfully. You can now verify it via WhatsApp.',
+            'phone' => $updated->phone,
+            'masked_phone' => $maskedPhone,
+            'whatsapp_url' => $whatsAppUrl,
+            'whatsapp_destination' => $destination,
+            'member' => $updated,
+        ]);
+    }
+
+    /**
+     * Submit a phone number change request for an already-verified member.
+     * Note: The existing verified phone number remains active until admin approval.
+     */
+    public function requestPhoneChange(Request $request)
+    {
+        /** @var Member $member */
+        $member = auth('member')->user();
+        $fresh = $member->fresh();
+
+        if (! $fresh->isMobileVerified()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your current phone number is not verified yet. Please update and verify it directly.',
+                'errors' => ['new_phone' => ['Your current phone number is not verified yet.']],
+            ], 422);
+        }
+
+        // Guard: prevent duplicate active change requests
+        if ($fresh->hasPendingPhoneChangeRequest()) {
+            $existing = $fresh->latestPendingPhoneChangeRequest;
+            return response()->json([
+                'success' => false,
+                'message' => 'You already have an active phone number change request pending admin approval.',
+                'errors' => ['new_phone' => ['You already have an active phone number change request pending admin approval.']],
+                'pending_request' => $existing,
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'new_phone' => [
+                'required',
+                'string',
+                'regex:/^\+?[0-9\s\-()]{7,20}$/',
+            ],
+        ], [
+            'new_phone.regex' => 'Please enter a valid new mobile number with country code (e.g. +91 9876543210).',
+        ]);
+
+        $rawPhone = preg_replace('/[^\d+]/', '', $validated['new_phone']);
+        if (! str_starts_with($rawPhone, '+')) {
+            $rawPhone = '+' . $rawPhone;
+        }
+
+        $digitsOnly = preg_replace('/\D/', '', $rawPhone);
+        if (strlen($digitsOnly) < 7 || strlen($digitsOnly) > 15) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please enter a valid phone number with 7 to 15 digits.',
+                'errors' => ['new_phone' => ['Please enter a valid phone number with 7 to 15 digits.']],
+            ], 422);
+        }
+
+        // Check if new number equals current number
+        if ($rawPhone === $fresh->phone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The new phone number cannot be the same as your current verified number.',
+                'errors' => ['new_phone' => ['The new phone number cannot be the same as your current verified number.']],
+            ], 422);
+        }
+
+        // Check if taken by another member
+        if (Member::where('phone', $rawPhone)->where('id', '!=', $fresh->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This phone number is already registered to another account.',
+                'errors' => ['new_phone' => ['This phone number is already registered to another account.']],
+            ], 422);
+        }
+
+        // Check if in another pending request
+        if (PhoneNumberChangeRequest::where('new_phone', $rawPhone)->where('status', 'pending')->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This phone number is already part of a pending change request.',
+                'errors' => ['new_phone' => ['This phone number is already part of a pending change request.']],
+            ], 422);
+        }
+
+        // Rate limit: 5 requests per 10 minutes
+        $rateKey = 'phone-change-request:' . $fresh->id;
+        if (RateLimiter::tooManyAttempts($rateKey, 5)) {
+            $seconds = RateLimiter::availableIn($rateKey);
+            return response()->json([
+                'success' => false,
+                'message' => "Please wait {$seconds} seconds before submitting another change request.",
+            ], 429);
+        }
+        RateLimiter::hit($rateKey, 600);
+
+        // Create change request. CRITICAL: members.phone remains UNTOUCHED!
+        $changeRequest = PhoneNumberChangeRequest::create([
+            'member_id' => $fresh->id,
+            'old_phone' => $fresh->phone,
+            'new_phone' => $rawPhone,
+            'status' => 'pending',
+            'whatsapp_verified_at' => null,
+        ]);
+
+        $destination = $this->getWhatsAppDestination();
+        $changeWhatsAppUrl = $this->getWhatsAppChangeRequestDeepLink(
+            $destination,
+            $fresh,
+            $changeRequest->old_phone,
+            $changeRequest->new_phone
+        );
+
+        Log::info('Member created phone number change request', [
+            'change_request_id' => $changeRequest->id,
+            'member_id' => $fresh->id,
+            'user_id' => $fresh->user_id,
+            'old_phone' => $changeRequest->old_phone,
+            'new_phone' => $changeRequest->new_phone,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Phone number change request created. Please send the verification message on WhatsApp.',
+            'change_request' => [
+                'id' => $changeRequest->id,
+                'old_phone' => $changeRequest->old_phone,
+                'masked_old_phone' => app(\App\Services\MemberPhoneNumberService::class)->mask($changeRequest->old_phone),
+                'new_phone' => $changeRequest->new_phone,
+                'masked_new_phone' => app(\App\Services\MemberPhoneNumberService::class)->mask($changeRequest->new_phone),
+                'status' => $changeRequest->status,
+                'whatsapp_verified_at' => null,
+                'whatsapp_url' => $changeWhatsAppUrl,
+                'created_at' => $changeRequest->created_at->toIso8601String(),
+            ],
+            'whatsapp_url' => $changeWhatsAppUrl,
+            'whatsapp_destination' => $destination,
+        ]);
+    }
+
+    /**
+     * Member confirms that they sent the WhatsApp verification message for their change request.
+     */
+    public function confirmPhoneChangeWhatsApp(Request $request, $id)
+    {
+        /** @var Member $member */
+        $member = auth('member')->user();
+        $fresh = $member->fresh();
+
+        $changeRequest = PhoneNumberChangeRequest::where('id', $id)
+            ->where('member_id', $fresh->id)
+            ->firstOrFail();
+
+        if ($changeRequest->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => "This change request has already been {$changeRequest->status}.",
+            ], 422);
+        }
+
+        $now = now();
+        $changeRequest->update([
+            'whatsapp_verified_at' => $now,
+        ]);
+
+        Log::info('Member confirmed sending WhatsApp for phone change request', [
+            'change_request_id' => $changeRequest->id,
+            'member_id' => $fresh->id,
+            'user_id' => $fresh->user_id,
+            'new_phone' => $changeRequest->new_phone,
+        ]);
+
+        // Notify Admin of incoming change request
+        \App\Services\AdminNotificationService::notify(
+            title: 'Phone Number Change Requested',
+            message: sprintf('%s (%s) requested to change number from %s to %s and sent WhatsApp confirmation.', $fresh->name, $fresh->user_id, app(\App\Services\MemberPhoneNumberService::class)->mask($changeRequest->old_phone), app(\App\Services\MemberPhoneNumberService::class)->mask($changeRequest->new_phone)),
+            icon: 'shield',
+            sourceType: 'phone_change_request',
+            sourceId: (string) $changeRequest->id,
+            actionUrl: '/admin/members/phone-change-requests',
+            metadata: [
+                'change_request_id' => $changeRequest->id,
+                'member_id' => $fresh->id,
+                'user_id' => $fresh->user_id,
+                'old_phone' => $changeRequest->old_phone,
+                'new_phone' => $changeRequest->new_phone,
+                'requested_at' => $now->toIso8601String(),
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'WhatsApp verification confirmation recorded. Your phone change request is pending admin approval.',
+            'change_request' => [
+                'id' => $changeRequest->id,
+                'old_phone' => $changeRequest->old_phone,
+                'masked_old_phone' => app(\App\Services\MemberPhoneNumberService::class)->mask($changeRequest->old_phone),
+                'new_phone' => $changeRequest->new_phone,
+                'masked_new_phone' => app(\App\Services\MemberPhoneNumberService::class)->mask($changeRequest->new_phone),
+                'status' => $changeRequest->status,
+                'whatsapp_verified_at' => $now->toIso8601String(),
+                'is_whatsapp_verified' => true,
+            ],
+        ]);
+    }
+
+    /**
+     * Member cancels their own pending phone number change request.
+     */
+    public function cancelPhoneChangeRequest(Request $request, $id)
+    {
+        /** @var Member $member */
+        $member = auth('member')->user();
+
+        $changeRequest = PhoneNumberChangeRequest::where('id', $id)
+            ->where('member_id', $member->id)
+            ->firstOrFail();
+
+        if ($changeRequest->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only pending requests can be cancelled.',
+            ], 422);
+        }
+
+        $changeRequest->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Phone number change request has been cancelled.',
+        ]);
+    }
+
+    /**
+     * Build distinct WhatsApp deep link for phone change requests.
+     */
+    public function getWhatsAppChangeRequestDeepLink(string $destinationNumber, Member $member, string $oldPhone, string $newPhone): string
+    {
+        $cleanDigits = preg_replace('/\D/', '', $destinationNumber) ?: '919876543210';
+        $name = trim((string) $member->name);
+        $userId = trim((string) $member->user_id);
+        $email = trim((string) $member->email);
+
+        $message = "Hello Support Team,\n\n"
+            . "PHONE NUMBER CHANGE REQUEST\n\n"
+            . "I would like to request a change of my registered WhatsApp number.\n\n"
+            . "Member ID: {$userId}\n"
+            . "Name: {$name}\n"
+            . "Email: {$email}\n"
+            . "Current Verified Number: {$oldPhone}\n"
+            . "New Requested Number: {$newPhone}\n\n"
+            . "Kindly review and approve my phone number change request.\n\n"
+            . "Thank you.";
+
+        return 'https://wa.me/' . $cleanDigits . '?text=' . rawurlencode($message);
+    }
 }
+

@@ -13,6 +13,7 @@ import {
   Users,
 } from 'lucide-react';
 import businessApi from '../../../api/businessApi';
+import { formatAdAmount } from '../../../utils/adFormatters';
 import { CreateAdCampaignModal } from './CreateAdCampaignModal';
 import { AdCampaignDetailModal } from './AdCampaignDetailModal';
 import { AddFundModal } from './AddFundModal';
@@ -179,7 +180,7 @@ export function BusinessAdCampaignsList({
             </div>
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#15803d', marginTop: '8px' }}>
-            ${Number(metrics.available_ad_funds !== undefined ? metrics.available_ad_funds : (metrics.member_ad_balance || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            ${formatAdAmount(metrics.available_ad_funds !== undefined ? metrics.available_ad_funds : (metrics.member_ad_balance || 0))}
           </div>
           <div style={{ fontSize: '11.5px', color: '#166534', marginTop: '4px', fontWeight: 500 }}>Approved ready balance (USD)</div>
         </div>
@@ -192,7 +193,7 @@ export function BusinessAdCampaignsList({
             </div>
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-text-main, #1e293b)', marginTop: '8px' }}>
-            ${Number(metrics.total_budget || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            ${formatAdAmount(metrics.total_budget || 0)}
           </div>
           <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>Allocated across campaigns</div>
         </div>
@@ -205,7 +206,7 @@ export function BusinessAdCampaignsList({
             </div>
           </div>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#334155', marginTop: '8px' }}>
-            ${Number(metrics.total_remaining || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            ${formatAdAmount(metrics.total_remaining || 0)}
           </div>
           <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>Unspent campaign budget</div>
         </div>
@@ -550,7 +551,7 @@ export function BusinessAdCampaignsList({
             const additionalFunding = parseFloat(camp.additional_funding) || 0;
             const totalFunded = parseFloat(camp.total_funded) || (origBudget + additionalFunding);
             const spentVal = parseFloat(camp.spent_amount) || 0;
-            const remainVal = parseFloat(camp.remaining_amount) || Math.max(0, totalFunded - spentVal);
+            const remainVal = Math.max(0, parseFloat((totalFunded - spentVal).toFixed(4)));
 
             return (
               <div
@@ -628,21 +629,21 @@ export function BusinessAdCampaignsList({
                   <div>
                     <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Original / Funded</div>
                     <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#4f7df3' }}>
-                      ${origBudget.toFixed(2)}{additionalFunding > 0 && <span style={{ fontSize: '11px', color: '#16a34a' }}> (+${additionalFunding.toFixed(2)})</span>}
+                      ${formatAdAmount(origBudget)}{additionalFunding > 0 && <span style={{ fontSize: '11px', color: '#16a34a' }}> (+${formatAdAmount(additionalFunding)})</span>}
                     </div>
                   </div>
 
                   <div>
                     <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Total Funded</div>
                     <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#1e293b' }}>
-                      ${totalFunded.toFixed(2)}
+                      ${formatAdAmount(totalFunded)}
                     </div>
                   </div>
 
                   <div>
                     <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Rewards Paid</div>
                     <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#dc2626' }}>
-                      ${spentVal.toFixed(4)}
+                      ${formatAdAmount(spentVal)}
                     </div>
                   </div>
 
@@ -655,7 +656,7 @@ export function BusinessAdCampaignsList({
                         color: isExhausted ? '#b91c1c' : isLow ? '#b45309' : '#15803d',
                       }}
                     >
-                      ${remainVal.toFixed(4)}
+                      ${formatAdAmount(remainVal)}
                     </div>
                   </div>
                 </div>

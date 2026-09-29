@@ -15,6 +15,7 @@ import {
 import businessApi from '../../../api/businessApi';
 import { getMediaUrl } from '../../../utils/assetHelper';
 import { ModalPortal } from '../../common/ModalPortal';
+import { formatAdAmount } from '../../../utils/adFormatters';
 
 const BUDGET_PRESETS = [10, 25, 50, 100, 250, 500];
 
@@ -146,10 +147,10 @@ export function CreateAdCampaignModal({
     } else if (numBudget > 999999999) {
       errs.budget = 'Budget amount is too large.';
     } else if (availableAdFunds !== undefined && totalWalletDebit > Number(availableAdFunds)) {
-      const shortfall = (totalWalletDebit - Number(availableAdFunds)).toFixed(2);
+      const shortfall = formatAdAmount(totalWalletDebit - Number(availableAdFunds));
       errs.budget = feeAmount > 0
-        ? `Insufficient advertising funds. Campaign Budget: $${numBudget.toFixed(2)} USD, Platform Fee (${numFeePercent}%): $${feeAmount.toFixed(2)} USD, Total Debit: $${totalWalletDebit.toFixed(2)} USD, Available: $${Number(availableAdFunds).toFixed(2)} USD. Shortfall: $${shortfall} USD. Please add funds.`
-        : `Insufficient advertising funds. Campaign Budget: $${numBudget.toFixed(2)} USD, Available: $${Number(availableAdFunds).toFixed(2)} USD. Shortfall: $${shortfall} USD. Please add funds.`;
+        ? `Insufficient advertising funds. Campaign Budget: $${formatAdAmount(numBudget)} USD, Platform Fee (${numFeePercent}%): $${formatAdAmount(feeAmount)} USD, Total Debit: $${formatAdAmount(totalWalletDebit)} USD, Available: $${formatAdAmount(availableAdFunds)} USD. Shortfall: $${shortfall} USD. Please add funds.`
+        : `Insufficient advertising funds. Campaign Budget: $${formatAdAmount(numBudget)} USD, Available: $${formatAdAmount(availableAdFunds)} USD. Shortfall: $${shortfall} USD. Please add funds.`;
     }
 
     if (hasContent && !selectedPost && availablePosts.length > 0) {
@@ -554,7 +555,7 @@ export function CreateAdCampaignModal({
                     <div>
                       <span style={{ fontSize: '12px', color: '#166534', fontWeight: 600 }}>Available Ad Funds: </span>
                       <strong style={{ fontSize: '13.5px', color: '#15803d' }}>
-                        ${Number(availableAdFunds).toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
+                        ${formatAdAmount(availableAdFunds)} USD
                       </strong>
                     </div>
                   </div>
@@ -629,27 +630,27 @@ export function CreateAdCampaignModal({
                 <div style={{ padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', marginTop: '10px', fontSize: '12.5px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: '#475569' }}>
                     <span>Campaign Running Budget:</span>
-                    <span style={{ fontWeight: 700, color: '#1e293b' }}>${numBudget.toFixed(2)} USD</span>
+                    <span style={{ fontWeight: 700, color: '#1e293b' }}>${formatAdAmount(numBudget)} USD</span>
                   </div>
                   {feeAmount > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: '#475569' }}>
                       <span>Platform Fee ({numFeePercent}%):</span>
-                      <span style={{ fontWeight: 700, color: '#2563eb' }}>+${feeAmount.toFixed(2)} USD</span>
+                      <span style={{ fontWeight: 700, color: '#2563eb' }}>+${formatAdAmount(feeAmount)} USD</span>
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px dashed #cbd5e1', fontWeight: 700, color: '#1e293b' }}>
                     <span>Total Wallet Debit:</span>
-                    <span style={{ color: '#4f7df3', fontSize: '13.5px' }}>${totalWalletDebit.toFixed(2)} USD</span>
+                    <span style={{ color: '#4f7df3', fontSize: '13.5px' }}>${formatAdAmount(totalWalletDebit)} USD</span>
                   </div>
 
                   <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 600 }}>
                     {totalWalletDebit > Number(availableAdFunds) ? (
                       <span style={{ color: '#dc2626' }}>
-                        ⚠️ Insufficient advertising funds. Shortfall: ${(totalWalletDebit - Number(availableAdFunds)).toFixed(2)} USD
+                        ⚠️ Insufficient advertising funds. Shortfall: ${formatAdAmount(totalWalletDebit - Number(availableAdFunds))} USD
                       </span>
                     ) : (
                       <span style={{ color: '#166534' }}>
-                        ✓ Estimated remaining funds after debit: ${(Number(availableAdFunds) - totalWalletDebit).toFixed(2)} USD
+                        ✓ Estimated remaining funds after debit: ${formatAdAmount(Number(availableAdFunds) - totalWalletDebit)} USD
                       </span>
                     )}
                   </div>
@@ -715,7 +716,7 @@ export function CreateAdCampaignModal({
                 <div>
                   <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Campaign Running Budget</div>
                   <div style={{ fontSize: '16px', fontWeight: 800, color: '#15803d', marginTop: '2px' }}>
-                    ${numBudget.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
+                    ${formatAdAmount(numBudget)} USD
                   </div>
                 </div>
 
@@ -723,7 +724,7 @@ export function CreateAdCampaignModal({
                   <div>
                     <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({numFeePercent}%)</div>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: '#2563eb', marginTop: '2px' }}>
-                      +${feeAmount.toFixed(2)} USD
+                      +${formatAdAmount(feeAmount)} USD
                     </div>
                   </div>
                 )}
@@ -731,14 +732,14 @@ export function CreateAdCampaignModal({
                 <div>
                   <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Total Wallet Debit</div>
                   <div style={{ fontSize: '16px', fontWeight: 800, color: '#4f7df3', marginTop: '2px' }}>
-                    ${totalWalletDebit.toFixed(2)} USD
+                    ${formatAdAmount(totalWalletDebit)} USD
                   </div>
                 </div>
 
                 <div>
                   <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Available Funds → Remaining</div>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginTop: '2px' }}>
-                    ${Number(availableAdFunds).toFixed(2)} → ${(Math.max(0, Number(availableAdFunds) - totalWalletDebit)).toFixed(2)} USD
+                    ${formatAdAmount(availableAdFunds)} → ${formatAdAmount(Math.max(0, Number(availableAdFunds) - totalWalletDebit))} USD
                   </div>
                 </div>
 

@@ -248,7 +248,7 @@ class AdDepositSettingsController extends Controller
 
             // 1. Credit Member's Fund Wallet (p2p_wallet)
             $previousP2pBalance = (float) ($member->p2p_wallet ?? 0.00);
-            $newP2pBalance = round($previousP2pBalance + $usdCredit, 2);
+            $newP2pBalance = round($previousP2pBalance + $usdCredit, 4);
             $member->p2p_wallet = $newP2pBalance;
             $member->save();
 
@@ -461,7 +461,7 @@ class AdDepositSettingsController extends Controller
             $lockedDeposit->save();
 
             if (!$previouslyApproved && $member) {
-                $member->p2p_wallet = round((float) ($member->p2p_wallet ?? 0.00) + $netAmount, 2);
+                $member->p2p_wallet = round((float) ($member->p2p_wallet ?? 0.00) + $netAmount, 4);
                 $member->save();
             }
 

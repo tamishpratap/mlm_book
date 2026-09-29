@@ -55,6 +55,7 @@ const NAV_GROUPS = [
           { label: 'Blocked Members', to: '/admin/members/blocked' },
           { label: 'Security', to: '/admin/members/security' },
           { label: 'Wallet Address', to: '/admin/members/wallet-address' },
+          { label: 'Phone Number Change Requests', to: '/admin/members/phone-change-requests' },
         ],
       },
       {

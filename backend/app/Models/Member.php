@@ -59,7 +59,8 @@ class Member extends Authenticatable
             'blocked_at' => 'datetime',
             'direct_referral_count' => 'integer',
             'referral_counted_at' => 'datetime',
-            'p2p_wallet' => 'float',
+            'p2p_wallet' => 'decimal:4',
+            'ad_balance' => 'decimal:4',
             'wallet' => 'decimal:4',
             'password' => 'hashed',
         ];
@@ -67,12 +68,14 @@ class Member extends Authenticatable
 
     public function getFundWalletAttribute(): float
     {
-        return (float) ($this->p2p_wallet ?? 0.00);
+        return (float) ($this->attributes['p2p_wallet'] ?? $this->attributes['ad_balance'] ?? 0.00);
     }
 
     public function creditP2pWallet(float $amount): float
     {
-        $this->p2p_wallet = round((float) ($this->p2p_wallet ?? 0.00) + max(0.00, $amount), 2);
+        $current = (float) ($this->p2p_wallet ?? 0.00);
+        $newBalance = round($current + max(0.00, $amount), 4);
+        $this->p2p_wallet = $newBalance;
         $this->save();
         return (float) $this->p2p_wallet;
     }
@@ -101,7 +104,7 @@ class Member extends Authenticatable
 
     public function hasAdBalance(float $amount): bool
     {
-        return ((float) ($this->p2p_wallet ?? 0.00)) >= $amount;
+        return ((float) ($this->p2p_wallet ?? 0.00)) >= round($amount, 4);
     }
 
     public function adRewards(): HasMany
@@ -117,6 +120,38 @@ class Member extends Authenticatable
     public function withdrawalRequests(): HasMany
     {
         return $this->hasMany(WithdrawalRequest::class, 'member_id');
+    }
+
+    public function phoneChangeRequests(): HasMany
+    {
+        return $this->hasMany(PhoneNumberChangeRequest::class, 'member_id');
+    }
+
+    public function phoneNumberChangeRequests(): HasMany
+    {
+        return $this->hasMany(PhoneNumberChangeRequest::class, 'member_id');
+    }
+
+    public function latestPhoneNumberChangeRequest(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PhoneNumberChangeRequest::class, 'member_id')->latestOfMany();
+    }
+
+    public function pendingPhoneNumberChangeRequest(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PhoneNumberChangeRequest::class, 'member_id')
+            ->where('status', 'pending')
+            ->latestOfMany();
+    }
+
+    public function latestPendingPhoneChangeRequest(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->pendingPhoneNumberChangeRequest();
+    }
+
+    public function hasPendingPhoneChangeRequest(): bool
+    {
+        return $this->phoneChangeRequests()->where('status', 'pending')->exists();
     }
 
 
@@ -783,10 +818,38 @@ class Member extends Authenticatable
     }
 
     /**
-     * Virtual accessor for legacy references to ad_balance. Maps directly to p2p_wallet (Fund Wallet).
+     * Virtual accessors and mutators for p2p_wallet / ad_balance (Fund Wallet).
+     * Guarantees 4-decimal precision and schema compatibility across databases.
      */
     public function getAdBalanceAttribute(): float
     {
-        return (float) ($this->attributes['p2p_wallet'] ?? 0.00);
+        return round((float) ($this->attributes['ad_balance'] ?? $this->attributes['p2p_wallet'] ?? 0.00), 4);
+    }
+
+    public function getP2pWalletAttribute(): float
+    {
+        return round((float) ($this->attributes['p2p_wallet'] ?? $this->attributes['ad_balance'] ?? 0.00), 4);
+    }
+
+    public function setP2pWalletAttribute($value): void
+    {
+        $val = round((float) $value, 4);
+        if (array_key_exists('p2p_wallet', $this->attributes) || !array_key_exists('ad_balance', $this->attributes)) {
+            $this->attributes['p2p_wallet'] = $val;
+        }
+        if (array_key_exists('ad_balance', $this->attributes)) {
+            $this->attributes['ad_balance'] = $val;
+        }
+    }
+
+    public function setAdBalanceAttribute($value): void
+    {
+        $val = round((float) $value, 4);
+        if (array_key_exists('ad_balance', $this->attributes) || !array_key_exists('p2p_wallet', $this->attributes)) {
+            $this->attributes['ad_balance'] = $val;
+        }
+        if (array_key_exists('p2p_wallet', $this->attributes)) {
+            $this->attributes['p2p_wallet'] = $val;
+        }
     }
 }

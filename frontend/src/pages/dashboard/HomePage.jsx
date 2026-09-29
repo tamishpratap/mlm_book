@@ -32,6 +32,7 @@ export function HomePage() {
   const [isReminderOpen, setIsReminderOpen] = useState(false);
 
   useEffect(() => {
+    document.title = 'MLM Book - The Next-Generation Digital Social & Business Ecosystem';
     let isMounted = true;
 
     dashboardApi

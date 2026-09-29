@@ -166,7 +166,7 @@ class MobileBusinessAndCampaignController extends Controller
 
         $campaign = DB::transaction(function () use ($member, $page, $validated, $budget, $feePercent, $feeAmount, $totalDebit, $availableFunds) {
             // Deduct funds from member Fund Wallet (p2p_wallet)
-            $member->p2p_wallet = round($availableFunds - $totalDebit, 2);
+            $member->p2p_wallet = round($availableFunds - $totalDebit, 4);
             $member->save();
 
             return AdCampaign::create([
