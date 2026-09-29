@@ -2080,10 +2080,35 @@ class BusinessAdCampaignController extends Controller
             ->get()
             ->keyBy('member_id');
 
-        $data = collect($paginated->items())->map(function (AdCampaignActivity $act) use ($creditedRewardsByMember) {
+        $data = collect($paginated->items())->map(function (AdCampaignActivity $act) use ($creditedRewardsByMember, $campaign) {
             $member = $act->member;
             $actReward = $act->reward ?: ($act->member_id ? ($creditedRewardsByMember[$act->member_id] ?? null) : null);
-            $rewardAmount = $actReward ? (float) ($actReward->reward_amount_usd ?? 0.00) : 0.00;
+
+            // Extract metadata snapshots
+            $metaReward = isset($act->metadata['reward_amount_usd']) ? (float) $act->metadata['reward_amount_usd'] : 0.00;
+            $metaTier = $act->metadata['tier_label'] ?? null;
+            $metaDirectReferrals = $act->metadata['direct_verified_referral_count'] ?? null;
+
+            // Authoritative reward amount resolution:
+            // 1. From linked or preloaded AdReward model
+            // 2. From metadata snapshot stored on the activity
+            // 3. Fallback for 'rewarded' action: campaign fixed reward or standard 0.0250 USD
+            $rewardAmount = 0.00;
+            if ($actReward && (float) $actReward->reward_amount_usd > 0) {
+                $rewardAmount = (float) $actReward->reward_amount_usd;
+            } elseif ($metaReward > 0) {
+                $rewardAmount = $metaReward;
+            } elseif ($act->action === AdCampaignActivity::ACTION_REWARDED) {
+                $rewardAmount = (float) ($campaign->fixed_verified_visit_reward ?: 0.0250);
+            }
+
+            // Tier label resolution:
+            $tierLabel = $actReward?->tier_label ?? $metaTier;
+            if (!$tierLabel && ($rewardAmount > 0 || $act->action === AdCampaignActivity::ACTION_REWARDED)) {
+                $tierLabel = '0+';
+            }
+
+            $directReferrals = $actReward ? (int) $actReward->direct_verified_referral_count : (int) ($metaDirectReferrals ?? 0);
 
             return [
                 'id' => 'act_' . $act->id,
@@ -2095,9 +2120,13 @@ class BusinessAdCampaignController extends Controller
                 'reward_amount_usd' => $rewardAmount,
                 'reward_amount_exact' => number_format($rewardAmount, 4, '.', ''),
                 'reward_formatted' => $rewardAmount > 0 ? '+$' . number_format($rewardAmount, 4, '.', '') . ' USD' : '$0.00',
+                'tier_label' => $tierLabel,
+                'direct_verified_referral_count' => $directReferrals,
+                'direct_referrals' => $directReferrals,
                 'status' => $actReward ? $actReward->status : ($act->action === AdCampaignActivity::ACTION_FAILED ? 'failed' : 'completed'),
                 'created_at' => $act->created_at?->toIso8601String(),
                 'timestamp' => $act->created_at?->timestamp ?? 0,
+                'metadata' => $act->metadata,
                 'user' => $member ? [
                     'id' => $member->id,
                     'name' => $member->name,
