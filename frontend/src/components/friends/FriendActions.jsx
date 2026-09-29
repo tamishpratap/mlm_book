@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 // import { Link } from 'react-router-dom';
-import { UserPlus, UserMinus, UserCheck, UserX, UsersRound /*, MessageSquare */ } from 'lucide-react';
+import { UserPlus, UserMinus, UserCheck, UserX, UsersRound, Loader2 /*, MessageSquare */ } from 'lucide-react';
 import friendApi from '../../api/friendApi';
 
 export function FriendActions({
@@ -106,7 +106,11 @@ export function FriendActions({
           onClick={handleSendRequest}
           disabled={isLoading}
         >
-          <UserPlus size={15} aria-hidden="true" />
+          {isLoading ? (
+            <Loader2 size={15} className="spin-icon" aria-hidden="true" />
+          ) : (
+            <UserPlus size={15} aria-hidden="true" />
+          )}
           <span>{isLoading ? 'Sending...' : 'Connect'}</span>
         </button>
       )}
@@ -118,7 +122,11 @@ export function FriendActions({
           onClick={handleCancelRequest}
           disabled={isLoading}
         >
-          <UserMinus size={15} aria-hidden="true" />
+          {isLoading ? (
+            <Loader2 size={15} className="spin-icon" aria-hidden="true" />
+          ) : (
+            <UserMinus size={15} aria-hidden="true" />
+          )}
           <span>{isLoading ? 'Cancelling...' : 'Cancel Connection Request'}</span>
         </button>
       )}
@@ -131,7 +139,11 @@ export function FriendActions({
             onClick={handleAcceptRequest}
             disabled={isLoading}
           >
-            <UserCheck size={15} aria-hidden="true" />
+            {isLoading ? (
+              <Loader2 size={15} className="spin-icon" aria-hidden="true" />
+            ) : (
+              <UserCheck size={15} aria-hidden="true" />
+            )}
             <span>{isLoading ? 'Accepting...' : 'Accept Connection'}</span>
           </button>
           <button
@@ -140,7 +152,11 @@ export function FriendActions({
             onClick={handleRejectRequest}
             disabled={isLoading}
           >
-            <UserX size={15} aria-hidden="true" />
+            {isLoading ? (
+              <Loader2 size={15} className="spin-icon" aria-hidden="true" />
+            ) : (
+              <UserX size={15} aria-hidden="true" />
+            )}
             <span>{isLoading ? 'Rejecting...' : 'Reject Connection'}</span>
           </button>
         </div>

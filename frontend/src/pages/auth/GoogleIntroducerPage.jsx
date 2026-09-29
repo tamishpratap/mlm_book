@@ -23,6 +23,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import authApi from '../../api/authApi';
 import useBranding from '../../hooks/useBranding';
 import { BRAND_LOGO } from '../../utils/assetHelper';
+import { Loader2 } from 'lucide-react';
 
 const COUNTRY_CODES = [
   { code: '+91', label: 'India (+91)' },
@@ -571,8 +572,9 @@ export function GoogleIntroducerPage() {
                       <span>Phone number is available.</span>
                     </div>
                   ) : phoneStatus === 'checking' ? (
-                    <span className="member-register-confirm-help" id="google-phone-feedback" style={{ display: 'block', marginTop: '6px' }}>
-                      Checking phone number availability…
+                    <span className="member-register-confirm-help" id="google-phone-feedback" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                      <Loader2 className="spin-icon" size={13} aria-hidden="true" />
+                      <span>Checking phone number availability…</span>
                     </span>
                   ) : phoneStatus === 'invalid' ? (
                     <p className="member-auth-error" id="google-phone-feedback" role="alert" style={{ marginTop: '6px' }}>
@@ -686,8 +688,9 @@ export function GoogleIntroducerPage() {
                       <span>{introducerMessage || 'The selected Introducer ID does not exist.'}</span>
                     </p>
                   ) : introducerStatus === 'checking' ? (
-                    <span className="member-register-confirm-help" style={{ display: 'block', marginTop: '6px' }}>
-                      Verifying Introducer details…
+                    <span className="member-register-confirm-help" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                      <Loader2 className="spin-icon" size={13} aria-hidden="true" />
+                      <span>Verifying Introducer details…</span>
                     </span>
                   ) : (
                     <span className="member-register-confirm-help" style={{ display: 'block', marginTop: '6px' }}>
@@ -707,8 +710,13 @@ export function GoogleIntroducerPage() {
                       margin: 0,
                       opacity: isNextDisabled ? 0.6 : 1,
                       cursor: isNextDisabled ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
                     }}
                   >
+                    {isSubmitting && <Loader2 className="spin-icon" size={18} aria-hidden="true" />}
                     <span>{isSubmitting ? 'Completing…' : 'Next'}</span>
                   </button>
                 </div>

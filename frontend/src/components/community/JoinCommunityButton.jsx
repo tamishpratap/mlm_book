@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Crown, CheckCircle2, LogOut, Clock, UserPlus } from 'lucide-react';
+import { Crown, CheckCircle2, LogOut, Clock, UserPlus, Loader2 } from 'lucide-react';
 import communityApi from '../../api/communityApi';
 import useAuth from '../../hooks/useAuth';
 import AccountVerificationModal from '../verification/AccountVerificationModal';
@@ -139,7 +139,11 @@ export function JoinCommunityButton({
           onClick={handleLeave}
           disabled={isLoading}
         >
-          <LogOut size={13} aria-hidden="true" />
+          {isLoading ? (
+            <Loader2 size={13} className="spin-icon" aria-hidden="true" />
+          ) : (
+            <LogOut size={13} aria-hidden="true" />
+          )}
           <span>{isLoading ? 'Leaving...' : 'Leave Community'}</span>
         </button>
       </div>
@@ -169,7 +173,11 @@ export function JoinCommunityButton({
         onClick={handleJoin}
         disabled={isLoading}
       >
-        <UserPlus size={14} aria-hidden="true" />
+        {isLoading ? (
+          <Loader2 size={14} className="spin-icon" aria-hidden="true" />
+        ) : (
+          <UserPlus size={14} aria-hidden="true" />
+        )}
         <span>
           {isLoading
             ? 'Joining...'

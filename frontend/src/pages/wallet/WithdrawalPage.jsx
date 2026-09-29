@@ -233,6 +233,7 @@ export function WithdrawalPage() {
             )}
 
             <form onSubmit={handleSubmit}>
+              <fieldset disabled={isSubmitting} style={{ border: 'none', padding: 0, margin: 0 }}>
               {/* Gross Amount Input */}
               <div className="withdrawal-form-group">
                 <label htmlFor="gross_amount" className="withdrawal-form-label">
@@ -327,6 +328,7 @@ export function WithdrawalPage() {
                   maxLength={500}
                 />
               </div>
+              </fieldset>
 
               {/* Submit Button */}
               <button

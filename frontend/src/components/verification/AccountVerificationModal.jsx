@@ -11,6 +11,7 @@ import {
   Clock,
   ExternalLink,
   ShieldAlert,
+  Loader2,
 } from 'lucide-react';
 import verificationApi from '../../api/verificationApi';
 import useAuth from '../../hooks/useAuth';
@@ -554,6 +555,8 @@ export function AccountVerificationModal({ isOpen, onClose, onVerified, initialE
                   color: '#ffffff',
                   fontSize: '14.5px',
                   fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
                   border: 'none',
@@ -561,6 +564,9 @@ export function AccountVerificationModal({ isOpen, onClose, onVerified, initialE
                   boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
                 }}
               >
+                {isLoading ? (
+                  <Loader2 size={16} className="spin-icon" />
+                ) : null}
                 <span>{isLoading ? 'Preparing WhatsApp Link...' : 'Continue to WhatsApp Verification'}</span>
                 {!isLoading && <ArrowRight size={16} />}
               </button>
@@ -712,7 +718,11 @@ export function AccountVerificationModal({ isOpen, onClose, onVerified, initialE
                   boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
                 }}
               >
-                <CheckCircle2 size={18} />
+                {isLoading ? (
+                  <Loader2 size={18} className="spin-icon" />
+                ) : (
+                  <CheckCircle2 size={18} />
+                )}
                 <span>{isLoading ? 'Submitting Request...' : 'I have sent Hi'}</span>
               </button>
 

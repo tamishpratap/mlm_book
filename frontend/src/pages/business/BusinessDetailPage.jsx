@@ -43,6 +43,7 @@ import {
   Camera,
   Eye,
   Gift,
+  Loader2,
 } from 'lucide-react';
 import businessApi from '../../api/businessApi';
 import postApi from '../../api/postApi';
@@ -269,13 +270,17 @@ export function BusinessDetailPage() {
     setSearchParams(newParams);
   };
 
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+
   const handleToggleFollow = async () => {
+    if (isFollowLoading) return;
     if (!isVerified) {
       setVerifyPromptMessage('Please verify your mobile number through WhatsApp before following a business page.');
       setShowVerifyModal(true);
       return;
     }
 
+    setIsFollowLoading(true);
     try {
       const res = await businessApi.toggleFollow(slug);
       if (res && res.success) {
@@ -291,6 +296,8 @@ export function BusinessDetailPage() {
       }
     } catch {
       // Ignore
+    } finally {
+      setIsFollowLoading(false);
     }
   };
 
@@ -884,8 +891,14 @@ export function BusinessDetailPage() {
                     type="button"
                     className={`member-button ${followStatus === 'accepted' || followStatus === 'pending' ? 'member-button--secondary' : 'member-button--primary'}`}
                     onClick={handleToggleFollow}
+                    disabled={isFollowLoading}
                   >
-                    {followStatus === 'accepted' ? (
+                    {isFollowLoading ? (
+                      <>
+                        <Loader2 size={15} className="spin-icon" aria-hidden="true" />
+                        <span>Updating...</span>
+                      </>
+                    ) : followStatus === 'accepted' ? (
                       <>
                         <Check size={15} color="#20c875" aria-hidden="true" />
                         <span>Following</span>
@@ -1913,7 +1926,11 @@ export function BusinessDetailPage() {
                   className="member-button member-button--primary"
                   disabled={isSubmittingReview || !reviewBody.trim()}
                 >
-                  <Send size={14} />
+                  {isSubmittingReview ? (
+                    <Loader2 size={14} className="spin-icon" />
+                  ) : (
+                    <Send size={14} />
+                  )}
                   <span>{isSubmittingReview ? 'Submitting...' : reviewEditMode ? 'Update Review' : 'Publish Review'}</span>
                 </button>
               </div>
@@ -1994,6 +2011,7 @@ export function BusinessDetailPage() {
                   className="member-button member-button--primary"
                   disabled={isSubmittingReply || !replyText.trim()}
                 >
+                  {isSubmittingReply && <Loader2 size={14} className="spin-icon" />}
                   <span>{isSubmittingReply ? 'Publishing...' : 'Publish Reply'}</span>
                 </button>
               </div>
@@ -2092,6 +2110,7 @@ export function BusinessDetailPage() {
                   className="member-button member-button--danger"
                   disabled={isSubmittingReport}
                 >
+                  {isSubmittingReport && <Loader2 size={14} className="spin-icon" />}
                   <span>{isSubmittingReport ? 'Submitting...' : 'Submit Report'}</span>
                 </button>
               </div>
@@ -2187,7 +2206,11 @@ export function BusinessDetailPage() {
                   className="member-button member-button--primary"
                   disabled={isInvitingFollow || !inviteFollowId}
                 >
-                  <Send size={14} />
+                  {isInvitingFollow ? (
+                    <Loader2 size={14} className="spin-icon" />
+                  ) : (
+                    <Send size={14} />
+                  )}
                   <span>{isInvitingFollow ? 'Sending...' : 'Send Invitation'}</span>
                 </button>
               </div>
@@ -2271,7 +2294,11 @@ export function BusinessDetailPage() {
                   className="member-button member-button--primary"
                   disabled={isSendingCustomerMessage || !customerMessageText.trim()}
                 >
-                  <Send size={14} />
+                  {isSendingCustomerMessage ? (
+                    <Loader2 size={14} className="spin-icon" />
+                  ) : (
+                    <Send size={14} />
+                  )}
                   <span>{isSendingCustomerMessage ? 'Sending...' : 'Send Message'}</span>
                 </button>
               </div>

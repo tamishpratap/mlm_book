@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import postApi from '../../../api/postApi';
 import { ModalPortal } from '../../common/ModalPortal';
 
@@ -168,6 +168,7 @@ export function ReportModal({ isOpen = true, onClose, postId, post = null }) {
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -185,8 +186,16 @@ export function ReportModal({ isOpen = true, onClose, postId, post = null }) {
                 className="post-report-modal__btn-submit"
                 type="submit"
                 disabled={isSubmitting || isUnbackedSynthetic}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
               >
-                {isSubmitting ? 'Sending...' : 'Send Report'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={14} className="spin-icon" />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  'Send Report'
+                )}
               </button>
             </footer>
           </form>

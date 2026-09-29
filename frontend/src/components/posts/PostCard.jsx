@@ -25,6 +25,7 @@ import {
   Tag,
   Gift,
   Star,
+  Loader2,
 } from 'lucide-react';
 import CommentItem from './CommentItem';
 import ReactorsModal from './modals/ReactorsModal';
@@ -211,6 +212,7 @@ export function PostCard({
   const isTouchInteractionRef = useRef(false);
   const justInteractedRef = useRef(false);
   const isReactingRef = useRef(false);
+  const isSavingRef = useRef(false);
 
   // Modals state
   const [showReactorsModal, setShowReactorsModal] = useState(false);
@@ -556,6 +558,8 @@ export function PostCard({
   };
 
   const handleToggleSave = async () => {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
     setOptionsOpen(false);
     try {
       const response = await postApi.toggleSave(post.id);
@@ -570,6 +574,8 @@ export function PostCard({
       }
     } catch {
       // Revert
+    } finally {
+      isSavingRef.current = false;
     }
   };
 
@@ -1816,6 +1822,7 @@ export function PostCard({
               autoComplete="off"
               value={newCommentText}
               onChange={(e) => setNewCommentText(e.target.value)}
+              disabled={isSubmittingComment}
             />
             <button
               className="post-comment-form__submit"
@@ -1823,7 +1830,11 @@ export function PostCard({
               disabled={!newCommentText.trim() || isSubmittingComment}
               aria-label="Send Comment"
             >
-              <SendHorizontal size={16} aria-hidden="true" />
+              {isSubmittingComment ? (
+                <Loader2 size={16} className="spin-icon" aria-hidden="true" />
+              ) : (
+                <SendHorizontal size={16} aria-hidden="true" />
+              )}
             </button>
           </div>
         </form>

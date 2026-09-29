@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   FileText,
   ShieldCheck,
+  Loader2,
 } from 'lucide-react';
 import businessApi from '../../../api/businessApi';
 import { getMediaUrl } from '../../../utils/assetHelper';
@@ -909,9 +910,13 @@ export function CreateAdCampaignModal({
                     fontSize: '13.5px',
                     fontWeight: 600,
                     cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
                   }}
                 >
-                  {isSubmitting ? 'Saving...' : 'Save as Draft'}
+                  {isSubmitting && <Loader2 size={14} className="spin-icon" />}
+                  <span>{isSubmitting ? 'Saving...' : 'Save as Draft'}</span>
                 </button>
 
                 <button
@@ -934,7 +939,11 @@ export function CreateAdCampaignModal({
                     boxShadow: '0 4px 12px rgba(79, 125, 243, 0.25)',
                   }}
                 >
-                  <CheckCircle2 size={16} />
+                  {isSubmitting ? (
+                    <Loader2 size={16} className="spin-icon" />
+                  ) : (
+                    <CheckCircle2 size={16} />
+                  )}
                   <span>{isSubmitting ? 'Submitting...' : 'Submit for Review'}</span>
                 </button>
               </div>

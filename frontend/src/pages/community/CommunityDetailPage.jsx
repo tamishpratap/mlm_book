@@ -21,6 +21,7 @@ import {
   Activity,
   Bell,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
 import communityApi from '../../api/communityApi';
 import useAuth from '../../hooks/useAuth';
@@ -78,6 +79,8 @@ export function CommunityDetailPage() {
   const [isLogoAdjustModalOpen, setIsLogoAdjustModalOpen] = useState(false);
   const [pendingCoverFile, setPendingCoverFile] = useState(null);
   const [isCoverAdjustModalOpen, setIsCoverAdjustModalOpen] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
 
 
@@ -159,8 +162,9 @@ export function CommunityDetailPage() {
   const handleApplyCoverAdjustment = async ({ file: adjustedFile }) => {
     setIsCoverAdjustModalOpen(false);
     setPendingCoverFile(null);
-    if (!adjustedFile || !slug) return;
+    if (!adjustedFile || !slug || isUploadingCover) return;
 
+    setIsUploadingCover(true);
     const formData = new FormData();
     formData.append('cover_photo', adjustedFile);
 
@@ -172,6 +176,7 @@ export function CommunityDetailPage() {
     } catch (err) {
       console.error('Failed to update community cover photo', err);
     } finally {
+      setIsUploadingCover(false);
       if (coverInputRef.current) coverInputRef.current.value = '';
     }
   };
@@ -193,8 +198,9 @@ export function CommunityDetailPage() {
   const handleApplyLogoAdjustment = async ({ file: adjustedFile }) => {
     setIsLogoAdjustModalOpen(false);
     setPendingLogoFile(null);
-    if (!adjustedFile || !slug) return;
+    if (!adjustedFile || !slug || isUploadingLogo) return;
 
+    setIsUploadingLogo(true);
     const formData = new FormData();
     formData.append('logo', adjustedFile);
 
@@ -206,6 +212,7 @@ export function CommunityDetailPage() {
     } catch (err) {
       console.error('Failed to update community logo', err);
     } finally {
+      setIsUploadingLogo(false);
       if (logoInputRef.current) logoInputRef.current.value = '';
     }
   };
@@ -317,10 +324,11 @@ export function CommunityDetailPage() {
                 className="media-upload-button"
                 title="Change Cover Photo"
                 onClick={() => coverInputRef.current?.click()}
-                style={{ position: 'absolute', bottom: '16px', right: '16px', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}
+                disabled={isUploadingCover}
+                style={{ position: 'absolute', bottom: '16px', right: '16px', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: isUploadingCover ? 'not-allowed' : 'pointer', fontSize: '13px' }}
               >
-                <Camera size={15} />
-                <span>Change Cover</span>
+                {isUploadingCover ? <Loader2 size={15} className="spin-icon" /> : <Camera size={15} />}
+                <span>{isUploadingCover ? 'Uploading...' : 'Change Cover'}</span>
               </button>
               <input
                 ref={coverInputRef}
@@ -351,6 +359,7 @@ export function CommunityDetailPage() {
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   title="Change Logo"
+                  disabled={isUploadingLogo}
                   style={{
                     position: 'absolute',
                     bottom: '4px',
@@ -364,12 +373,12 @@ export function CommunityDetailPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: 'pointer',
+                    cursor: isUploadingLogo ? 'not-allowed' : 'pointer',
                     zIndex: 20,
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
                   }}
                 >
-                  <Camera size={14} />
+                  {isUploadingLogo ? <Loader2 size={14} className="spin-icon" /> : <Camera size={14} />}
                 </button>
                 <input
                   ref={logoInputRef}
@@ -778,8 +787,10 @@ export function CommunityDetailPage() {
                   type="submit"
                   className="member-button member-button--primary"
                   disabled={isSavingNotif}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  {isSavingNotif ? 'Saving...' : 'Save Preferences'}
+                  {isSavingNotif && <Loader2 size={14} className="spin-icon" />}
+                  <span>{isSavingNotif ? 'Saving...' : 'Save Preferences'}</span>
                 </button>
               </div>
             </form>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2, ThumbsUp, SendHorizontal } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, ThumbsUp, SendHorizontal, Loader2 } from 'lucide-react';
 import ReplyItem from './ReplyItem';
 import CommentReactorsModal from './modals/CommentReactorsModal';
 import postApi from '../../api/postApi';
@@ -144,7 +144,7 @@ export function CommentItem({
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    if (!editText.trim()) return;
+    if (!editText.trim() || isSaving) return;
     setIsSaving(true);
     try {
       await postApi.updateComment(comment.id, editText.trim());
@@ -446,21 +446,31 @@ export function CommentItem({
                 maxLength={1000}
                 required
                 rows={2}
+                disabled={isSaving}
               />
               <div className="post-comment-edit-form__actions">
                 <button
                   type="button"
                   className="post-comment-edit-form__btn-cancel"
                   onClick={() => setIsEditing(false)}
+                  disabled={isSaving}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="post-comment-edit-form__btn-save"
-                  disabled={isSaving}
+                  disabled={isSaving || !editText.trim()}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  {isSaving ? 'Saving...' : 'Save'}
+                  {isSaving ? (
+                    <>
+                      <Loader2 size={13} className="spin-icon" aria-hidden="true" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    'Save'
+                  )}
                 </button>
               </div>
             </form>
@@ -599,6 +609,7 @@ export function CommentItem({
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   maxLength={1000}
+                  disabled={isSubmittingReply}
                   autoFocus
                 />
                 <button
@@ -607,7 +618,11 @@ export function CommentItem({
                   disabled={!replyText.trim() || isSubmittingReply}
                   aria-label="Send reply"
                 >
-                  <SendHorizontal size={14} />
+                  {isSubmittingReply ? (
+                    <Loader2 size={14} className="spin-icon" aria-hidden="true" />
+                  ) : (
+                    <SendHorizontal size={14} aria-hidden="true" />
+                  )}
                 </button>
               </div>
             </form>

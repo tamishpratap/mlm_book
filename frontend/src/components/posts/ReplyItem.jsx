@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2, ThumbsUp } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, ThumbsUp, Loader2 } from 'lucide-react';
 import postApi from '../../api/postApi';
 import { getAvatarUrl } from '../../utils/assetHelper';
 import { renderContentWithLinks } from '../../utils/linkHelper';
@@ -115,7 +115,7 @@ export function ReplyItem({
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    if (!editText.trim()) return;
+    if (!editText.trim() || isSaving) return;
     setIsSaving(true);
     try {
       await postApi.updateComment(reply.id, editText.trim());
@@ -319,21 +319,31 @@ export function ReplyItem({
                 maxLength={1000}
                 required
                 rows={2}
+                disabled={isSaving}
               />
               <div className="post-comment-edit-form__actions">
                 <button
                   type="button"
                   className="post-comment-edit-form__btn-cancel"
                   onClick={() => setIsEditing(false)}
+                  disabled={isSaving}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="post-comment-edit-form__btn-save"
-                  disabled={isSaving}
+                  disabled={isSaving || !editText.trim()}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  {isSaving ? 'Saving...' : 'Save'}
+                  {isSaving ? (
+                    <>
+                      <Loader2 size={13} className="spin-icon" aria-hidden="true" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    'Save'
+                  )}
                 </button>
               </div>
             </form>

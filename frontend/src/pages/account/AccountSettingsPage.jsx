@@ -6,6 +6,7 @@ import {
   BadgeCheck,
   Shield,
   UserRound,
+  Loader2,
 } from 'lucide-react';
 import accountApi from '../../api/accountApi';
 import useAuth from '../../hooks/useAuth';
@@ -216,6 +217,7 @@ export function AccountSettingsPage() {
                 maxLength={255}
                 placeholder="new.email@example.com"
                 required
+                disabled={isSendingEmailOtp}
                 className="form-control"
                 style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px', boxSizing: 'border-box' }}
               />
@@ -228,9 +230,15 @@ export function AccountSettingsPage() {
                 disabled={isSendingEmailOtp || emailCooldown > 0}
                 style={{ fontSize: '13px', minHeight: '40px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                <Send size={14} />
+                {isSendingEmailOtp ? (
+                  <Loader2 size={14} className="spin-icon" />
+                ) : (
+                  <Send size={14} />
+                )}
                 <span>
-                  {emailCooldown > 0
+                  {isSendingEmailOtp
+                    ? 'Sending…'
+                    : emailCooldown > 0
                     ? `Resend in ${emailCooldown}s`
                     : emailOtpPending
                     ? 'Resend Code'
@@ -258,6 +266,7 @@ export function AccountSettingsPage() {
                   pattern="[0-9]{6}"
                   placeholder="000000"
                   required
+                  disabled={isVerifyingEmailOtp}
                   style={{
                     flex: '1 1 140px',
                     minWidth: 0,
@@ -276,10 +285,14 @@ export function AccountSettingsPage() {
                   type="submit"
                   className="member-button member-button--primary"
                   disabled={isVerifyingEmailOtp || emailOtp.length < 6}
-                  style={{ flexShrink: 0, minHeight: '42px' }}
+                  style={{ flexShrink: 0, minHeight: '42px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <BadgeCheck size={16} />
-                  <span>Verify</span>
+                  {isVerifyingEmailOtp ? (
+                    <Loader2 size={16} className="spin-icon" />
+                  ) : (
+                    <BadgeCheck size={16} />
+                  )}
+                  <span>{isVerifyingEmailOtp ? 'Verifying…' : 'Verify'}</span>
                 </button>
               </form>
             </div>

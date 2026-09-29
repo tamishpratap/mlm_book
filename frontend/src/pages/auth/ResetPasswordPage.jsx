@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import authApi from '../../api/authApi';
 import useBranding from '../../hooks/useBranding';
 import { BRAND_LOGO } from '../../utils/assetHelper';
+import { Loader2 } from 'lucide-react';
 
 export function ResetPasswordPage() {
   const { logoUrl, siteName } = useBranding();
@@ -252,12 +253,14 @@ export function ResetPasswordPage() {
                     autoComplete="new-password"
                     required
                     autoFocus
+                    disabled={isSubmitting}
                     aria-invalid={errors.password ? 'true' : 'false'}
                     aria-describedby={errors.password ? 'member-password-error' : undefined}
                   />
                   <button
                     className="member-auth-password-toggle"
                     type="button"
+                    disabled={isSubmitting}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     onClick={() => setShowPassword(!showPassword)}
                   >
@@ -290,10 +293,12 @@ export function ResetPasswordPage() {
                     placeholder="Re-enter your new password"
                     autoComplete="new-password"
                     required
+                    disabled={isSubmitting}
                   />
                   <button
                     className="member-auth-password-toggle"
                     type="button"
+                    disabled={isSubmitting}
                     aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
@@ -313,7 +318,11 @@ export function ResetPasswordPage() {
               </div>
 
               <button className="member-auth-submit" type="submit" disabled={isSubmitting}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="m10 17 5-5-5-5" /><path d="M15 12H3" /></svg>
+                {isSubmitting ? (
+                  <Loader2 className="spin-icon" size={18} aria-hidden="true" />
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="m10 17 5-5-5-5" /><path d="M15 12H3" /></svg>
+                )}
                 <span>{isSubmitting ? 'Resetting Password…' : 'Reset Password'}</span>
               </button>
             </form>

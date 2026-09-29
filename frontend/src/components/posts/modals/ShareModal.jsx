@@ -12,6 +12,7 @@ import {
   Mail,
   Copy,
   ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import postApi from '../../../api/postApi';
 import { getAvatarUrl, getMediaUrl, getInitials } from '../../../utils/assetHelper';
@@ -791,6 +792,7 @@ export function ShareModal({
                   rows={3}
                   value={shareMessage}
                   onChange={(e) => setShareMessage(e.target.value)}
+                  disabled={isSubmitting}
                   autoFocus
                   style={{
                     width: '100%',
@@ -964,9 +966,16 @@ export function ShareModal({
                 type="submit"
                 className="member-button member-button--primary"
                 disabled={isSubmitting}
-                style={{ padding: '8px 20px', borderRadius: '10px', fontWeight: 700, minWidth: '120px' }}
+                style={{ padding: '8px 20px', borderRadius: '10px', fontWeight: 700, minWidth: '120px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
               >
-                {isSubmitting ? 'Sharing...' : 'Share Now'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={15} className="spin-icon" />
+                    <span>Sharing...</span>
+                  </>
+                ) : (
+                  'Share Now'
+                )}
               </button>
             </footer>
           </form>
@@ -1129,6 +1138,7 @@ export function ShareModal({
                   maxLength={500}
                   value={friendNote}
                   onChange={(e) => setFriendNote(e.target.value)}
+                  disabled={isSubmitting}
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -1167,9 +1177,16 @@ export function ShareModal({
                 type="submit"
                 className="member-button member-button--primary"
                 disabled={isSubmitting || selectedFriendIds.length === 0}
-                style={{ padding: '8px 20px', borderRadius: '10px', fontWeight: 700, minWidth: '120px' }}
+                style={{ padding: '8px 20px', borderRadius: '10px', fontWeight: 700, minWidth: '120px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
               >
-                {isSubmitting ? 'Sending...' : `Send (${selectedFriendIds.length})`}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={15} className="spin-icon" />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  `Send (${selectedFriendIds.length})`
+                )}
               </button>
             </footer>
           </form>

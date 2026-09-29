@@ -22,7 +22,7 @@ html, body {
   flex-direction: column;
 }
 
-.spin-icon {
+.spin-icon, .animate-spin {
   animation: spin 0.8s linear infinite;
 }
 
