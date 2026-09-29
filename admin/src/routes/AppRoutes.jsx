@@ -10,6 +10,7 @@ import { NotFoundPage } from '../pages/common/NotFoundPage';
 import { UnauthorizedPage } from '../pages/common/UnauthorizedPage';
 
 // Members Module Pages
+import { AllMembersPage } from '../pages/members/AllMembersPage';
 import { MembersListPage } from '../pages/members/MembersListPage';
 import { MemberDetailsPage } from '../pages/members/MemberDetailsPage';
 import { MemberEditPage } from '../pages/members/MemberEditPage';
@@ -74,6 +75,7 @@ import { PermissionMatrixPage } from '../pages/roles/PermissionMatrixPage';
 import { NotificationsListPage } from '../pages/notifications/NotificationsListPage';
 import { BroadcastComposerPage } from '../pages/notifications/BroadcastComposerPage';
 import { NotificationDetailsPage } from '../pages/notifications/NotificationDetailsPage';
+import { NotificationSoundPage } from '../pages/notifications/NotificationSoundPage';
 
 // Analytics & BI Module Pages
 import { AnalyticsPage } from '../pages/analytics/AnalyticsPage';
@@ -110,6 +112,7 @@ export function AppRoutes() {
         <Route path="dashboard" element={<DashboardPage />} />
 
         {/* Members Management Module */}
+        <Route path="members/all" element={<AllMembersPage />} />
         <Route path="members" element={<MembersListPage defaultMode="active" />} />
         <Route path="members/active" element={<Navigate to="/admin/members" replace />} />
         <Route path="members/pending" element={<MembersListPage defaultMode="pending" />} />
@@ -193,6 +196,7 @@ export function AppRoutes() {
         {/* Notifications & Communication Center */}
         <Route path="notifications" element={<NotificationsListPage />} />
         <Route path="notifications/broadcast" element={<BroadcastComposerPage />} />
+        <Route path="notifications/sound" element={<NotificationSoundPage />} />
         <Route path="notifications/:id" element={<NotificationDetailsPage />} />
 
         {/* Analytics & BI Module */}

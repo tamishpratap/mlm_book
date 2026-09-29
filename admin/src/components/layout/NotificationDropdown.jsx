@@ -18,7 +18,7 @@ import { OverlayPanel } from 'primereact/overlaypanel';
 import { notificationsApi } from '../../api';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
-import { processNewNotifications, markNotificationsAsKnown } from '../../utils/notificationSound';
+import { processNewNotifications, markNotificationsAsKnown, setCustomNotificationSoundUrl } from '../../utils/notificationSound';
 
 export function NotificationDropdown() {
   const { admin } = useAuth();
@@ -40,6 +40,9 @@ export function NotificationDropdown() {
         if (typeof notificationsApi.getDropdownData === 'function') {
           const res = await notificationsApi.getDropdownData();
           if (res?.success && isMounted) {
+            if (res.admin_sound_url) {
+              setCustomNotificationSoundUrl(res.admin_sound_url);
+            }
             const count = typeof res.unread_count === 'number'
               ? res.unread_count
               : typeof res.count === 'number'

@@ -13,7 +13,14 @@ export function MemberFilterBar({
   showStatusFilter = true,
   currentMode = 'active',
 }) {
-  const statusOptions = currentMode === 'pending'
+  const statusOptions = currentMode === 'all'
+    ? [
+        { label: 'All Verification Statuses', value: '' },
+        { label: 'Verified Members', value: 'verified' },
+        { label: 'Unverified Members', value: 'unverified' },
+        { label: 'Pending Verification', value: 'pending' },
+      ]
+    : currentMode === 'pending'
     ? [
         { label: 'All Unverified', value: '' },
         { label: 'Verification Requested', value: 'requested' },
@@ -27,8 +34,14 @@ export function MemberFilterBar({
         { label: 'Inactive', value: 'inactive' },
       ];
 
+  const accountStatusOptions = [
+    { label: 'All Account Statuses', value: '' },
+    { label: 'Active (Unblocked)', value: 'active' },
+    { label: 'Blocked Accounts', value: 'blocked' },
+  ];
+
   const hasActiveFilters = Boolean(
-    filters.q || filters.status || filters.country || filters.date_from || filters.date_to
+    filters.q || filters.status || filters.account_status || filters.country || filters.date_from || filters.date_to
   );
 
   const handleSubmit = (e) => {
@@ -57,7 +70,7 @@ export function MemberFilterBar({
         {showStatusFilter && (
           <div className="w-full sm:w-auto sm:min-w-[150px]">
             <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="status">
-              Verification & Activity
+              {currentMode === 'all' ? 'Verification Status' : 'Verification & Activity'}
             </label>
             <select
               id="status"
@@ -66,6 +79,27 @@ export function MemberFilterBar({
               className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               {statusOptions.map((opt, idx) => (
+                <option key={idx} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Account Status Filter for All Members Mode */}
+        {currentMode === 'all' && (
+          <div className="w-full sm:w-auto sm:min-w-[140px]">
+            <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="account_status">
+              Account Status
+            </label>
+            <select
+              id="account_status"
+              value={filters.account_status || ''}
+              onChange={(e) => onFilterChange('account_status', e.target.value)}
+              className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              {accountStatusOptions.map((opt, idx) => (
                 <option key={idx} value={opt.value}>
                   {opt.label}
                 </option>

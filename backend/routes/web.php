@@ -79,10 +79,60 @@ Route::get('/community/invite/{code}', [CommunityInviteController::class, 'show'
 
 // Notification & UI Audio Assets
 Route::get('/sounds/{file}', function ($file) {
+    if ($file === 'notification.mp3' || $file === 'member_notification.mp3') {
+        $customMemberSound = \App\Models\Setting::get('member_notification_sound');
+        if ($customMemberSound) {
+            $customPath = public_path($customMemberSound);
+            if (file_exists($customPath)) {
+                $ext = strtolower(pathinfo($customPath, PATHINFO_EXTENSION));
+                $mime = match($ext) {
+                    'wav' => 'audio/wav',
+                    'ogg' => 'audio/ogg',
+                    'aac' => 'audio/aac',
+                    'm4a' => 'audio/mp4',
+                    default => 'audio/mpeg',
+                };
+                return response()->file($customPath, [
+                    'Content-Type' => $mime,
+                    'Cache-Control' => 'no-cache, must-revalidate',
+                ]);
+            }
+        }
+    }
+
+    if ($file === 'admin_notification.mp3') {
+        $customAdminSound = \App\Models\Setting::get('admin_notification_sound');
+        if ($customAdminSound) {
+            $customPath = public_path($customAdminSound);
+            if (file_exists($customPath)) {
+                $ext = strtolower(pathinfo($customPath, PATHINFO_EXTENSION));
+                $mime = match($ext) {
+                    'wav' => 'audio/wav',
+                    'ogg' => 'audio/ogg',
+                    'aac' => 'audio/aac',
+                    'm4a' => 'audio/mp4',
+                    default => 'audio/mpeg',
+                };
+                return response()->file($customPath, [
+                    'Content-Type' => $mime,
+                    'Cache-Control' => 'no-cache, must-revalidate',
+                ]);
+            }
+        }
+    }
+
     $path = public_path('sounds/' . $file);
     if (file_exists($path)) {
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mime = match($ext) {
+            'wav' => 'audio/wav',
+            'ogg' => 'audio/ogg',
+            'aac' => 'audio/aac',
+            'm4a' => 'audio/mp4',
+            default => 'audio/mpeg',
+        };
         return response()->file($path, [
-            'Content-Type' => 'audio/mpeg',
+            'Content-Type' => $mime,
             'Cache-Control' => 'public, max-age=31536000',
         ]);
     }
@@ -958,9 +1008,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/wallet-address', [\App\Http\Controllers\Admin\MemberManagementController::class, 'walletAddressView'])->name('wallet-address');
             Route::get('/search', [\App\Http\Controllers\Admin\MemberManagementController::class, 'search'])->name('search');
             Route::get('/', [\App\Http\Controllers\Admin\MemberManagementController::class, 'active'])->name('index');
+            Route::get('/all', [\App\Http\Controllers\Admin\MemberManagementController::class, 'all'])->name('all');
             Route::get('/active', [\App\Http\Controllers\Admin\MemberManagementController::class, 'active'])->name('active');
             Route::get('/pending', [\App\Http\Controllers\Admin\MemberManagementController::class, 'pending'])->name('pending');
             Route::get('/blocked', [\App\Http\Controllers\Admin\MemberManagementController::class, 'blocked'])->name('blocked');
+            Route::get('/{member}/open-panel', [\App\Http\Controllers\Admin\MemberManagementController::class, 'redirectToMemberPanel'])->name('open-panel');
             Route::get('/export/{format?}', [\App\Http\Controllers\Admin\MemberManagementController::class, 'export'])->name('export');
             Route::post('/bulk-action', [\App\Http\Controllers\Admin\MemberManagementController::class, 'bulkAction'])->name('bulk-action');
             Route::get('/{member}', [\App\Http\Controllers\Admin\MemberManagementController::class, 'show'])->name('show');

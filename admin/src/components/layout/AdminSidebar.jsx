@@ -49,6 +49,7 @@ const NAV_GROUPS = [
         basePath: '/admin/members',
         ownerKey: '/admin/members',
         children: [
+          { label: 'All Members', to: '/admin/members/all' },
           { label: 'Verified Members', to: '/admin/members' },
           { label: 'Unverified Members', to: '/admin/members/pending' },
           { label: 'Blocked Members', to: '/admin/members/blocked' },
@@ -201,6 +202,7 @@ const NAV_GROUPS = [
         children: [
           { label: 'Notification Queue', to: '/admin/notifications' },
           { label: 'Send Broadcast', to: '/admin/notifications/broadcast' },
+          { label: 'Change Notification Sound', to: '/admin/notifications/sound' },
         ],
       },
     ],

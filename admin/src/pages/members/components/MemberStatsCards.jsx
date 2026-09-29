@@ -16,8 +16,8 @@ export function MemberStatsCards({
       color: 'text-blue-600',
       bg: 'bg-blue-50',
       subtext: 'All System Records',
-      to: '/admin/members',
-      mode: 'active',
+      to: '/admin/members/all',
+      mode: 'all',
     },
     {
       title: 'Verified Members',
