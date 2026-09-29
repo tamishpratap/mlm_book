@@ -16,22 +16,48 @@ const STORAGE_KEY = 'mlm_admin_notification_sound_enabled';
 const MIN_SOUND_INTERVAL_MS = 1500; // Throttle to prevent audio spam
 const MAX_KNOWN_IDS = 1000; // Bounded cache for long-running sessions
 
+let customAdminSoundUrl = null;
+
 /**
- * Resolves the publicly accessible browser URL for notification.mp3.
- * Prioritizes VITE_BACKEND_URL (backend/public/sounds/notification.mp3),
+ * Configure the runtime audio URL for admin notifications.
+ * Immediately updates the active singleton audio source if initialized.
+ * @param {string|null} url
+ */
+export function setCustomNotificationSoundUrl(url) {
+  if (url && typeof url === 'string') {
+    customAdminSoundUrl = url;
+    if (audioInstance) {
+      audioInstance.src = url;
+      audioInstance.load();
+    }
+  } else if (url === null) {
+    customAdminSoundUrl = null;
+    if (audioInstance) {
+      audioInstance.src = resolveNotificationSoundUrl();
+      audioInstance.load();
+    }
+  }
+}
+
+/**
+ * Resolves the publicly accessible browser URL for admin notification sound.
+ * Checks dynamically configured URL, then prioritizes VITE_BACKEND_URL/sounds/admin_notification.mp3,
  * falling back to VITE_ASSET_URL or relative root path.
  */
 export function resolveNotificationSoundUrl() {
+  if (customAdminSoundUrl) {
+    return customAdminSoundUrl;
+  }
   const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
   const backendUrl = (env.VITE_BACKEND_URL || '').replace(/\/+$/, '');
   if (backendUrl) {
-    return `${backendUrl}/sounds/notification.mp3`;
+    return `${backendUrl}/sounds/admin_notification.mp3`;
   }
   const assetUrl = (env.VITE_ASSET_URL || '').replace(/\/+$/, '');
   if (assetUrl) {
-    return `${assetUrl}/sounds/notification.mp3`;
+    return `${assetUrl}/sounds/admin_notification.mp3`;
   }
-  return '/sounds/notification.mp3';
+  return '/sounds/admin_notification.mp3';
 }
 
 // Embedded Base64 Data URI fallback of notification.mp3 (5,458 bytes)
@@ -324,4 +350,5 @@ export default {
   isSoundEnabled,
   setSoundEnabled,
   resolveNotificationSoundUrl,
+  setCustomNotificationSoundUrl,
 };
