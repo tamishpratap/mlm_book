@@ -512,15 +512,19 @@ body.menu-open {
 }
 
 .page-shell:has(.biz-page),
-.page-shell--single:has(.biz-page) {
-    width: min(100% - 36px, 1370px);
+.page-shell--single:has(.biz-page),
+.page-shell:has(#member-dashboard-main),
+.page-shell--single:has(#member-dashboard-main) {
+    width: min(100% - 32px, 1440px);
     max-width: 100%;
     grid-template-columns: 250px minmax(0, 1fr);
 }
 
 @media (max-width: 1280px) {
     .page-shell:has(.biz-page),
-    .page-shell--single:has(.biz-page) {
+    .page-shell--single:has(.biz-page),
+    .page-shell:has(#member-dashboard-main),
+    .page-shell--single:has(#member-dashboard-main) {
         width: calc(100% - 16px);
         grid-template-columns: 240px minmax(0, 1fr);
         gap: 16px;

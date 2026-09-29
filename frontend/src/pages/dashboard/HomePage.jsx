@@ -2,24 +2,32 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import dashboardApi from '../../api/dashboardApi';
-import '../../styles/member-dashboard-hub.css';
 
-// Modern Dashboard Components
-import MemberWelcomeBanner from './components/MemberWelcomeBanner';
-import WalletIntelligenceCard from './components/WalletIntelligenceCard';
-import BusinessPagesOverview from './components/BusinessPagesOverview';
-import AdCampaignsOverview from './components/AdCampaignsOverview';
-import ReferralNetworkCard from './components/ReferralNetworkCard';
-import RecentTransactionsCard from './components/RecentTransactionsCard';
-import PlatformShortcutsGrid from './components/PlatformShortcutsGrid';
-import DashboardSkeleton from './components/DashboardSkeleton';
+// Subcomponents (16 Sections in exact specified order)
+import HomeHero from './components/HomeHero';
+import HomeWhatIs from './components/HomeWhatIs';
+import HomeCapabilities from './components/HomeCapabilities';
+import HomeWorkflowSteps from './components/HomeWorkflowSteps';
+import HomeAdvertisingProcess from './components/HomeAdvertisingProcess';
+import HomeMemberRewards from './components/HomeMemberRewards';
+import HomeRewardDeterminants from './components/HomeRewardDeterminants';
+import HomeBusinessBenefits from './components/HomeBusinessBenefits';
+import HomeMemberBenefits from './components/HomeMemberBenefits';
+import HomeCampaignTypes from './components/HomeCampaignTypes';
+import HomeRewardWallet from './components/HomeRewardWallet';
+import HomeTrustVerification from './components/HomeTrustVerification';
+import HomeEndToEndWorkflow from './components/HomeEndToEndWorkflow';
+import HomeWhyChoose from './components/HomeWhyChoose';
+import HomeFaqAccordion from './components/HomeFaqAccordion';
+import HomeCtaBanner from './components/HomeCtaBanner';
+import HomeSkeleton from './components/HomeSkeleton';
 import MissedIntroducerReminderModal from './components/MissedIntroducerReminderModal';
 
-export function DashboardPage() {
+export function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!user);
   const [error, setError] = useState(null);
   const [isReminderOpen, setIsReminderOpen] = useState(false);
 
@@ -45,7 +53,7 @@ export function DashboardPage() {
           } else if (status === 429) {
             setError(data?.message || 'Too many requests. Please try again shortly.');
           } else {
-            setError(data?.message || 'Unable to load dashboard details.');
+            setError(data?.message || 'Unable to load home details.');
           }
         } else {
           setError('Network error. Please check your internet connection.');
@@ -71,7 +79,7 @@ export function DashboardPage() {
         setDashboardData(data);
       })
       .catch((err) => {
-        setError(err.response?.data?.message || 'Unable to load dashboard details.');
+        setError(err.response?.data?.message || 'Unable to load home details.');
       })
       .finally(() => {
         setIsLoading(false);
@@ -119,14 +127,14 @@ export function DashboardPage() {
 
   return (
     <>
-      <main className="member-main" id="member-dashboard-main">
+      <main className="member-main home-landing" id="home-landing">
         {isLoading ? (
-          <DashboardSkeleton />
-        ) : error ? (
-          <div className="member-dashboard-hub">
-            <div className="card" role="alert" style={{ textAlign: 'center', padding: '48px 24px', borderRadius: '16px' }}>
+          <HomeSkeleton />
+        ) : error && !currentMember ? (
+          <div className="home-container">
+            <div className="card home-section" role="alert" style={{ textAlign: 'center', padding: '40px 20px' }}>
               <h2 style={{ fontSize: '1.25rem', color: 'var(--color-danger, #ef4444)', marginBottom: '8px' }}>
-                Dashboard Unavailable
+                Home Unavailable
               </h2>
               <p style={{ color: 'var(--color-text-secondary)', marginBottom: '18px' }}>{error}</p>
               <button
@@ -140,40 +148,54 @@ export function DashboardPage() {
             </div>
           </div>
         ) : (
-          <div className="member-dashboard-hub">
-            {/* 1. Executive Welcome & Quick Action Header */}
-            <MemberWelcomeBanner
-              member={currentMember}
-              referralNetwork={dashboardData?.referral_network}
-            />
+          <div className="home-container">
+            {/* Section 1 — Hero */}
+            <HomeHero memberName={currentMember?.name} />
 
-            {/* 2. Wallet & Financial Intelligence Center */}
-            <WalletIntelligenceCard
-              wallets={dashboardData?.wallets}
-            />
+            {/* Section 2 — What is MLM Book? */}
+            <HomeWhatIs />
 
-            {/* 3. Business Pages Command Center */}
-            <BusinessPagesOverview
-              businessPages={dashboardData?.business_pages}
-            />
+            {/* Section 3 — What Can You Do on MLM Book? */}
+            <HomeCapabilities />
 
-            {/* 4. Advertising Campaigns Performance */}
-            <AdCampaignsOverview
-              adCampaigns={dashboardData?.ad_campaigns}
-            />
+            {/* Section 4 — How MLM Book Works */}
+            <HomeWorkflowSteps />
 
-            {/* 5. Referral Network & Rank Status */}
-            <ReferralNetworkCard
-              referralNetwork={dashboardData?.referral_network}
-            />
+            {/* Section 5 — How Advertising Works */}
+            <HomeAdvertisingProcess />
 
-            {/* 6. Recent Financial Activity (Deposits & Withdrawals) */}
-            <RecentTransactionsCard
-              transactions={dashboardData?.recent_transactions}
-            />
+            {/* Section 6 — How Member Rewards Work */}
+            <HomeMemberRewards />
 
-            {/* 7. Quick Navigation Hub */}
-            <PlatformShortcutsGrid />
+            {/* Section 7 — What Determines Your Reward? */}
+            <HomeRewardDeterminants />
+
+            {/* Section 8 — Business Owner Benefits */}
+            <HomeBusinessBenefits />
+
+            {/* Section 9 — Member Benefits */}
+            <HomeMemberBenefits />
+
+            {/* Section 10 — Business Campaigns & Event Campaigns */}
+            <HomeCampaignTypes />
+
+            {/* Section 11 — Reward Wallet */}
+            <HomeRewardWallet />
+
+            {/* Section 12 — Trust & Verification */}
+            <HomeTrustVerification />
+
+            {/* Section 13 — End-to-End Workflow */}
+            <HomeEndToEndWorkflow />
+
+            {/* Section 14 — Why MLM Book? */}
+            <HomeWhyChoose />
+
+            {/* Section 15 — FAQ */}
+            <HomeFaqAccordion />
+
+            {/* Section 16 — Final CTA */}
+            <HomeCtaBanner />
           </div>
         )}
       </main>
@@ -188,4 +210,4 @@ export function DashboardPage() {
   );
 }
 
-export default DashboardPage;
+export default HomePage;

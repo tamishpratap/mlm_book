@@ -1,41 +1,53 @@
+import { Megaphone, Wallet, Sparkles } from 'lucide-react';
+
 export function DashboardSkeleton() {
   return (
-    <div className="home-container" aria-busy="true" aria-label="Loading dashboard...">
-      <section className="card home-hero" style={{ minHeight: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ width: '180px', height: '26px', background: 'rgba(79, 125, 243, 0.1)', borderRadius: '20px', marginBottom: '14px' }} />
-        <div style={{ width: '60%', height: '32px', background: 'var(--color-border)', borderRadius: '8px', marginBottom: '12px' }} />
-        <div style={{ width: '90%', height: '18px', background: 'var(--color-border-soft)', borderRadius: '6px', marginBottom: '8px' }} />
-        <div style={{ width: '75%', height: '18px', background: 'var(--color-border-soft)', borderRadius: '6px', marginBottom: '20px' }} />
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ width: '130px', height: '40px', background: 'rgba(79, 125, 243, 0.15)', borderRadius: '10px' }} />
-          <div style={{ width: '150px', height: '40px', background: 'var(--color-border)', borderRadius: '10px' }} />
-        </div>
-      </section>
+    <div className="member-dashboard-hub" aria-busy="true" aria-label="Loading Member Dashboard...">
+      {/* High-Tech Central Executive Loader Card */}
+      <div className="dash-loader-wrapper">
+        <div className="dash-loader-card">
+          <div className="dash-spinner-orbit">
+            <div className="dash-spinner-ring-outer" />
+            <div className="dash-spinner-ring-inner" />
+            <div className="dash-spinner-core-icon">
+              <Megaphone size={20} color="#38bdf8" />
+            </div>
+          </div>
 
-      <section className="card home-section" style={{ minHeight: '260px' }}>
-        <div style={{ width: '260px', height: '24px', background: 'var(--color-border)', borderRadius: '6px', marginBottom: '20px' }} />
-        <div className="home-video-layout">
-          <div style={{ height: '220px', background: 'var(--color-surface-alt)', borderRadius: '14px' }} />
-          <div style={{ height: '220px', background: 'var(--color-surface-alt)', borderRadius: '14px' }} />
-        </div>
-      </section>
+          <h3 className="dash-loader-title">
+            Loading Dashboard...
+          </h3>
 
-      <section className="card home-section" style={{ minHeight: '200px' }}>
-        <div style={{ width: '220px', height: '24px', background: 'var(--color-border)', borderRadius: '6px', marginBottom: '20px' }} />
-        <div className="home-grid home-grid--2">
-          <div style={{ height: '120px', background: 'var(--color-surface-alt)', borderRadius: '12px' }} />
-          <div style={{ height: '120px', background: 'var(--color-surface-alt)', borderRadius: '12px' }} />
-        </div>
-      </section>
+          <p className="dash-loader-subtitle">
+            Synchronizing fund balances, active ad campaigns, and business page analytics.
+          </p>
 
-      <section className="card home-section" style={{ minHeight: '300px' }}>
-        <div style={{ width: '240px', height: '24px', background: 'var(--color-border)', borderRadius: '6px', marginBottom: '20px' }} />
-        <div className="home-grid home-grid--3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} style={{ height: '150px', background: 'var(--color-surface-alt)', borderRadius: '12px' }} />
+          <div className="dash-loader-pill">
+            <span className="dash-loader-dot-pulse" />
+            <span>Fetching Live Account Data</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Synchronized Shimmer Skeleton Layout Below */}
+      <div style={{ opacity: 0.65, display: 'flex', flexDirection: 'column', gap: '20px', pointerEvents: 'none' }}>
+        {/* Banner Skeleton */}
+        <div className="dash-skeleton-box" style={{ height: '140px', borderRadius: '20px' }} />
+
+        {/* 4 Wallet Cards Skeleton Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="dash-skeleton-box" style={{ height: '150px', borderRadius: '16px' }} />
           ))}
         </div>
-      </section>
+
+        {/* Business Pages Skeleton Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '18px' }}>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="dash-skeleton-box" style={{ height: '220px', borderRadius: '16px' }} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

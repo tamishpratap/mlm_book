@@ -136,7 +136,7 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
   const getNavClass = (path, exact = false) => {
     const isActive = exact
       ? location.pathname === path
-      : location.pathname === path || (path !== '/member/dashboard' && location.pathname.startsWith(path));
+      : location.pathname === path || (path !== '/member/home' && path !== '/member/dashboard' && location.pathname.startsWith(path));
     return `top-nav__item ${isActive ? 'is-active' : ''}`;
   };
 
@@ -154,7 +154,7 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
             <Menu size={20} />
           </button>
 
-          <Link className="brand" to="/member/dashboard" aria-label={`${siteName || 'MLM Book'} Member Dashboard`}>
+          <Link className="brand" to="/member/home" aria-label={`${siteName || 'MLM Book'} Member Home`}>
             <img
               className="mlm-book-logo mlm-book-header-logo"
               src={logoUrl || BRAND_LOGO}
@@ -225,7 +225,7 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
         </div>
 
         <nav className="top-nav" aria-label="Primary navigation">
-          <NavLink to="/member/dashboard" className={getNavClass('/member/dashboard', true)} end>
+          <NavLink to="/member/home" className={getNavClass('/member/home', true)} end>
             <House size={18} />
             <span>Home</span>
           </NavLink>

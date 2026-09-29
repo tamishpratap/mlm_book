@@ -108,7 +108,7 @@ export function VerifyEmailPage() {
     try {
       await authApi.verifyEmailOtp({ otp });
       await refreshUser();
-      navigate('/member/dashboard', { replace: true });
+      navigate('/member/home', { replace: true });
     } catch (err) {
       if (err.response) {
         const { status, data } = err.response;
