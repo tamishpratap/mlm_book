@@ -85,7 +85,7 @@ class MemberManagementController extends Controller
         $verifiedCount = Member::whereNotNull('mobile_verified_at')->count();
         $unverifiedCount = Member::whereNull('mobile_verified_at')->count();
         $activeCount = Member::whereNull('blocked_at')->whereNotNull('mobile_verified_at')->count();
-        $pendingCount = Member::whereNull('blocked_at')->whereNull('mobile_verified_at')->whereNotNull('mobile_verification_requested_at')->count();
+        $pendingCount = Member::whereNull('blocked_at')->whereNull('mobile_verified_at')->count();
         $blockedCount = Member::whereNotNull('blocked_at')->count();
         $activeTodayCount = Member::where('last_seen_at', '>=', now()->subHours(24))->count();
 
@@ -147,14 +147,20 @@ class MemberManagementController extends Controller
         ]);
 
         $search = trim((string) $request->input('q'));
+        $status = $request->input('status');
         $country = $request->input('country');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
         $query = Member::query()
             ->whereNull('blocked_at')
-            ->whereNull('mobile_verified_at')
-            ->whereNotNull('mobile_verification_requested_at');
+            ->whereNull('mobile_verified_at');
+
+        if ($status === 'requested' || $status === 'pending') {
+            $query->whereNotNull('mobile_verification_requested_at');
+        } elseif ($status === 'not_requested' || $status === 'unverified') {
+            $query->whereNull('mobile_verification_requested_at');
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -179,15 +185,15 @@ class MemberManagementController extends Controller
             $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
         }
 
-        $members = $query->orderBy('mobile_verification_requested_at', 'asc')
-            ->paginate(15)
+        $members = $query->orderByRaw('mobile_verification_requested_at IS NULL ASC, mobile_verification_requested_at DESC, created_at DESC')
+            ->paginate($request->integer('per_page', 15))
             ->withQueryString();
 
         $totalCount = Member::count();
         $verifiedCount = Member::whereNotNull('mobile_verified_at')->count();
         $unverifiedCount = Member::whereNull('mobile_verified_at')->count();
         $activeCount = Member::whereNull('blocked_at')->whereNotNull('mobile_verified_at')->count();
-        $pendingCount = Member::whereNull('blocked_at')->whereNull('mobile_verified_at')->whereNotNull('mobile_verification_requested_at')->count();
+        $pendingCount = Member::whereNull('blocked_at')->whereNull('mobile_verified_at')->count();
         $blockedCount = Member::whereNotNull('blocked_at')->count();
 
         $countries = Member::whereNotNull('country')
@@ -278,7 +284,7 @@ class MemberManagementController extends Controller
         $verifiedCount = Member::whereNotNull('mobile_verified_at')->count();
         $unverifiedCount = Member::whereNull('mobile_verified_at')->count();
         $activeCount = Member::whereNull('blocked_at')->whereNotNull('mobile_verified_at')->count();
-        $pendingCount = Member::whereNull('blocked_at')->whereNull('mobile_verified_at')->whereNotNull('mobile_verification_requested_at')->count();
+        $pendingCount = Member::whereNull('blocked_at')->whereNull('mobile_verified_at')->count();
         $blockedCount = Member::whereNotNull('blocked_at')->count();
 
         $countries = Member::whereNotNull('country')
@@ -390,20 +396,12 @@ class MemberManagementController extends Controller
             return redirect()->back()->with('error', 'Member does not have a registered WhatsApp/mobile number.');
         }
 
-        // 3. Member must have requested verification
-        if ($member->mobile_verification_requested_at === null) {
-            if ($request->expectsJson() || $request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Member has not submitted a WhatsApp verification request.',
-                ], 422);
-            }
-
-            return redirect()->back()->with('error', 'Member has not submitted a WhatsApp verification request.');
-        }
-
-        // 4. Mark verified, preserving phone and mobile_verification_requested_at
-        $member->update(['mobile_verified_at' => now()]);
+        // 3. Mark verified, preserving phone and ensuring timestamps are recorded
+        $requestTime = $member->mobile_verification_requested_at ?? now();
+        $member->update([
+            'mobile_verified_at' => now(),
+            'mobile_verification_requested_at' => $requestTime,
+        ]);
         $member->qualifyReferral();
 
         // 5. Notify member
@@ -797,9 +795,15 @@ class MemberManagementController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        if ($type === 'pending') {
-            $query = Member::query()->whereNull('blocked_at')->whereNull('mobile_verified_at')->whereNotNull('mobile_verification_requested_at')->orderBy('mobile_verification_requested_at', 'asc');
-            $filename = 'pending_verification_members_export_' . date('Y_m_d_His') . '.csv';
+        if ($type === 'pending' || $type === 'unverified') {
+            $query = Member::query()->whereNull('blocked_at')->whereNull('mobile_verified_at');
+            if ($status === 'requested' || $status === 'pending') {
+                $query->whereNotNull('mobile_verification_requested_at');
+            } elseif ($status === 'not_requested' || $status === 'unverified') {
+                $query->whereNull('mobile_verification_requested_at');
+            }
+            $query->orderByRaw('mobile_verification_requested_at IS NULL ASC, mobile_verification_requested_at DESC, created_at DESC');
+            $filename = 'unverified_members_export_' . date('Y_m_d_His') . '.csv';
         } elseif ($type === 'blocked') {
             $query = Member::query()->whereNotNull('blocked_at');
             $filename = 'blocked_members_export_' . date('Y_m_d_His') . '.csv';
