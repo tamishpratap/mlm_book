@@ -3,6 +3,13 @@ import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 // Layouts
 import MemberLayout from '../layouts/MemberLayout';
 import AuthLayout from '../layouts/AuthLayout';
+import PublicLayout from '../layouts/PublicLayout';
+
+// Public Experience Pages
+import LandingPage from '../pages/public/LandingPage';
+import EcosystemPage from '../pages/public/EcosystemPage';
+import RewardPage from '../pages/public/RewardPage';
+import ContactPage from '../pages/public/ContactPage';
 
 // Guards
 import ProtectedMemberRoute from '../components/common/ProtectedMemberRoute';
@@ -86,8 +93,17 @@ function LegacyGroupRedirect() {
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Root redirect */}
-      <Route path="/" element={<Navigate to="/member/home" replace />} />
+      {/* Public Platform Experience Pages */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/ecosystem" element={<EcosystemPage />} />
+        <Route path="/rewards" element={<RewardPage />} />
+        <Route path="/reward" element={<Navigate to="/rewards" replace />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/contact-us" element={<Navigate to="/contact" replace />} />
+      </Route>
+
+      {/* Member base redirect */}
       <Route path="/member" element={<Navigate to="/member/home" replace />} />
 
       {/* Public Auth Routes */}

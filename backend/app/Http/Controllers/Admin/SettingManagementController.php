@@ -182,6 +182,105 @@ class SettingManagementController extends Controller
     }
 
     /**
+     * Public endpoint to fetch active platform branding and contact information (dynamic for frontend).
+     */
+    public function getPublicSettings(Request $request)
+    {
+        $branding = Setting::getBrandingData();
+        $contact = [
+            'company_name' => Setting::get('company_name', 'MLM Book Enterprise'),
+            'support_email' => Setting::get('support_email', 'support@mlmbook.com'),
+            'phone' => Setting::get('phone', '+1 (800) 123-4567'),
+            'website' => Setting::get('website', 'https://mlmbook.com'),
+            'address' => Setting::get('address', '123 Enterprise Way, Suite 500, Tech City'),
+            'social_facebook' => Setting::get('social_facebook', 'https://facebook.com/mlmbook'),
+            'social_twitter' => Setting::get('social_twitter', 'https://twitter.com/mlmbook'),
+            'social_instagram' => Setting::get('social_instagram', 'https://instagram.com/mlmbook'),
+            'social_linkedin' => Setting::get('social_linkedin', 'https://linkedin.com/company/mlmbook'),
+            'social_youtube' => Setting::get('social_youtube', 'https://youtube.com/mlmbook'),
+            'social_telegram' => Setting::get('social_telegram', 'https://t.me/mlmbook'),
+            'business_hours' => Setting::get('business_hours', 'Monday - Friday: 9:00 AM - 6:00 PM (UTC)'),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'branding' => $branding,
+            'contact' => $contact,
+        ]);
+    }
+
+    /**
+     * Public endpoint to submit contact inquiries from the frontend Contact Us page.
+     */
+    public function submitContact(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|max:150',
+            'phone' => 'nullable|string|max:50',
+            'subject' => 'required|string|max:200',
+            'message' => 'required|string|min:5|max:5000',
+        ]);
+
+        $path = storage_path('app/contact_messages.json');
+        $messages = [];
+        try {
+            if (File::exists($path)) {
+                $decoded = json_decode(File::get($path), true);
+                if (is_array($decoded)) {
+                    $messages = $decoded;
+                }
+            }
+        } catch (\Throwable $e) {
+            $messages = [];
+        }
+
+        $newMessage = [
+            'id' => uniqid('msg_', true),
+            'name' => trim($validated['name']),
+            'email' => trim($validated['email']),
+            'phone' => trim($validated['phone'] ?? ''),
+            'subject' => trim($validated['subject']),
+            'message' => trim($validated['message']),
+            'created_at' => now()->toIso8601String(),
+            'ip' => $request->ip(),
+        ];
+
+        array_unshift($messages, $newMessage);
+
+        try {
+            $dir = dirname($path);
+            if (!File::exists($dir)) {
+                File::makeDirectory($dir, 0755, true);
+            }
+            File::put($path, json_encode(array_slice($messages, 0, 500), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        } catch (\Throwable $e) {
+            // Non-blocking
+        }
+
+        // If authenticated member, also record in FeedbackSuggestion table
+        try {
+            $member = auth('member')->user();
+            if ($member) {
+                \App\Models\FeedbackSuggestion::create([
+                    'member_id' => $member->id,
+                    'type' => 'other',
+                    'subject' => '[Contact Form] ' . $validated['subject'],
+                    'message' => "From: {$validated['name']} ({$validated['email']}, Phone: {$validated['phone']})\n\n" . $validated['message'],
+                    'status' => 'new',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Non-blocking
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thank you for contacting us! We have received your message and will respond promptly.',
+        ]);
+    }
+
+    /**
      * Safely delete a previously uploaded custom asset from public storage.
      */
     protected function deleteOldBrandingAsset(?string $path): void
