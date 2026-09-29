@@ -200,6 +200,7 @@ const NAV_GROUPS = [
         children: [
           { label: 'Notification Queue', to: '/admin/notifications' },
           { label: 'Send Broadcast', to: '/admin/notifications/broadcast' },
+          { label: 'Change Notification Sound', to: '/admin/notifications/sound' },
         ],
       },
     ],

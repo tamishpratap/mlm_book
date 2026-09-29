@@ -341,6 +341,8 @@ Route::prefix('admin')->group(function () {
             Route::get('/export', [NotificationManagementController::class, 'export']);
             Route::post('/bulk-action', [NotificationManagementController::class, 'bulkAction']);
             Route::post('/mark-all-read', [NotificationManagementController::class, 'markAllRead']);
+            Route::get('/sounds', [NotificationManagementController::class, 'getSoundSettings']);
+            Route::post('/sounds', [NotificationManagementController::class, 'updateSoundSettings']);
             Route::get('/{id}', [NotificationManagementController::class, 'show']);
             Route::post('/{id}/read', [NotificationManagementController::class, 'markRead']);
         });

@@ -14,6 +14,8 @@ export const notificationsApi = {
   markAllRead: () => http.post('/notifications/mark-all-read'),
   bulkAction: (action, ids) => http.post('/notifications/bulk-action', { action, ids }),
   exportCsv: (params = {}) => http.download('/notifications/export', params),
+  getSoundSettings: (signal) => http.get('/notifications/sounds', {}, { signal }),
+  updateSoundSettings: (formData) => http.upload('/notifications/sounds', formData),
 };
 
 export default notificationsApi;
