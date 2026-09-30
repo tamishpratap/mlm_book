@@ -73,6 +73,27 @@ Route::get('/register', function (\Illuminate\Http\Request $request) {
     return redirect($target);
 });
 
+// Legal & Compliance Pages Redirects
+Route::get('/privacy-policy', function () {
+    $frontendUrl = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : '');
+    return redirect(($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/privacy-policy');
+})->name('privacy.policy');
+
+Route::get('/privacy', function () {
+    $frontendUrl = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : '');
+    return redirect(($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/privacy-policy');
+});
+
+Route::get('/terms-and-conditions', function () {
+    $frontendUrl = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : '');
+    return redirect(($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/terms-and-conditions');
+})->name('terms.conditions');
+
+Route::get('/terms', function () {
+    $frontendUrl = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : '');
+    return redirect(($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/terms-and-conditions');
+});
+
 // Public Community Invite URL
 Route::get('/community/invite/{code}', [CommunityInviteController::class, 'show'])
     ->name('member.community.invite.show');

@@ -210,7 +210,23 @@
                         </div>
 
 
-                        <button class="member-auth-submit" type="submit" data-member-register-submit>
+                        <div class="member-auth-terms-group">
+                            <label class="member-auth-terms-label" for="memberRegisterTerms">
+                                <input
+                                    id="memberRegisterTerms"
+                                    name="terms_accepted"
+                                    type="checkbox"
+                                    class="member-auth-terms-checkbox"
+                                    data-member-terms-checkbox
+                                    required
+                                >
+                                <span class="member-auth-terms-text">
+                                    I agree to the <a href="{{ url('/terms-and-conditions') }}" target="_blank" rel="noopener noreferrer" class="member-auth-terms-link" onclick="event.stopPropagation();">Terms &amp; Conditions</a> and <a href="{{ url('/privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="member-auth-terms-link" onclick="event.stopPropagation();">Privacy Policy</a>
+                                </span>
+                            </label>
+                        </div>
+
+                        <button class="member-auth-submit" type="submit" data-member-register-submit disabled aria-disabled="true">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6"></path><path d="M22 11h-6"></path></svg>
                             <span>Create account</span>
                         </button>
