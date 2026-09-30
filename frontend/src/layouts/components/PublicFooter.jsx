@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import {
   TelegramIcon,
-  TwitterXIcon,
   FacebookIcon,
   LinkedinIcon,
   YoutubeIcon,
@@ -28,7 +27,6 @@ export function PublicFooter() {
     phone: '+1 (800) 123-4567',
     address: '123 Enterprise Way, Suite 500, Tech City',
     social_telegram: 'https://t.me/mlmbook',
-    social_twitter: 'https://twitter.com/mlmbook',
     social_facebook: 'https://facebook.com/mlmbook',
     social_linkedin: 'https://linkedin.com/company/mlmbook',
     social_youtube: 'https://youtube.com/mlmbook',
@@ -77,11 +75,6 @@ export function PublicFooter() {
               {contactData.social_telegram && (
                 <a href={contactData.social_telegram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram">
                   <TelegramIcon className="w-4 h-4" />
-                </a>
-              )}
-              {contactData.social_twitter && (
-                <a href={contactData.social_twitter} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Twitter / X">
-                  <TwitterXIcon className="w-4 h-4" />
                 </a>
               )}
               {contactData.social_facebook && (
