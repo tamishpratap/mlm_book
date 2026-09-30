@@ -75,13 +75,13 @@ export function LandingPage() {
         {/* Section 13 — End-to-End Workflow */}
         <HomeEndToEndWorkflow />
 
-        {/* Section 14 — Why MLM Book? */}
+        {/* Section 14 — Why Choose Us */}
         <HomeWhyChoose />
 
-        {/* Section 15 — FAQ */}
+        {/* Section 15 — FAQ Accordion */}
         <HomeFaqAccordion />
 
-        {/* Section 16 — Final CTA */}
+        {/* Section 16 — Bottom CTA Banner */}
         <HomeCtaBanner />
       </main>
     </div>

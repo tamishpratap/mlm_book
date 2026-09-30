@@ -148,7 +148,7 @@ export function EcosystemPage() {
             <span className="eco-metric-lbl">WhatsApp Phone Verified</span>
           </div>
           <div className="eco-metric-item">
-            <span className="eco-metric-val" style={{ color: '#2563eb' }}>Blue Badge Pages</span>
+            <span className="eco-metric-val" style={{ color: '#2563eb' }}>Business Pages</span>
             <span className="eco-metric-lbl">Documented Trust Profiles</span>
           </div>
           <div className="eco-metric-item">
