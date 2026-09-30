@@ -353,7 +353,7 @@ export function LandingPage() {
                       <Wallet className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div className="pub-triad-title">Web3 Payouts</div>
-                    <div className="pub-triad-value" style={{ color: '#059669' }}>0.00% Fee</div>
+                    <div className="pub-triad-value" style={{ color: '#059669' }}>100% Payout</div>
                     <div className="pub-triad-sub">Instant USDT</div>
                   </div>
                 </div>
@@ -553,7 +553,7 @@ export function LandingPage() {
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
-                  <span>0% Fee on Fund Wallet Withdrawals</span>
+                  <span>100% Payout on Fund Wallet Withdrawals</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />

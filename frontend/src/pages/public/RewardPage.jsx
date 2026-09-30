@@ -185,7 +185,7 @@ export function RewardPage() {
     },
     {
       q: 'If I close or stop my ad campaign, where does my unspent money go?',
-      a: 'Your funds are 100% protected. If you "Stop/Pause" a campaign, the remaining budget is safely frozen inside the campaign for you to restart anytime. If you "Close/Cancel" the campaign, 100% of the remaining unspent amount is INSTANTLY refunded back to your Fund Wallet with ZERO deductions and ZERO penalties. You can use it for another ad or withdraw it at 0% fee.'
+      a: 'Your funds are 100% protected. If you "Stop/Pause" a campaign, the remaining budget is safely frozen inside the campaign for you to restart anytime. If you "Close/Cancel" the campaign, 100% of the remaining unspent amount is INSTANTLY refunded back to your Fund Wallet with ZERO deductions and ZERO penalties. You can use it for another ad or withdraw it anytime directly.'
     },
     {
       q: 'Can I earn rewards from viewing my own ads or posts?',
@@ -193,7 +193,7 @@ export function RewardPage() {
     },
     {
       q: 'Where do service charges apply on MLM Book?',
-      a: 'Service charge applies ONLY on Fund Deposits, and its percentage is dynamically configured by the Admin in platform settings. There is 0.00% service charge on creating ads, 0.00% fee on earning rewards, and 0.00% fee on withdrawals (100% full payout).'
+      a: 'Service charge applies ONLY on Fund Deposits, and its percentage is dynamically configured by the Admin in platform settings. There is 0.00% service charge on creating ads, zero deductions on earning rewards, and 100% full payout on withdrawals.'
     },
     {
       q: 'How fast are withdrawal requests processed?',
@@ -590,7 +590,7 @@ export function RewardPage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                  <span><strong>Withdraw at 0% Fee</strong> — Withdraw your refunded balance to your Web3 wallet anytime!</span>
+                  <span><strong>100% Full Payout</strong> — Withdraw your refunded balance to your Web3 wallet anytime!</span>
                 </div>
               </div>
             </div>
@@ -639,10 +639,6 @@ export function RewardPage() {
                   <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>Instant Web3 USDT (BEP-20)</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Withdrawal Fee:</span>
-                  <span style={{ fontWeight: '800', color: '#059669', fontSize: '0.9rem' }}>0.00% (Zero Fee!)</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
                   <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Minimum Withdrawal:</span>
                   <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>$5.00 USD</span>
                 </div>
@@ -677,10 +673,6 @@ export function RewardPage() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
                   <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Earning Sources:</span>
                   <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>Ad views ($0.025 - $1.00) + Referrals</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Withdrawal Fee:</span>
-                  <span style={{ fontWeight: '800', color: '#059669', fontSize: '0.9rem' }}>0.00% (Zero Fee / 100% Payout!)</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
                   <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Minimum Withdrawal:</span>
