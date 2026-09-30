@@ -194,7 +194,7 @@ class SettingManagementController extends Controller
             'website' => Setting::get('website', 'https://mlmbook.com'),
             'address' => Setting::get('address', '123 Enterprise Way, Suite 500, Tech City'),
             'social_facebook' => Setting::get('social_facebook', 'https://facebook.com/mlmbook'),
-            'social_twitter' => Setting::get('social_twitter', 'https://twitter.com/mlmbook'),
+            'social_twitter' => Setting::get('social_twitter', null),
             'social_instagram' => Setting::get('social_instagram', 'https://instagram.com/mlmbook'),
             'social_linkedin' => Setting::get('social_linkedin', 'https://linkedin.com/company/mlmbook'),
             'social_youtube' => Setting::get('social_youtube', 'https://youtube.com/mlmbook'),
