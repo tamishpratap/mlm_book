@@ -92,6 +92,29 @@ export function EcosystemPage() {
     {
       q: 'What is the difference between Fund Wallet and Reward Wallet?',
       a: 'MLM Book uses a Dual-Wallet Architecture for total audit transparency. The Fund Wallet is used for business operations, depositing capital, and launching ad campaigns. The Reward Wallet collects all member earnings and is exclusively for cashable Web3 withdrawals.',
+      id: 'ads',
+      badge: 'Advertising Engine',
+      title: '3. Peer-to-Peer Targeted Ad Engine',
+      desc: 'A transparent advertising system where advertisers pay directly for verified real-user attention, and viewers earn real monetary rewards for their engagement.',
+      icon: <TrendingUp className="w-6 h-6 text-blue-600" />,
+      features: [
+        {
+          title: 'Precision Campaign Budgeting',
+          desc: 'Set daily budgets, cost-per-click (CPC), and impression caps funded seamlessly through your internal Fund Wallet.'
+        },
+        {
+          title: 'Anti-Fraud & View Verification',
+          desc: 'Automated rate-limiting, IP verification, and unique interaction detection to prevent bot clicks and wasted ad spend.'
+        },
+        {
+          title: 'People Engaged Analytics',
+          desc: 'Real-time drilldown reports showing unique members who viewed, clicked, and engaged with each sponsored campaign.'
+        },
+        {
+          title: 'Instant Value Distribution',
+          desc: 'Every valid click or engagement immediately credits the member’s Reward account with zero delay.'
+        }
+      ]
     },
     {
       q: 'Can any business get the official Blue Verification Badge?',
@@ -101,6 +124,56 @@ export function EcosystemPage() {
       q: 'How do members qualify for campaign rewards?',
       a: 'To qualify for rewards, members must complete mobile/WhatsApp verification, browse active sponsored campaigns in the Socials or Watch feed, and complete the required engagement condition defined by the campaign.',
     },
+    },
+      id: 'financial',
+      badge: 'Dual-Wallet System',
+      title: '5. Dual-Wallet Financial Infrastructure',
+      desc: 'Separating business operation funds from cashable member rewards provides institutional-grade accounting, total transparency, and seamless Web3 liquidity.',
+      icon: <Wallet className="w-6 h-6 text-amber-600" />,
+      features: [
+        {
+          title: 'Fund Wallet',
+          desc: 'Used for depositing capital, funding business advertising campaigns, creating premium events, and member-to-member balance transfers.'
+        },
+        {
+          title: 'Reward (Cashable Rewards)',
+          desc: 'Receives all earnings from ad interactions, referral commissions, and rank bonuses. Cleanly isolated for audit and payout.'
+        },
+        {
+          title: 'Web3 On-Chain Verification',
+          desc: 'Members bind their personal EVM/crypto wallet address with security checks for direct, tamper-proof USDT payouts.'
+        },
+        {
+          title: 'Instant Deposit & Automated Ledger',
+          desc: 'Real-time crypto and gateway balance replenishment with verifiable ledger transaction histories.'
+        }
+      ]
+    },
+    {
+      id: 'mlm',
+      badge: 'Affiliate Architecture',
+      title: '6. Multi-Level Referral & Network Tree',
+      desc: 'A decentralized affiliate growth engine that rewards network builders with multi-tier generational bonuses and rank advancement pools.',
+      icon: <GitBranch className="w-6 h-6 text-rose-600" />,
+      features: [
+        {
+          title: 'Personalized Introducer Links',
+          desc: 'Every member receives a unique referral URL and QR code with 100% free registration. New community signups automatically connect to your referral network.'
+        },
+        {
+          title: 'Multi-Generation Team Commissions',
+          desc: 'Earn overriding percentages on ad engagement and campaign activities generated across your multi-tier downline.'
+        },
+        {
+          title: 'Rank Milestone Rules (RewardRankRule)',
+          desc: 'Advance through achievement tiers based on team volume and active direct referrals to unlock higher payout ceilings.'
+        },
+        {
+          title: 'Real-Time Downline Analytics',
+          desc: 'Monitor team volume, active members, pending referrals, and historical commission splits from your member dashboard.'
+        }
+      ]
+    }
   ];
 
   return (
@@ -146,6 +219,10 @@ export function EcosystemPage() {
           <div className="eco-metric-item">
             <span className="eco-metric-val" style={{ color: '#7c3aed' }}>100% Real Humans</span>
             <span className="eco-metric-lbl">WhatsApp Phone Verified</span>
+          </div>
+          <div className="eco-metric-item">
+            <span className="eco-metric-val" style={{ color: '#2563eb' }}>Blue Badge Pages</span>
+            <span className="eco-metric-lbl">Documented Trust Profiles</span>
           </div>
           <div className="eco-metric-item">
             <span className="eco-metric-val" style={{ color: '#059669' }}>Zero Bot Waste</span>
@@ -457,6 +534,85 @@ export function EcosystemPage() {
                 <div className="eco-suite-icon-row">
                   <div className="pub-icon-wrapper pub-icon-emerald" style={{ width: '46px', height: '46px', marginBottom: 0 }}>
                     <TrendingUp className="w-5 h-5" />
+                  </div>
+                  <span className="eco-tag eco-tag--emerald">Campaign Earnings</span>
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', margin: '0 0 10px' }}>
+                  Qualifying Campaign Interaction Rewards
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.55', margin: '0 0 16px' }}>
+                  Get paid cashable USDT whenever you view sponsored business posts or complete qualifying campaign actions. Reward credits are immediately updated in your transparent ledger.
+                </p>
+                <ul className="pub-checklist" style={{ marginTop: 'auto' }}>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Instant credit per verified campaign interaction</span>
+                  </li>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Clear, transparent reward qualification rules</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Card 2 - Replaced with Watch Video Hub & Discovery */}
+              <div className="eco-suite-card eco-suite-card--user">
+                <div className="eco-suite-icon-row">
+                  <div className="pub-icon-wrapper pub-icon-indigo" style={{ width: '46px', height: '46px', marginBottom: 0 }}>
+                    <TvMinimalPlay className="w-5 h-5" />
+                  </div>
+                  <span className="eco-tag eco-tag--blue">Media Discovery</span>
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', margin: '0 0 10px' }}>
+                  Watch Video Hub & Creator Reels
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.55', margin: '0 0 16px' }}>
+                  Discover captivating video content through the dedicated Watch Hub. Enjoy short-form creator reels, watch product video showcases, and engage with verified media.
+                </p>
+                <ul className="pub-checklist" style={{ marginTop: 'auto' }}>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Explore vertical video reels & publisher feeds</span>
+                  </li>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Support content creators & brand showcases</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Card 3 - Replaced with Community Groups & Networking */}
+              <div className="eco-suite-card eco-suite-card--user">
+                <div className="eco-suite-icon-row">
+                  <div className="pub-icon-wrapper pub-icon-amber" style={{ width: '46px', height: '46px', marginBottom: 0 }}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <span className="eco-tag eco-tag--amber">Community Hubs</span>
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', margin: '0 0 10px' }}>
+                  Community Discussion Hubs
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.55', margin: '0 0 16px' }}>
+                  Join public or private interest-based communities. Connect with fellow members, share strategies, participate in discussions, and expand your professional circle.
+                </p>
+                <ul className="pub-checklist" style={{ marginTop: 'auto' }}>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Join niche groups around shared passions</span>
+                  </li>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Community moderation and active timelines</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Card 4 - Socials Feed & Ephemeral Stories */}
+              <div className="eco-suite-card eco-suite-card--user">
+                <div className="eco-suite-icon-row">
+                  <div className="pub-icon-wrapper pub-icon-purple" style={{ width: '46px', height: '46px', marginBottom: 0 }}>
+                    <Rss className="w-5 h-5" />
+                  </div>
                   </div>
                   <span className="eco-tag eco-tag--emerald">Campaign Earnings</span>
                 </div>
@@ -942,6 +1098,24 @@ export function EcosystemPage() {
               <p style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: '1.55', margin: 0 }}>
                 Official Blue Check Badges are granted only after administrative review of business documentation, ensuring our community interacts with verified, reputable merchants.
               </p>
+              </p>
+              <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
+                Scale an international network community with 0 registration fees. Leverage automated introducer links, real-time team connection tracking, and rank bonuses.
+              </p>
+              <ul className="pub-checklist">
+                <li className="pub-checklist-item">
+                  <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                  <span>Multi-tier generational overrides</span>
+                </li>
+                <li className="pub-checklist-item">
+                  <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                  <span>Real-time team connection dashboards</span>
+                </li>
+                <li className="pub-checklist-item">
+                  <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                  <span>Monthly rank pool profit splits</span>
+                </li>
+              </ul>
             </div>
           </div>
         </section>

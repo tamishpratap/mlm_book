@@ -152,7 +152,7 @@ class MemberManagementController extends Controller
         $request->session()->save();
 
         $frontendUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url', 'https://mlmbookai.com')), '/');
-        $targetUrl = $frontendUrl . '/member/dashboard';
+        $targetUrl = $frontendUrl . '/member/home';
 
         return response()->json([
             'success' => true,
@@ -183,7 +183,7 @@ class MemberManagementController extends Controller
         $request->session()->save();
 
         $frontendUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url', 'https://mlmbookai.com')), '/');
-        return redirect()->away($frontendUrl . '/member/dashboard');
+        return redirect()->away($frontendUrl . '/member/home');
     }
 
     /**
