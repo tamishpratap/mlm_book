@@ -92,6 +92,29 @@ export function EcosystemPage() {
     {
       q: 'What is the difference between Fund Wallet and Reward Wallet?',
       a: 'MLM Book uses a Dual-Wallet Architecture for total audit transparency. The Fund Wallet is used for business operations, depositing capital, and launching ad campaigns. The Reward Wallet collects all member earnings and is exclusively for cashable Web3 withdrawals.',
+      id: 'ads',
+      badge: 'Advertising Engine',
+      title: '3. Peer-to-Peer Targeted Ad Engine',
+      desc: 'A transparent advertising system where advertisers pay directly for verified real-user attention, and viewers earn real monetary rewards for their engagement.',
+      icon: <TrendingUp className="w-6 h-6 text-blue-600" />,
+      features: [
+        {
+          title: 'Precision Campaign Budgeting',
+          desc: 'Set daily budgets, cost-per-click (CPC), and impression caps funded seamlessly through your internal Fund Wallet.'
+        },
+        {
+          title: 'Anti-Fraud & View Verification',
+          desc: 'Automated rate-limiting, IP verification, and unique interaction detection to prevent bot clicks and wasted ad spend.'
+        },
+        {
+          title: 'People Engaged Analytics',
+          desc: 'Real-time drilldown reports showing unique members who viewed, clicked, and engaged with each sponsored campaign.'
+        },
+        {
+          title: 'Instant Value Distribution',
+          desc: 'Every valid click or engagement immediately credits the member’s Reward account with zero delay.'
+        }
+      ]
     },
     {
       q: 'Can any business get the official Blue Verification Badge?',
@@ -101,6 +124,55 @@ export function EcosystemPage() {
       q: 'How do members qualify for campaign rewards?',
       a: 'To qualify for rewards, members must complete mobile/WhatsApp verification, browse active sponsored campaigns in the Socials or Watch feed, and complete the required engagement condition defined by the campaign.',
     },
+      id: 'financial',
+      badge: 'Dual-Wallet System',
+      title: '5. Dual-Wallet Financial Infrastructure',
+      desc: 'Separating business operation funds from cashable member rewards provides institutional-grade accounting, total transparency, and seamless Web3 liquidity.',
+      icon: <Wallet className="w-6 h-6 text-amber-600" />,
+      features: [
+        {
+          title: 'Fund Wallet',
+          desc: 'Used for depositing capital, funding business advertising campaigns, creating premium events, and member-to-member balance transfers.'
+        },
+        {
+          title: 'Reward (Cashable Rewards)',
+          desc: 'Receives all earnings from ad interactions, referral commissions, and rank bonuses. Cleanly isolated for audit and payout.'
+        },
+        {
+          title: 'Web3 On-Chain Verification',
+          desc: 'Members bind their personal EVM/crypto wallet address with security checks for direct, tamper-proof USDT payouts.'
+        },
+        {
+          title: 'Instant Deposit & Automated Ledger',
+          desc: 'Real-time crypto and gateway balance replenishment with verifiable ledger transaction histories.'
+        }
+      ]
+    },
+    {
+      id: 'mlm',
+      badge: 'Affiliate Architecture',
+      title: '6. Multi-Level Referral & Network Tree',
+      desc: 'A decentralized affiliate growth engine that rewards network builders with multi-tier generational bonuses and rank advancement pools.',
+      icon: <GitBranch className="w-6 h-6 text-rose-600" />,
+      features: [
+        {
+          title: 'Personalized Introducer Links',
+          desc: 'Every member receives a unique referral URL and QR code with 100% free registration. New community signups automatically connect to your referral network.'
+        },
+        {
+          title: 'Multi-Generation Team Commissions',
+          desc: 'Earn overriding percentages on ad engagement and campaign activities generated across your multi-tier downline.'
+        },
+        {
+          title: 'Rank Milestone Rules (RewardRankRule)',
+          desc: 'Advance through achievement tiers based on team volume and active direct referrals to unlock higher payout ceilings.'
+        },
+        {
+          title: 'Real-Time Downline Analytics',
+          desc: 'Monitor team volume, active members, pending referrals, and historical commission splits from your member dashboard.'
+        }
+      ]
+    }
   ];
 
   return (
@@ -946,6 +1018,23 @@ export function EcosystemPage() {
               <p style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: '1.55', margin: 0 }}>
                 Official Blue Check Badges are granted only after administrative review of business documentation, ensuring our community interacts with verified, reputable merchants.
               </p>
+              <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
+                Scale an international network community with 0 registration fees. Leverage automated introducer links, real-time team connection tracking, and rank bonuses.
+              </p>
+              <ul className="pub-checklist">
+                <li className="pub-checklist-item">
+                  <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                  <span>Multi-tier generational overrides</span>
+                </li>
+                <li className="pub-checklist-item">
+                  <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                  <span>Real-time team connection dashboards</span>
+                </li>
+                <li className="pub-checklist-item">
+                  <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                  <span>Monthly rank pool profit splits</span>
+                </li>
+              </ul>
             </div>
           </div>
         </section>
