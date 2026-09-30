@@ -207,25 +207,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          {/* Stats Bar */}
-          <div className="pub-stats-strip">
-            <div className="pub-stat-item">
-              <div className="pub-stat-value">50,000+</div>
-              <div className="pub-stat-label">Verified Members</div>
-            </div>
-            <div className="pub-stat-item">
-              <div className="pub-stat-value">12,400+</div>
-              <div className="pub-stat-label">Business Pages</div>
-            </div>
-            <div className="pub-stat-item">
-              <div className="pub-stat-value">$1.2M+</div>
-              <div className="pub-stat-label">Rewards Distributed</div>
-            </div>
-            <div className="pub-stat-item">
-              <div className="pub-stat-value">99.8%</div>
-              <div className="pub-stat-label">Uptime & Reliability</div>
-            </div>
-          </div>
+
         </div>
       </section>
 
