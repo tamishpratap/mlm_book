@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { BrandingContext } from '../../context/brandingContextDef';
 import { AuthContext } from '../../context/AuthContext';
+import { BRAND_LOGO } from '../../utils/assetHelper';
 import { 
   LogIn, 
   UserPlus, 
@@ -17,7 +18,7 @@ import {
 
 export function PublicHeader() {
   const { logoUrl, siteName } = useContext(BrandingContext) || {};
-  const { user, isAuthenticated } = useContext(AuthContext) || {};
+  const { isAuthenticated } = useContext(AuthContext) || {};
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const closeMobile = () => setMobileMenuOpen(false);
@@ -27,18 +28,17 @@ export function PublicHeader() {
       <div className="pub-container">
         <div className="pub-header-inner">
           {/* Brand Logo */}
-          <Link to="/" className="pub-logo-link" onClick={closeMobile}>
-            {logoUrl ? (
-              <img 
-                src={logoUrl} 
-                alt={siteName || 'MLM Book'} 
-                className="pub-logo-img"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            ) : null}
-            <span className="pub-logo-text">{siteName || 'MLM Book'}</span>
+          <Link to="/" className="pub-logo-link" onClick={closeMobile} aria-label={siteName || 'MLM Book'}>
+            <img 
+              src={logoUrl || BRAND_LOGO} 
+              alt={siteName || 'MLM Book'} 
+              className="pub-logo-img"
+              onError={(e) => {
+                if (e.currentTarget.src !== BRAND_LOGO) {
+                  e.currentTarget.src = BRAND_LOGO;
+                }
+              }}
+            />
           </Link>
 
           {/* Desktop Navigation Links */}
