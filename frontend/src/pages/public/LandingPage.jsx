@@ -287,84 +287,76 @@ export function LandingPage() {
                   </div>
                   <div className="pub-card-header-badge">
                     <span className="pub-radar-dot"></span>
-                    <span>Platform Ecosystem</span>
+                    <span>100% Free Member Community</span>
                   </div>
-                  <span className="pub-live-tag">Verified Platform</span>
+                  <span className="pub-live-tag">Zero Registration Fee</span>
                 </div>
 
-                {/* 4 Authentic Engine Modules (Real features, zero fake data) */}
+                {/* 4 Authentic Engine Modules (2x2 Grid, Zero Fake Data) */}
                 <div className="pub-hero-feature-list">
                   {/* Module 1 */}
                   <div className="pub-hero-feature-item">
-                    <div className="pub-feature-icon-box pub-icon-indigo">
-                      <MessageSquare className="w-5 h-5 text-indigo-600" />
+                    <div className="pub-feature-item-top">
+                      <div className="pub-feature-icon-box pub-icon-indigo">
+                        <MessageSquare className="w-4 h-4 text-indigo-600" />
+                      </div>
+                      <span className="pub-feature-pill blue">0% Shadowbans</span>
                     </div>
-                    <div className="pub-feature-text">
-                      <div className="pub-feature-title">
-                        <span>Direct Selling Social Network</span>
-                        <span className="pub-feature-pill blue">0% Shadowbans</span>
-                      </div>
-                      <div className="pub-feature-desc">
-                        Connect with verified leaders, share business stories, and publish updates in an MLM-friendly network.
-                      </div>
+                    <div className="pub-feature-title">Community Social Feed</div>
+                    <div className="pub-feature-desc">
+                      Share business posts, build connections, and network with verified entrepreneurs without censorship.
                     </div>
                   </div>
 
                   {/* Module 2 */}
                   <div className="pub-hero-feature-item">
-                    <div className="pub-feature-icon-box pub-icon-purple">
-                      <TvMinimalPlay className="w-5 h-5 text-purple-600" />
+                    <div className="pub-feature-item-top">
+                      <div className="pub-feature-icon-box pub-icon-purple">
+                        <TvMinimalPlay className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <span className="pub-feature-pill purple">$0.025 – $1.00</span>
                     </div>
-                    <div className="pub-feature-text">
-                      <div className="pub-feature-title">
-                        <span>Pay-Per-View Sponsored Ads</span>
-                        <span className="pub-feature-pill purple">$0.025 – $1.00</span>
-                      </div>
-                      <div className="pub-feature-desc">
-                        Advertisers reach 100% targeted network marketers. Members earn verified rewards with atomic smart ledger payouts.
-                      </div>
+                    <div className="pub-feature-title">Watch & Earn Video Ads</div>
+                    <div className="pub-feature-desc">
+                      Explore sponsored brand videos and receive verified daily rewards directly into your account.
                     </div>
                   </div>
 
                   {/* Module 3 */}
                   <div className="pub-hero-feature-item">
-                    <div className="pub-feature-icon-box pub-icon-cyan">
-                      <Users className="w-5 h-5 text-sky-600" />
+                    <div className="pub-feature-item-top">
+                      <div className="pub-feature-icon-box pub-icon-cyan">
+                        <Users className="w-4 h-4 text-sky-600" />
+                      </div>
+                      <span className="pub-feature-pill cyan">100% Free Joining</span>
                     </div>
-                    <div className="pub-feature-text">
-                      <div className="pub-feature-title">
-                        <span>5-Generation Genealogy Tree</span>
-                        <span className="pub-feature-pill cyan">5 Tiers Deep</span>
-                      </div>
-                      <div className="pub-feature-desc">
-                        Transparent downline tracking, introducer rewards, and automated real-time rank qualifications.
-                      </div>
+                    <div className="pub-feature-title">5-Tier Team Connections</div>
+                    <div className="pub-feature-desc">
+                      Zero fee to join. Earn team referral bonuses across 5 active tiers as your network expands.
                     </div>
                   </div>
 
                   {/* Module 4 */}
                   <div className="pub-hero-feature-item">
-                    <div className="pub-feature-icon-box pub-icon-emerald">
-                      <Wallet className="w-5 h-5 text-emerald-600" />
+                    <div className="pub-feature-item-top">
+                      <div className="pub-feature-icon-box pub-icon-emerald">
+                        <Wallet className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <span className="pub-feature-pill green">0.00% Withdrawal Fee</span>
                     </div>
-                    <div className="pub-feature-text">
-                      <div className="pub-feature-title">
-                        <span>Dual Wallet & Instant Payouts</span>
-                        <span className="pub-feature-pill green">0.00% Withdrawal Fee</span>
-                      </div>
-                      <div className="pub-feature-desc">
-                        Clean isolation between Fund Wallet and Reward. On-chain Web3 USDT (BEP-20) withdrawals with zero deductions.
-                      </div>
+                    <div className="pub-feature-title">Dual Wallet & Web3 Payouts</div>
+                    <div className="pub-feature-desc">
+                      Safe separation of Fund Wallet and Reward. 100% full payout on USDT withdrawals anytime.
                     </div>
                   </div>
                 </div>
 
                 {/* Card Footer Link */}
                 <div className="pub-hero-card-footer">
-                  <Link to="/ecosystem" className="pub-hero-card-link">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Explore complete platform architecture</span>
-                    <ChevronRight className="w-4 h-4" />
+                  <Link to="/rewards" className="pub-hero-card-link">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Free Registration • No Investment Required • Instant USDT Rewards</span>
+                    <ChevronRight className="w-4 h-4 ml-auto" />
                   </Link>
                 </div>
               </div>
@@ -519,7 +511,7 @@ export function LandingPage() {
               <ul className="pub-checklist" style={{ marginTop: '16px' }}>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
-                  <span>Visual 5-Generation Genealogy Tree</span>
+                  <span>Multi-Tier Community Team Connections</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
@@ -1263,11 +1255,11 @@ export function LandingPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '16px 24px', borderBottom: '1px solid #f1f5f9', alignItems: 'center' }}>
               <div>
-                <strong style={{ color: '#0f172a' }}>Direct Selling Genealogy Tree</strong>
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Automated visual tracking of downline depth</div>
+                <strong style={{ color: '#0f172a' }}>Multi-Tier Community Referral Growth</strong>
+                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>100% Free registration with 5-tier referral rewards</div>
               </div>
               <div style={{ textAlign: 'center', color: '#dc2626' }}>❌ Not Available</div>
-              <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ 5-Generation Tree</div>
+              <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ 5-Tier Referral Network</div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '16px 24px', alignItems: 'center' }}>

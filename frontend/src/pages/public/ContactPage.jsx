@@ -135,7 +135,7 @@ export function ContactPage() {
     },
     {
       q: 'What is an Introducer ID and is it required?',
-      a: 'An Introducer ID is the member username or referral code of the person who invited you. It places you in their genealogy network tree. If you do not have an introducer, you can join directly under the corporate team.'
+      a: 'An Introducer ID is the member username or referral code of the person who invited you. Joining MLM Book is 100% free and connects you with their community network. If you do not have an introducer, you can register directly under the platform community.'
     },
     {
       q: 'How does the Reward system work and when can I withdraw?',

@@ -155,7 +155,7 @@ export function EcosystemPage() {
       features: [
         {
           title: 'Personalized Introducer Links',
-          desc: 'Every member receives a unique sponsor URL and QR code. New signups automatically nest under your genealogy tree.'
+          desc: 'Every member receives a unique referral URL and QR code with 100% free registration. New community signups automatically connect to your referral network.'
         },
         {
           title: 'Multi-Generation Team Commissions',
@@ -337,7 +337,7 @@ export function EcosystemPage() {
                 For Network & MLM Leaders
               </h3>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
-                Scale an international network organization. Leverage automated introducer trees, real-time downline genealogy tracking, and rank pool bonuses.
+                Scale an international network community with 0 registration fees. Leverage automated introducer links, real-time team connection tracking, and rank bonuses.
               </p>
               <ul className="pub-checklist">
                 <li className="pub-checklist-item">
@@ -346,7 +346,7 @@ export function EcosystemPage() {
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
-                  <span>Real-time genealogy tree charts</span>
+                  <span>Real-time team connection dashboards</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
