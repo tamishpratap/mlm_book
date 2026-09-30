@@ -21,6 +21,7 @@ const FEATURES = [
     path: '/member/socials',
     linkText: 'Open Socials',
   },
+  /*
   {
     icon: TvMinimalPlay,
     title: 'Watch',
@@ -30,6 +31,7 @@ const FEATURES = [
     path: '/member/watch',
     linkText: 'Explore Watch',
   },
+  */
   {
     icon: Users,
     title: 'Communities',

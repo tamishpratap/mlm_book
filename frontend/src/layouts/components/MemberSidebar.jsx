@@ -137,6 +137,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <House size={18} />
             <span>Home</span>
           </NavLink>
+          {/*
           <NavLink
             to="/member/dashboard"
             className={getSideNavClass('/member/dashboard', true)}
@@ -145,6 +146,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <LayoutDashboard size={18} />
             <span>Analytics Dashboard</span>
           </NavLink>
+          */}
           <NavLink
             to="/member/socials"
             className={getSideNavClass('/member/socials')}
