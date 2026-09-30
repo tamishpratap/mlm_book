@@ -37,12 +37,31 @@ document.addEventListener('DOMContentLoaded', function () {
         const $feedback = $('#memberUserIdFeedback');
         const $inputWrap = $('[data-member-user-id-input-wrap]');
         const $submit = $('[data-member-register-submit]');
+        const $termsCheckbox = $('[data-member-terms-checkbox]');
         const checkUrl = $userId.data('check-url');
         const helperMessage = 'Optional. Leave blank to auto-generate a 10-character User ID from your name.';
         const invalidMessage = 'Use a 10-character User ID: 4 uppercase letters and 6 digits.';
         const validPattern = /^[A-Za-z]{4}[0-9]{6}$/;
         let debounceTimer;
         let activeRequest;
+
+        function isTermsAccepted() {
+            return $termsCheckbox.length ? $termsCheckbox.is(':checked') : true;
+        }
+
+        function refreshSubmitButton(isUserIdOk) {
+            const userIdValid = typeof isUserIdOk === 'boolean'
+                ? isUserIdOk
+                : (!$feedback.hasClass('is-invalid') && !$feedback.hasClass('is-reserved') && !$feedback.hasClass('is-network-error'));
+            const canSubmit = userIdValid && isTermsAccepted();
+            $submit.prop('disabled', !canSubmit).attr('aria-disabled', canSubmit ? 'false' : 'true');
+        }
+
+        if ($termsCheckbox.length) {
+            $termsCheckbox.on('change', function () {
+                refreshSubmitButton();
+            });
+        }
 
         function normalizeVisibleValue(value) {
             return value
@@ -63,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const isAvailable = state === 'available' || state === '';
             $userId.attr('aria-invalid', isAvailable ? 'false' : 'true');
-            $submit.prop('disabled', ! isAvailable).attr('aria-disabled', isAvailable ? 'false' : 'true');
+            refreshSubmitButton(isAvailable);
         }
 
         function cancelPendingCheck() {
@@ -142,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 400);
         }
 
-        $submit.prop('disabled', false).attr('aria-disabled', 'false');
+        refreshSubmitButton();
         $userId.on('input', scheduleAvailabilityCheck);
 
         if ($userId.val()) {
