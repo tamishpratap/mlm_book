@@ -31,7 +31,6 @@ export const publicApi = {
             website: 'https://mlmbook.com',
             address: '123 Enterprise Way, Suite 500, Tech City',
             social_facebook: 'https://facebook.com/mlmbook',
-            social_twitter: 'https://twitter.com/mlmbook',
             social_instagram: 'https://instagram.com/mlmbook',
             social_linkedin: 'https://linkedin.com/company/mlmbook',
             social_youtube: 'https://youtube.com/mlmbook',
