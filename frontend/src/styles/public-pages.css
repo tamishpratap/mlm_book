@@ -118,9 +118,11 @@
 }
 
 .pub-logo-img {
-  height: 38px;
+  height: 58px;
+  max-height: 58px;
   width: auto;
   object-fit: contain;
+  display: block;
 }
 
 .pub-logo-text {
@@ -297,6 +299,11 @@
 }
 
 @media (max-width: 900px) {
+
+  .pub-logo-img {
+    height: 50px;
+    max-height: 50px;
+  }
 
   .pub-nav-links,
   .pub-nav-actions {

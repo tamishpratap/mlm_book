@@ -19,13 +19,10 @@ import {
   DollarSign,
   Layers,
   Lock,
-  BadgePercent,
   ChevronDown,
   ChevronUp,
   Check,
-  HelpCircle,
-  Clock,
-  ArrowDownRight
+  HelpCircle
 } from 'lucide-react';
 
 export function RewardPage() {
@@ -673,7 +670,7 @@ export function RewardPage() {
               </div>
 
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '20px' }}>
-                Collects all your verified ad view payouts, direct sponsor commissions, and rank bonuses in real time.
+                Collects all your verified ad view payouts, and rank bonuses in real time.
               </p>
 
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
