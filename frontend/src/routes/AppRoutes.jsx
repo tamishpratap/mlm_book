@@ -78,6 +78,10 @@ import DepositPage from '../pages/deposit/DepositPage';
 import FeedbackSuggestionsPage from '../pages/feedback/FeedbackSuggestionsPage';
 import WithdrawalPage from '../pages/wallet/WithdrawalPage';
 
+// Legal Pages
+import PrivacyPolicyPage from '../pages/legal/PrivacyPolicyPage';
+import TermsAndConditionsPage from '../pages/legal/TermsAndConditionsPage';
+
 function LegacyGroupRedirect() {
   const { slug } = useParams();
   return <Navigate to={slug ? `/member/community/${slug}` : '/member/community'} replace />;
@@ -89,6 +93,14 @@ export function AppRoutes() {
       {/* Root redirect */}
       <Route path="/" element={<Navigate to="/member/home" replace />} />
       <Route path="/member" element={<Navigate to="/member/home" replace />} />
+
+      {/* Public Legal & Compliance Routes (Accessible to all guests and members) */}
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/member/privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
+      <Route path="/terms" element={<TermsAndConditionsPage />} />
+      <Route path="/member/terms-and-conditions" element={<TermsAndConditionsPage />} />
 
       {/* Public Auth Routes */}
       <Route element={<PublicMemberRoute />}>

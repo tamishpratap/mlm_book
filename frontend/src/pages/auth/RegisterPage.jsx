@@ -141,6 +141,7 @@ export function RegisterPage() {
   }, [searchParams, resolveIntroducer]);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
@@ -346,6 +347,10 @@ export function RegisterPage() {
     if (!formData.email.trim()) clientErrors.email = ['Please enter your email address.'];
     if (!formData.password) clientErrors.password = ['Please enter a password.'];
     else if (formData.password.length < 8) clientErrors.password = ['Password must be at least 8 characters long.'];
+
+    if (!acceptedTerms) {
+      clientErrors.terms = ['Please agree to the Terms & Conditions and Privacy Policy to continue.'];
+    }
 
     if (Object.keys(clientErrors).length > 0) {
       setErrors(clientErrors);
@@ -911,7 +916,59 @@ export function RegisterPage() {
               </div>
 
 
-              <button className="member-auth-submit" type="submit" disabled={isSubmitting}>
+              <div className="member-auth-terms-group">
+                <label className="member-auth-terms-label" htmlFor="member-register-terms">
+                  <input
+                    id="member-register-terms"
+                    name="acceptedTerms"
+                    type="checkbox"
+                    className="member-auth-terms-checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => {
+                      setAcceptedTerms(e.target.checked);
+                      if (errors.terms) {
+                        setErrors((prev) => ({ ...prev, terms: null }));
+                      }
+                    }}
+                  />
+                  <span className="member-auth-terms-text">
+                    I agree to the{' '}
+                    <Link
+                      to="/terms-and-conditions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="member-auth-terms-link"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Terms &amp; Conditions
+                    </Link>{' '}
+                    and{' '}
+                    <Link
+                      to="/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="member-auth-terms-link"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Privacy Policy
+                    </Link>
+                  </span>
+                </label>
+                {errors.terms && (
+                  <p className="member-auth-error member-auth-terms-error" id="member-register-terms-error" role="alert">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 17h.01" /></svg>
+                    <span>{Array.isArray(errors.terms) ? errors.terms[0] : errors.terms}</span>
+                  </p>
+                )}
+              </div>
+
+              <button
+                className="member-auth-submit"
+                type="submit"
+                disabled={isSubmitting || !acceptedTerms}
+                aria-disabled={!acceptedTerms}
+                title={!acceptedTerms ? 'Please check the box to agree to the Terms & Conditions and Privacy Policy' : undefined}
+              >
                 {isSubmitting ? (
                   <Loader2 className="spin-icon" size={18} aria-hidden="true" />
                 ) : (
