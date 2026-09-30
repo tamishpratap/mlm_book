@@ -169,8 +169,8 @@ export function AppRoutes() {
           <Route path="/member/marketplace/:id" element={<ProductDetailsPage />} />
           <Route path="/member/marketplace/:id/edit" element={<EditProductPage />} />
           */}
-          <Route path="/member/marketplace" element={<Navigate to="/member/dashboard" replace />} />
-          <Route path="/member/marketplace/*" element={<Navigate to="/member/dashboard" replace />} />
+          <Route path="/member/marketplace" element={<Navigate to="/member/home" replace />} />
+          <Route path="/member/marketplace/*" element={<Navigate to="/member/home" replace />} />
           <Route path="/member/community" element={<CommunitiesPage />} />
           <Route path="/member/community/discover" element={<CommunityDiscoveryPage />} />
           <Route path="/member/community/create" element={<CreateCommunityPage />} />
@@ -194,8 +194,8 @@ export function AppRoutes() {
           <Route path="/member/events/:id/outreach" element={<EventOutreachPage />} />
           <Route path="/member/events/:id/attendees" element={<EventOutreachPage />} />
           */}
-          <Route path="/member/events" element={<Navigate to="/member/dashboard" replace />} />
-          <Route path="/member/events/*" element={<Navigate to="/member/dashboard" replace />} />
+          <Route path="/member/events" element={<Navigate to="/member/home" replace />} />
+          <Route path="/member/events/*" element={<Navigate to="/member/home" replace />} />
           <Route path="/member/business-pages" element={<BusinessPagesPage />} />
           <Route path="/member/business-pages/create" element={<CreateBusinessPage />} />
           <Route path="/member/business-pages/:slug" element={<BusinessDetailPage />} />
@@ -227,7 +227,7 @@ export function AppRoutes() {
       </Route>
 
       {/* Catch-all fallback */}
-      <Route path="*" element={<Navigate to="/member/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/member/home" replace />} />
     </Routes>
   );
 }

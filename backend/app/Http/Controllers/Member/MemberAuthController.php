@@ -1174,7 +1174,7 @@ class MemberAuthController extends Controller
                 $request->session()->regenerate();
 
                 if ($frontendUrl) {
-                    return redirect(rtrim($frontendUrl, '/').'/member/dashboard');
+                    return redirect(rtrim($frontendUrl, '/').'/member/home');
                 }
 
                 return redirect()->route('member.dashboard');
@@ -1436,7 +1436,7 @@ class MemberAuthController extends Controller
                 'success' => true,
                 'message' => 'Logged in successfully.',
                 'member' => $existingMember,
-                'redirect' => '/member/dashboard',
+                'redirect' => '/member/home',
             ]);
         }
 
