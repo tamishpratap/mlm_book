@@ -117,10 +117,98 @@
     box-shadow: 0 0 0 4px rgba(220, 53, 69, .08);
 }
 
+/* Terms & Privacy Policy Consent */
+.member-auth-terms-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 4px 2px 2px;
+}
+
+.member-auth-terms-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    line-height: 1.48;
+    color: #4b5563;
+}
+
+.member-auth-terms-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    margin-top: 1px;
+    border: 2px solid #4b5563; /* Crisp, high-contrast visible border */
+    border-radius: 5px;
+    background-color: #ffffff;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+
+.member-auth-terms-checkbox:hover {
+    border-color: #3b5bfd;
+    box-shadow: 0 0 0 3.5px rgba(59, 91, 253, 0.16), 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.member-auth-terms-checkbox:focus-visible {
+    border-color: #3b5bfd;
+    box-shadow: 0 0 0 3.5px rgba(59, 91, 253, 0.25);
+}
+
+.member-auth-terms-checkbox:checked {
+    background-color: #3b5bfd;
+    border-color: #3b5bfd;
+    box-shadow: 0 2px 5px rgba(59, 91, 253, 0.28);
+}
+
+.member-auth-terms-checkbox:checked::before {
+    content: "";
+    width: 6px;
+    height: 10px;
+    border: solid #ffffff;
+    border-width: 0 2.2px 2.2px 0;
+    transform: rotate(45deg) translate(-0.5px, -1px);
+}
+
+.member-auth-terms-text {
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.45;
+}
+
+.member-auth-terms-link {
+    color: #3b5bfd;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2.5px;
+    transition: color 0.18s ease;
+}
+
+.member-auth-terms-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.member-auth-terms-error {
+    margin-top: 2px;
+}
+
 .member-register-form .member-auth-submit:disabled {
     cursor: not-allowed;
-    opacity: .58;
+    opacity: .52;
     box-shadow: none;
+    pointer-events: auto;
+    filter: grayscale(20%);
 }
 
 .member-register-login-link {
