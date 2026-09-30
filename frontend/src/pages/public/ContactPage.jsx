@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import {
   TelegramIcon,
-  TwitterXIcon,
   FacebookIcon,
   LinkedinIcon,
   YoutubeIcon,
@@ -36,7 +35,6 @@ export function ContactPage() {
     address: '123 Enterprise Way, Suite 500, Tech City',
     business_hours: 'Monday - Friday: 9:00 AM - 6:00 PM (UTC)',
     social_telegram: 'https://t.me/mlmbook',
-    social_twitter: 'https://twitter.com/mlmbook',
     social_facebook: 'https://facebook.com/mlmbook',
     social_linkedin: 'https://linkedin.com/company/mlmbook',
     social_youtube: 'https://youtube.com/mlmbook',
@@ -137,11 +135,11 @@ export function ContactPage() {
     },
     {
       q: 'What is an Introducer ID and is it required?',
-      a: 'An Introducer ID is the member username or referral code of the person who invited you. It places you in their genealogy network tree. If you do not have an introducer, you can join directly under the corporate team.'
+      a: 'An Introducer ID is the member username or referral code of the person who invited you. Joining MLM Book is 100% free and connects you with their community network. If you do not have an introducer, you can register directly under the platform community.'
     },
     {
-      q: 'How does the Reward Wallet work and when can I withdraw?',
-      a: 'All earnings from ad views, clicks, downline commissions, and rank bonuses accumulate in your Reward Wallet. You can bind your BEP-20 or TRC-20 USDT crypto address in Account Security and request instant on-chain payouts.'
+      q: 'How does the Reward system work and when can I withdraw?',
+      a: 'All earnings from ad views, clicks, downline commissions, and rank bonuses accumulate in your Reward balance. You can bind your BEP-20 or TRC-20 USDT crypto address in Account Security and request instant on-chain payouts.'
     },
     {
       q: 'How do business owners launch targeted ad campaigns?',
@@ -265,7 +263,7 @@ export function ContactPage() {
                     <option value="general">General Platform Inquiry</option>
                     <option value="business">Business Page & Verification</option>
                     <option value="advertising">Targeted Ad Campaigns</option>
-                    <option value="rewards">Reward Wallet & Withdrawals</option>
+                    <option value="rewards">Reward & Withdrawals</option>
                     <option value="technical">Technical Support</option>
                     <option value="partnership">Enterprise Partnership</option>
                   </select>
@@ -408,11 +406,6 @@ export function ContactPage() {
                 {contactData.social_telegram && (
                   <a href={contactData.social_telegram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram">
                     <TelegramIcon className="w-4 h-4" />
-                  </a>
-                )}
-                {contactData.social_twitter && (
-                  <a href={contactData.social_twitter} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Twitter / X">
-                    <TwitterXIcon className="w-4 h-4" />
                   </a>
                 )}
                 {contactData.social_facebook && (

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Mail\MemberRegistrationOtpMail;
 use App\Models\Member;
+use App\Models\MobileAccessToken;
 use App\Models\PendingMemberRegistration;
 use App\Services\MemberPhoneNumberService;
 use App\Services\MemberUserIdService;
@@ -945,6 +946,7 @@ class MemberAuthController extends Controller
     {
         $ref = $request->query('ref') ?: $request->query('introducer');
         $mode = $request->query('mode') ?: $request->query('intent') ?: 'login';
+        $returnUrl = $request->query('return_url') ?: $request->query('redirect_url');
 
         $cleanRef = null;
         if ($ref) {
@@ -955,26 +957,68 @@ class MemberAuthController extends Controller
         }
 
         $request->session()->put('google_oauth_mode', $mode);
+        if ($returnUrl) {
+            $request->session()->put('google_oauth_return_url', $returnUrl);
+        } else {
+            $request->session()->forget('google_oauth_return_url');
+        }
 
-        $stateData = [
+        $stateData = array_filter([
             'mode' => $mode,
             'ref' => $cleanRef,
-        ];
+            'return_url' => $returnUrl,
+        ]);
 
         return Socialite::driver('google')
             ->stateless()
-            ->with(['state' => base64_encode(json_encode(array_filter($stateData)))])
+            ->with(['state' => base64_encode(json_encode($stateData))])
             ->redirect();
     }
 
     public function handleGoogleCallback(Request $request)
     {
         $frontendUrl = (config('app.frontend_url') ?: env('FRONTEND_URL'));
+        $returnUrl = $request->session()->pull('google_oauth_return_url');
+        $mode = $request->session()->pull('google_oauth_mode') ?: 'login';
+        $ref = $request->session()->pull('google_oauth_ref');
+
+        if ($request->has('state')) {
+            try {
+                $decoded = json_decode(base64_decode((string) $request->input('state')), true);
+                if (is_array($decoded)) {
+                    if (! empty($decoded['mode'])) {
+                        $mode = $decoded['mode'];
+                    }
+                    if (! empty($decoded['ref']) && ! $ref) {
+                        $ref = strtolower(preg_replace('/[^a-z0-9_]/', '', (string) $decoded['ref']));
+                    }
+                    if (! empty($decoded['return_url']) && ! $returnUrl) {
+                        $returnUrl = $decoded['return_url'];
+                    }
+                }
+            } catch (Throwable $e) {
+                // Ignore state decode errors
+            }
+        }
+
+        $makeRedirect = function (string $path, array $queryParams = []) use ($returnUrl, $frontendUrl) {
+            if ($returnUrl) {
+                $url = rtrim($returnUrl, '/');
+                $sep = str_contains($url, '?') ? '&' : '?';
+                return redirect($url . (empty($queryParams) ? '' : $sep . http_build_query($queryParams)));
+            }
+            if ($frontendUrl) {
+                $url = rtrim($frontendUrl, '/') . $path;
+                return redirect(empty($queryParams) ? $url : $url . '?' . http_build_query($queryParams));
+            }
+            return null;
+        };
 
         if ($request->has('error')) {
             $msg = 'Google authentication was cancelled. Please try again.';
-            if ($frontendUrl) {
-                return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+            $target = $makeRedirect('/member/login', ['error' => $msg]);
+            if ($target) {
+                return $target;
             }
 
             return redirect()->route('member.login')->with('error', $msg);
@@ -987,8 +1031,9 @@ class MemberAuthController extends Controller
 
             if (! $email) {
                 $msg = 'Google could not provide an email address for this account.';
-                if ($frontendUrl) {
-                    return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+                $target = $makeRedirect('/member/login', ['error' => $msg]);
+                if ($target) {
+                    return $target;
                 }
 
                 return redirect()->route('member.login')->with('error', $msg);
@@ -1001,8 +1046,9 @@ class MemberAuthController extends Controller
 
             if ($verifiedEmail !== null && ! filter_var($verifiedEmail, FILTER_VALIDATE_BOOLEAN)) {
                 $msg = 'Please use a verified Google email address.';
-                if ($frontendUrl) {
-                    return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+                $target = $makeRedirect('/member/login', ['error' => $msg]);
+                if ($target) {
+                    return $target;
                 }
 
                 return redirect()->route('member.login')->with('error', $msg);
@@ -1010,31 +1056,12 @@ class MemberAuthController extends Controller
 
             if (! $googleId) {
                 $msg = 'Google authentication could not be completed. Please try again.';
-                if ($frontendUrl) {
-                    return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+                $target = $makeRedirect('/member/login', ['error' => $msg]);
+                if ($target) {
+                    return $target;
                 }
 
                 return redirect()->route('member.login')->with('error', $msg);
-            }
-
-            // Extract mode and ref from session or state
-            $mode = $request->session()->pull('google_oauth_mode') ?: 'login';
-            $ref = $request->session()->pull('google_oauth_ref');
-
-            if ($request->has('state')) {
-                try {
-                    $decoded = json_decode(base64_decode((string) $request->input('state')), true);
-                    if (is_array($decoded)) {
-                        if (! empty($decoded['mode'])) {
-                            $mode = $decoded['mode'];
-                        }
-                        if (! empty($decoded['ref']) && ! $ref) {
-                            $ref = strtolower(preg_replace('/[^a-z0-9_]/', '', (string) $decoded['ref']));
-                        }
-                    }
-                } catch (Throwable $e) {
-                    // Ignore state decode errors
-                }
             }
 
             $incomingGoogleEmail = strtolower(trim((string) $email));
@@ -1076,8 +1103,9 @@ class MemberAuthController extends Controller
                         ]);
 
                         $msg = 'Google authentication could not be completed. Please try again.';
-                        if ($frontendUrl) {
-                            return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+                        $target = $makeRedirect('/member/login', ['error' => $msg]);
+                        if ($target) {
+                            return $target;
                         }
 
                         return redirect()->route('member.login')->with('error', $msg);
@@ -1092,8 +1120,9 @@ class MemberAuthController extends Controller
                         ]);
 
                         $msg = 'Google authentication could not be completed. Please try again.';
-                        if ($frontendUrl) {
-                            return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+                        $target = $makeRedirect('/member/login', ['error' => $msg]);
+                        if ($target) {
+                            return $target;
                         }
 
                         return redirect()->route('member.login')->with('error', $msg);
@@ -1112,8 +1141,9 @@ class MemberAuthController extends Controller
                         ]);
 
                         $msg = 'Google authentication could not be completed. Please try again.';
-                        if ($frontendUrl) {
-                            return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+                        $target = $makeRedirect('/member/login', ['error' => $msg]);
+                        if ($target) {
+                            return $target;
                         }
 
                         return redirect()->route('member.login')->with('error', $msg);
@@ -1129,8 +1159,9 @@ class MemberAuthController extends Controller
                         $params['email'] = $email;
                     }
 
-                    if ($frontendUrl) {
-                        return redirect(rtrim($frontendUrl, '/').'/member/register?'.http_build_query($params));
+                    $target = $makeRedirect('/member/register', $params);
+                    if ($target) {
+                        return $target;
                     }
 
                     return redirect()->route('member.register', $params)->with('error', 'account_exists');
@@ -1145,8 +1176,9 @@ class MemberAuthController extends Controller
                     }
 
                     $blockedMsg = 'Your account has been blocked by the admin. You cannot log in.';
-                    if ($frontendUrl) {
-                        return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $blockedMsg]));
+                    $target = $makeRedirect('/member/login', ['error' => $blockedMsg]);
+                    if ($target) {
+                        return $target;
                     }
 
                     return redirect()->route('member.login')
@@ -1173,6 +1205,30 @@ class MemberAuthController extends Controller
                 Auth::guard('member')->login($member);
                 $request->session()->regenerate();
 
+                if ($returnUrl) {
+                    $plainToken = bin2hex(random_bytes(40));
+                    MobileAccessToken::create([
+                        'audience' => 'member',
+                        'actor_id' => $member->id,
+                        'token_hash' => hash('sha256', $plainToken),
+                        'device_name' => 'Mobile Google Login',
+                        'last_ip' => $request->ip(),
+                        'last_used_at' => now(),
+                        'expires_at' => now()->addDays(90),
+                    ]);
+
+                    $url = rtrim($returnUrl, '/');
+                    $sep = str_contains($url, '?') ? '&' : '?';
+                    return redirect($url . $sep . http_build_query([
+                        'auth_success' => '1',
+                        'mobile_token' => $plainToken,
+                        'role' => 'member',
+                        'user_id' => $member->user_id,
+                        'email' => $member->email,
+                        'name' => $member->name,
+                    ]));
+                }
+
                 if ($frontendUrl) {
                     return redirect(rtrim($frontendUrl, '/').'/member/home');
                 }
@@ -1191,8 +1247,9 @@ class MemberAuthController extends Controller
                     $params['email'] = $email;
                 }
 
-                if ($frontendUrl) {
-                    return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query($params));
+                $target = $makeRedirect('/member/login', $params);
+                if ($target) {
+                    return $target;
                 }
 
                 return redirect()->route('member.login', $params)->with([
@@ -1236,6 +1293,15 @@ class MemberAuthController extends Controller
                 $params['ref'] = $ref;
             }
 
+            if ($returnUrl) {
+                $url = rtrim($returnUrl, '/');
+                $sep = str_contains($url, '?') ? '&' : '?';
+                return redirect($url . $sep . http_build_query([
+                    'google_token' => $token,
+                    'ref' => $ref ?: '',
+                ]));
+            }
+
             if ($frontendUrl) {
                 return redirect(rtrim($frontendUrl, '/').'/member/google-introducer?'.http_build_query($params));
             }
@@ -1260,8 +1326,9 @@ class MemberAuthController extends Controller
             ]);
 
             $msg = 'Google authentication could not be completed. Please try again.';
-            if ($frontendUrl) {
-                return redirect(rtrim($frontendUrl, '/').'/member/login?'.http_build_query(['error' => $msg]));
+            $target = $makeRedirect('/member/login', ['error' => $msg]);
+            if ($target) {
+                return $target;
             }
 
             return redirect()->route('member.login')->with(

@@ -92,7 +92,7 @@ export function EcosystemPage() {
         },
         {
           title: 'Instant Value Distribution',
-          desc: 'Every valid click or engagement immediately credits the member’s Reward Wallet with zero delay.'
+          desc: 'Every valid click or engagement immediately credits the member’s Reward account with zero delay.'
         }
       ]
     },
@@ -129,11 +129,11 @@ export function EcosystemPage() {
       icon: <Wallet className="w-6 h-6 text-amber-600" />,
       features: [
         {
-          title: 'Fund Wallet (P2P Operations)',
-          desc: 'Used for depositing capital, funding business advertising campaigns, creating premium events, and peer-to-peer balance transfers.'
+          title: 'Fund Wallet',
+          desc: 'Used for depositing capital, funding business advertising campaigns, creating premium events, and member-to-member balance transfers.'
         },
         {
-          title: 'Reward Wallet (Cashable Income)',
+          title: 'Reward (Cashable Rewards)',
           desc: 'Receives all earnings from ad interactions, referral commissions, and rank bonuses. Cleanly isolated for audit and payout.'
         },
         {
@@ -155,7 +155,7 @@ export function EcosystemPage() {
       features: [
         {
           title: 'Personalized Introducer Links',
-          desc: 'Every member receives a unique sponsor URL and QR code. New signups automatically nest under your genealogy tree.'
+          desc: 'Every member receives a unique referral URL and QR code with 100% free registration. New community signups automatically connect to your referral network.'
         },
         {
           title: 'Multi-Generation Team Commissions',
@@ -337,7 +337,7 @@ export function EcosystemPage() {
                 For Network & MLM Leaders
               </h3>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
-                Scale an international network organization. Leverage automated introducer trees, real-time downline genealogy tracking, and rank pool bonuses.
+                Scale an international network community with 0 registration fees. Leverage automated introducer links, real-time team connection tracking, and rank bonuses.
               </p>
               <ul className="pub-checklist">
                 <li className="pub-checklist-item">
@@ -346,7 +346,7 @@ export function EcosystemPage() {
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
-                  <span>Real-time genealogy tree charts</span>
+                  <span>Real-time team connection dashboards</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />

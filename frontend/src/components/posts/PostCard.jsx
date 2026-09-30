@@ -228,8 +228,8 @@ export function PostCard({
   const isVerifiedMember = isMemberMobileVerified(currentUser);
   const contentType = post.content_type ||
     (post.type === 'PAID_EVENT' || post.type === 'sponsored_event' || (post.is_sponsored && (post.event || post.event_id)) ? 'PAID_EVENT' :
-     post.content_type === 'PAID_AD' || post.type === 'PAID_AD' || post.type === 'sponsored_ad' || post.is_sponsored || post.ad_campaign ? 'PAID_AD' :
-     'ORGANIC_POST');
+      post.content_type === 'PAID_AD' || post.type === 'PAID_AD' || post.type === 'sponsored_ad' || post.is_sponsored || post.ad_campaign ? 'PAID_AD' :
+        'ORGANIC_POST');
   const isEventSponsored = Boolean(
     contentType === 'PAID_EVENT' || post.type === 'sponsored_event' || (post.is_sponsored && (post.event || post.event_id))
   );
@@ -252,7 +252,7 @@ export function PostCard({
   const adEarnUpToAmount = adCampaignData?.earn_up_to_formatted ||
     post?.earn_up_to_formatted ||
     (adCampaignData?.earn_up_to_usd ? `$${Number(adCampaignData.earn_up_to_usd).toFixed(4)}` :
-    (adCampaignData?.reward_amount_usd ? `$${Number(adCampaignData.reward_amount_usd).toFixed(4)}` : '$0.0250'));
+      (adCampaignData?.reward_amount_usd ? `$${Number(adCampaignData.reward_amount_usd).toFixed(4)}` : '$0.0250'));
 
   const isCampaignOwner = Boolean(
     isOwner ||
@@ -291,7 +291,7 @@ export function PostCard({
       impressionTrackedRef.current = true;
       const cId = post.ad_campaign_id || post.ad_campaign?.campaign_id;
       const impressionKey = `imp_${cId}_${post.id}_${currentMemberId || 'guest'}`;
-      postApi.recordAdImpression(cId, impressionKey, 'social_feed').catch(() => {});
+      postApi.recordAdImpression(cId, impressionKey, 'social_feed').catch(() => { });
     }
   }, [isAdSponsored, isVerifiedMember, post.ad_campaign_id, post.ad_campaign, post.id, currentMemberId]);
 
@@ -321,7 +321,7 @@ export function PostCard({
     if (isSponsored && isVerifiedMember && (post.ad_campaign_id || post.ad_campaign?.campaign_id)) {
       const cId = post.ad_campaign_id || post.ad_campaign?.campaign_id;
       const clickKey = `clk_${cId}_${post.id}_${currentMemberId || 'guest'}_${Date.now()}`;
-      postApi.recordAdClick(cId, clickKey, 'social_feed').catch(() => {});
+      postApi.recordAdClick(cId, clickKey, 'social_feed').catch(() => { });
     }
   };
 
@@ -476,7 +476,7 @@ export function PostCard({
             }
           }
         })
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => {
           if (!isCancelled) setIsLoadingMoreComments(false);
         });
@@ -683,8 +683,8 @@ export function PostCard({
     const nextCount = isTogglingOff
       ? Math.max(0, prevCount - 1)
       : prevReaction
-      ? prevCount // Reaction switch keeps total count unchanged
-      : prevCount + 1; // New reaction increments count
+        ? prevCount // Reaction switch keeps total count unchanged
+        : prevCount + 1; // New reaction increments count
 
     // Apply immediate optimistic state
     setUserReaction(nextReaction);
@@ -838,10 +838,10 @@ export function PostCard({
   const photoUrl = isEventSponsored && eventData?.organizer?.profile_photo
     ? getAvatarUrl(eventData.organizer.profile_photo)
     : bizPage
-    ? (bizPage.logo ? getAvatarUrl(bizPage.logo) : (bizPage.logo_url ? getAvatarUrl(bizPage.logo_url) : null))
-    : author?.profile_photo
-    ? getAvatarUrl(author.profile_photo)
-    : null;
+      ? (bizPage.logo ? getAvatarUrl(bizPage.logo) : (bizPage.logo_url ? getAvatarUrl(bizPage.logo_url) : null))
+      : author?.profile_photo
+        ? getAvatarUrl(author.profile_photo)
+        : null;
   const userPhotoUrl = currentUser?.profile_photo ? getAvatarUrl(currentUser.profile_photo) : null;
   const activeReactionData = userReaction ? REACTION_CONFIG[userReaction] : null;
 
@@ -852,8 +852,8 @@ export function PostCard({
   const origPhotoUrl = origBiz
     ? (origBiz.logo ? getAvatarUrl(origBiz.logo) : (origBiz.logo_url ? getAvatarUrl(origBiz.logo_url) : null))
     : origAuthor?.profile_photo
-    ? getAvatarUrl(origAuthor.profile_photo)
-    : null;
+      ? getAvatarUrl(origAuthor.profile_photo)
+      : null;
   // Event module temporarily disabled: hide event posts from feed
   if (isEventSponsored || post.type === 'event' || post.event_id || post.event) {
     return null;
@@ -1479,7 +1479,7 @@ export function PostCard({
         <div
           className="sponsored-cta-banner"
           style={{
-            margin: '10px 0 4px 0',
+            margin: '10px 17px 4px',
             padding: '12px 16px',
             backgroundColor: isCampaignOwner ? 'rgba(241, 245, 249, 0.7)' : (adCampaignData?.already_rewarded ? 'rgba(16, 185, 129, 0.05)' : 'rgba(5, 150, 105, 0.06)'),
             borderRadius: '10px',
@@ -1617,228 +1617,228 @@ export function PostCard({
           </div>
         ) : (
           <div className="post-actions">
-          {/* Like / Reaction Button & Picker */}
-          <div
-            ref={likeWrapperRef}
-            className="post-like-wrapper"
-            onMouseEnter={handleMouseEnterLike}
-            onMouseLeave={handleMouseLeaveLike}
-            style={{ position: 'relative' }}
-          >
-            {pickerOpen && (
-              <div
-                className="post-reaction-picker is-visible"
-                role="toolbar"
-                aria-label="Choose a reaction"
-                onMouseEnter={handleMouseEnterLike}
-                onMouseLeave={handleMouseLeaveLike}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {Object.entries(REACTION_CONFIG).map(([type, config]) => (
-                  <button
-                    key={type}
-                    className="post-reaction-picker__item"
-                    type="button"
-                    title={config.label}
-                    aria-label={config.label}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleReact(type);
-                    }}
-                  >
-                    {config.emoji}
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* Like / Reaction Button & Picker */}
+            <div
+              ref={likeWrapperRef}
+              className="post-like-wrapper"
+              onMouseEnter={handleMouseEnterLike}
+              onMouseLeave={handleMouseLeaveLike}
+              style={{ position: 'relative' }}
+            >
+              {pickerOpen && (
+                <div
+                  className="post-reaction-picker is-visible"
+                  role="toolbar"
+                  aria-label="Choose a reaction"
+                  onMouseEnter={handleMouseEnterLike}
+                  onMouseLeave={handleMouseLeaveLike}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {Object.entries(REACTION_CONFIG).map(([type, config]) => (
+                    <button
+                      key={type}
+                      className="post-reaction-picker__item"
+                      type="button"
+                      title={config.label}
+                      aria-label={config.label}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReact(type);
+                      }}
+                    >
+                      {config.emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            <button
-              className={`post-action-btn post-action-btn--like ${userReaction ? 'is-active' : ''}`}
-              type="button"
-              aria-label={userReaction ? `Reacted ${activeReactionData?.label || 'Like'}` : 'Like post'}
-              style={
-                activeReactionData
-                  ? {
+              <button
+                className={`post-action-btn post-action-btn--like ${userReaction ? 'is-active' : ''}`}
+                type="button"
+                aria-label={userReaction ? `Reacted ${activeReactionData?.label || 'Like'}` : 'Like post'}
+                style={
+                  activeReactionData
+                    ? {
                       color: activeReactionData.color,
                       borderColor: `${activeReactionData.color}44`,
                       background: `${activeReactionData.color}12`,
                     }
-                  : {}
-              }
-              onTouchStart={handleTouchStartLike}
-              onTouchEnd={handleTouchEndLike}
-              onTouchCancel={handleTouchEndLike}
-              onClick={() => handleReact(userReaction || 'like')}
+                    : {}
+                }
+                onTouchStart={handleTouchStartLike}
+                onTouchEnd={handleTouchEndLike}
+                onTouchCancel={handleTouchEndLike}
+                onClick={() => handleReact(userReaction || 'like')}
+              >
+                <span className="post-action-btn__icon">
+                  {activeReactionData ? (
+                    activeReactionData.emoji
+                  ) : (
+                    <ThumbsUp size={16} aria-hidden="true" />
+                  )}
+                </span>
+                <span>{activeReactionData ? activeReactionData.label : 'Like'}</span>
+              </button>
+            </div>
+
+            {/* Reactions Count (Clickable modal trigger for Post Owner only; static badge for others) */}
+            {isOwner ? (
+              <button
+                className="post-action-btn post-action-btn--likers"
+                type="button"
+                aria-label="View who reacted to your post"
+                title="View who reacted to your post"
+                onClick={handleOpenReactors}
+              >
+                <span className="post-actions__reaction-badges">
+                  <span className="post-actions__badge">👍</span>
+                </span>
+                <span>{reactionsCount}</span>
+              </button>
+            ) : (
+              <div
+                className="post-action-badge post-action-badge--likers"
+                aria-label="Reactions count"
+                title="Reactions count"
+              >
+                <span className="post-actions__reaction-badges">
+                  <span className="post-actions__badge">👍</span>
+                </span>
+                <span>{reactionsCount}</span>
+              </div>
+            )}
+
+            {/* Comments Count Button */}
+            <button
+              className="post-action-btn post-action-btn--comment-count"
+              type="button"
+              aria-label="View Comments"
+              onClick={() => {
+                if (comments.length === 0 && commentsCount > 0 && !isLoadingMoreComments) {
+                  handleLoadMoreComments();
+                }
+                commentInputRef.current?.focus();
+              }}
             >
-              <span className="post-action-btn__icon">
-                {activeReactionData ? (
-                  activeReactionData.emoji
-                ) : (
-                  <ThumbsUp size={16} aria-hidden="true" />
-                )}
-              </span>
-              <span>{activeReactionData ? activeReactionData.label : 'Like'}</span>
+              <MessageCircle size={16} aria-hidden="true" />
+              <span>Comments ({commentsCount})</span>
+            </button>
+
+            {/* Save Button */}
+            <button
+              className={`post-action-btn post-action-btn--save ${isSaved ? 'is-active' : ''}`}
+              type="button"
+              aria-label="Save Post"
+              onClick={handleToggleSave}
+            >
+              <Bookmark size={16} aria-hidden="true" />
+              <span>{isSaved ? 'Saved' : 'Save'} ({savesCount})</span>
+            </button>
+
+            {/* Share Button */}
+            <button
+              className="post-action-btn post-action-btn--share"
+              type="button"
+              aria-label="Share Post"
+              onClick={() => setShowShareModal(true)}
+            >
+              <Share2 size={16} aria-hidden="true" />
+              <span>Share</span>
+            </button>
+
+            {/* Shares Count */}
+            <button
+              className="post-action-btn post-action-btn--share-count"
+              type="button"
+              aria-label="View Shares"
+              onClick={handleOpenSharers}
+            >
+              <Repeat size={16} aria-hidden="true" />
+              <span>{sharesCount} Shares</span>
             </button>
           </div>
-
-          {/* Reactions Count (Clickable modal trigger for Post Owner only; static badge for others) */}
-          {isOwner ? (
-            <button
-              className="post-action-btn post-action-btn--likers"
-              type="button"
-              aria-label="View who reacted to your post"
-              title="View who reacted to your post"
-              onClick={handleOpenReactors}
-            >
-              <span className="post-actions__reaction-badges">
-                <span className="post-actions__badge">👍</span>
-              </span>
-              <span>{reactionsCount}</span>
-            </button>
-          ) : (
-            <div
-              className="post-action-badge post-action-badge--likers"
-              aria-label="Reactions count"
-              title="Reactions count"
-            >
-              <span className="post-actions__reaction-badges">
-                <span className="post-actions__badge">👍</span>
-              </span>
-              <span>{reactionsCount}</span>
-            </div>
-          )}
-
-          {/* Comments Count Button */}
-          <button
-            className="post-action-btn post-action-btn--comment-count"
-            type="button"
-            aria-label="View Comments"
-            onClick={() => {
-              if (comments.length === 0 && commentsCount > 0 && !isLoadingMoreComments) {
-                handleLoadMoreComments();
-              }
-              commentInputRef.current?.focus();
-            }}
-          >
-            <MessageCircle size={16} aria-hidden="true" />
-            <span>Comments ({commentsCount})</span>
-          </button>
-
-          {/* Save Button */}
-          <button
-            className={`post-action-btn post-action-btn--save ${isSaved ? 'is-active' : ''}`}
-            type="button"
-            aria-label="Save Post"
-            onClick={handleToggleSave}
-          >
-            <Bookmark size={16} aria-hidden="true" />
-            <span>{isSaved ? 'Saved' : 'Save'} ({savesCount})</span>
-          </button>
-
-          {/* Share Button */}
-          <button
-            className="post-action-btn post-action-btn--share"
-            type="button"
-            aria-label="Share Post"
-            onClick={() => setShowShareModal(true)}
-          >
-            <Share2 size={16} aria-hidden="true" />
-            <span>Share</span>
-          </button>
-
-          {/* Shares Count */}
-          <button
-            className="post-action-btn post-action-btn--share-count"
-            type="button"
-            aria-label="View Shares"
-            onClick={handleOpenSharers}
-          >
-            <Repeat size={16} aria-hidden="true" />
-            <span>{sharesCount} Shares</span>
-          </button>
-        </div>
         )}
       </footer>
 
       {/* Comments Section */}
       {!isEventSponsored && (
         <div className="post-comments">
-        {hasMoreComments && (
-          <button
-            className="post-comments__more"
-            type="button"
-            onClick={handleLoadMoreComments}
-            disabled={isLoadingMoreComments}
-          >
-            {isLoadingMoreComments ? 'Loading comments...' : 'View previous comments'}
-          </button>
-        )}
-
-        <div className="post-comments__list">
-          {comments.length > 0 ? (
-            comments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                post={post}
-                currentUser={currentUser}
-                onDeleteComment={handleDeleteComment}
-              />
-            ))
-          ) : (
-            <div className="post-comments__empty">
-              <p>Be the first to comment.</p>
-            </div>
+          {hasMoreComments && (
+            <button
+              className="post-comments__more"
+              type="button"
+              onClick={handleLoadMoreComments}
+              disabled={isLoadingMoreComments}
+            >
+              {isLoadingMoreComments ? 'Loading comments...' : 'View previous comments'}
+            </button>
           )}
-        </div>
 
-        {/* Add Comment Form */}
-        <form className="post-comment-form" onSubmit={handleCreateComment}>
-          <div className="post-comment-form__avatar-wrap">
-            {userPhotoUrl && !userAvatarError ? (
-              <img
-                className="post-comment-form__avatar"
-                src={userPhotoUrl}
-                alt={currentUser?.name || 'User'}
-                onError={() => setUserAvatarError(true)}
-              />
+          <div className="post-comments__list">
+            {comments.length > 0 ? (
+              comments.map((comment) => (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  post={post}
+                  currentUser={currentUser}
+                  onDeleteComment={handleDeleteComment}
+                />
+              ))
             ) : (
-              <span className="post-comment-form__avatar post-comment-form__avatar--initials">
-                {getInitials(currentUser?.name)}
-              </span>
+              <div className="post-comments__empty">
+                <p>Be the first to comment.</p>
+              </div>
             )}
           </div>
 
-          <div className="post-comment-form__input-wrap">
-            <input
-              ref={commentInputRef}
-              className="post-comment-form__input"
-              type="text"
-              name="comment"
-              placeholder="Write a comment..."
-              aria-label="Write a comment"
-              maxLength={1000}
-              required
-              autoComplete="off"
-              value={newCommentText}
-              onChange={(e) => setNewCommentText(e.target.value)}
-              disabled={isSubmittingComment}
-            />
-            <button
-              className="post-comment-form__submit"
-              type="submit"
-              disabled={!newCommentText.trim() || isSubmittingComment}
-              aria-label="Send Comment"
-            >
-              {isSubmittingComment ? (
-                <Loader2 size={16} className="spin-icon" aria-hidden="true" />
+          {/* Add Comment Form */}
+          <form className="post-comment-form" onSubmit={handleCreateComment}>
+            <div className="post-comment-form__avatar-wrap">
+              {userPhotoUrl && !userAvatarError ? (
+                <img
+                  className="post-comment-form__avatar"
+                  src={userPhotoUrl}
+                  alt={currentUser?.name || 'User'}
+                  onError={() => setUserAvatarError(true)}
+                />
               ) : (
-                <SendHorizontal size={16} aria-hidden="true" />
+                <span className="post-comment-form__avatar post-comment-form__avatar--initials">
+                  {getInitials(currentUser?.name)}
+                </span>
               )}
-            </button>
-          </div>
-        </form>
-      </div>
+            </div>
+
+            <div className="post-comment-form__input-wrap">
+              <input
+                ref={commentInputRef}
+                className="post-comment-form__input"
+                type="text"
+                name="comment"
+                placeholder="Write a comment..."
+                aria-label="Write a comment"
+                maxLength={1000}
+                required
+                autoComplete="off"
+                value={newCommentText}
+                onChange={(e) => setNewCommentText(e.target.value)}
+                disabled={isSubmittingComment}
+              />
+              <button
+                className="post-comment-form__submit"
+                type="submit"
+                disabled={!newCommentText.trim() || isSubmittingComment}
+                aria-label="Send Comment"
+              >
+                {isSubmittingComment ? (
+                  <Loader2 size={16} className="spin-icon" aria-hidden="true" />
+                ) : (
+                  <SendHorizontal size={16} aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       {/* Modals */}
