@@ -1264,14 +1264,22 @@
 /* Quick Metrics Strip */
 .eco-metrics-bar {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   background: #ffffff;
   border: 1px solid var(--pub-border);
   border-radius: 16px;
-  padding: 20px 24px;
+  padding: 24px 28px;
   box-shadow: var(--pub-shadow-md);
   margin-top: 36px;
+}
+
+@media (max-width: 768px) {
+  .eco-metrics-bar {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 20px;
+  }
 }
 
 .eco-metric-item {
