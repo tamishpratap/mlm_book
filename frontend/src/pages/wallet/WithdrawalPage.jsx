@@ -383,18 +383,44 @@ export function WithdrawalPage() {
 
   return (
     <div className="withdrawal-page-container">
-      {/* Header */}
-      <header className="withdrawal-header">
-        <h1 className="withdrawal-header__title">
-          <ArrowDownToLine size={28} color="#2563eb" />
-          <span>Withdrawal Section</span>
-        </h1>
-        <p className="withdrawal-header__desc">
-          Request a withdrawal from your account. All requests are submitted with <strong>Pending</strong> status for admin review with {serviceChargePercent > 0 ? `${serviceChargePercent}% service charge` : '0% fee (100% full payout)'}.
-        </p>
-      </header>
+      {/* Header and Tabs wrapped in a card */}
+      <div className="withdrawal-card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+        <header className="withdrawal-header" style={{ marginBottom: '1.5rem' }}>
+          <h1 className="withdrawal-header__title">
+            <ArrowDownToLine size={28} color="#2563eb" />
+            <span>Wallet Section</span>
+          </h1>
+          <p className="withdrawal-header__desc" style={{ marginTop: '0.5rem', color: '#64748b' }}>
+            Request a withdrawal from your account. All requests are submitted with <strong>Pending</strong> status for admin review with {serviceChargePercent > 0 ? `${serviceChargePercent}% service charge` : '0% fee (100% full payout)'}.
+          </p>
+        </header>
 
-      {/* Summary Stats */}
+        {/* Tabs */}
+        <div className="wallet-tabs" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.25rem' }}>
+          <button
+            className={`wallet-tab ${activeTab === 'withdrawal' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('withdrawal')}
+            style={{ padding: '0.65rem 1.25rem', border: 'none', background: activeTab === 'withdrawal' ? '#176bff' : '#f1f5f9', color: activeTab === 'withdrawal' ? '#ffffff' : '#176bff', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+          >
+            <ArrowDownToLine size={18} />
+            Withdrawal & Stats
+          </button>
+          <button
+            className={`wallet-tab ${activeTab === 'analytics' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+            style={{ padding: '0.65rem 1.25rem', border: 'none', background: activeTab === 'analytics' ? '#176bff' : '#f1f5f9', color: activeTab === 'analytics' ? '#ffffff' : '#176bff', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+          >
+            <BarChart3 size={18} />
+            Analytics Rewards
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'analytics' ? (
+        <AnalyticsRewardsSection />
+      ) : (
+        <>
+          {/* Summary Stats */}
       <section className="withdrawal-stats-grid" aria-label="Withdrawal Statistics">
         <div className="withdrawal-stat-card">
           <div className="withdrawal-stat-icon withdrawal-stat-icon--primary">
