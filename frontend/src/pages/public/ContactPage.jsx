@@ -138,8 +138,8 @@ export function ContactPage() {
       a: 'An Introducer ID is the member username or referral code of the person who invited you. It places you in their genealogy network tree. If you do not have an introducer, you can join directly under the corporate team.'
     },
     {
-      q: 'How does the Reward Wallet work and when can I withdraw?',
-      a: 'All earnings from ad views, clicks, downline commissions, and rank bonuses accumulate in your Reward Wallet. You can bind your BEP-20 or TRC-20 USDT crypto address in Account Security and request instant on-chain payouts.'
+      q: 'How does the Reward system work and when can I withdraw?',
+      a: 'All earnings from ad views, clicks, downline commissions, and rank bonuses accumulate in your Reward balance. You can bind your BEP-20 or TRC-20 USDT crypto address in Account Security and request instant on-chain payouts.'
     },
     {
       q: 'How do business owners launch targeted ad campaigns?',
@@ -263,7 +263,7 @@ export function ContactPage() {
                     <option value="general">General Platform Inquiry</option>
                     <option value="business">Business Page & Verification</option>
                     <option value="advertising">Targeted Ad Campaigns</option>
-                    <option value="rewards">Reward Wallet & Withdrawals</option>
+                    <option value="rewards">Reward & Withdrawals</option>
                     <option value="technical">Technical Support</option>
                     <option value="partnership">Enterprise Partnership</option>
                   </select>

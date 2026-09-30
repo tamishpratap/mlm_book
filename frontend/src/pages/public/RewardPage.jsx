@@ -188,7 +188,7 @@ export function RewardPage() {
     },
     {
       q: 'If I close or stop my ad campaign, where does my unspent money go?',
-      a: 'Your funds are 100% protected. If you "Stop/Pause" a campaign, the remaining budget is safely frozen inside the campaign for you to restart anytime. If you "Close/Cancel" the campaign, 100% of the remaining unspent amount is INSTANTLY refunded back to your P2P Fund Wallet with ZERO deductions and ZERO penalties. You can use it for another ad or withdraw it at 0% fee.'
+      a: 'Your funds are 100% protected. If you "Stop/Pause" a campaign, the remaining budget is safely frozen inside the campaign for you to restart anytime. If you "Close/Cancel" the campaign, 100% of the remaining unspent amount is INSTANTLY refunded back to your Fund Wallet with ZERO deductions and ZERO penalties. You can use it for another ad or withdraw it at 0% fee.'
     },
     {
       q: 'Can I earn rewards from viewing my own ads or posts?',
@@ -444,7 +444,7 @@ export function RewardPage() {
                 1. Advertiser Funds Campaign
               </h3>
               <p style={{ color: '#475569', fontSize: '0.88rem', lineHeight: '1.6' }}>
-                Advertisers allocate campaign budget directly from their <strong>Fund Wallet (P2P Wallet)</strong>. They choose targeting, banner/video assets, and daily spend limits.
+                Advertisers allocate campaign budget directly from their <strong>Fund Wallet</strong>. They choose targeting, banner/video assets, and daily spend limits.
               </p>
               <div style={{ marginTop: '12px', fontSize: '0.78rem', color: '#0284c7', fontWeight: '600' }}>
                 ✓ Securely locked in campaign running budget
@@ -495,7 +495,7 @@ export function RewardPage() {
                 4. Instant Atomic Payout
               </h3>
               <p style={{ color: '#475569', fontSize: '0.88rem', lineHeight: '1.6' }}>
-                The exact reward based on the member’s rank ($0.025 to $1.00) is deducted from the campaign’s remaining amount and <strong>credited instantly to the member's Reward Wallet</strong>.
+                The exact reward based on the member’s rank ($0.025 to $1.00) is deducted from the campaign’s remaining amount and <strong>credited instantly to the member's Reward balance</strong>.
               </p>
               <div style={{ marginTop: '12px', fontSize: '0.78rem', color: '#d97706', fontWeight: '600' }}>
                 ✓ Real-time ledger accounting with 0 delay
@@ -579,7 +579,7 @@ export function RewardPage() {
               <div style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#065f46', fontWeight: '800', fontSize: '0.92rem', marginBottom: '6px' }}>
                   <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                  <span>100% Refunded to P2P Fund Wallet</span>
+                  <span>100% Refunded to Fund Wallet</span>
                 </div>
                 <p style={{ color: '#047857', fontSize: '0.86rem', margin: 0 }}>
                   The backend automatically releases the exact remaining balance (<code>remaining_amount</code>) and credits it back to your <strong>Fund Wallet</strong> instantly.
@@ -611,7 +611,7 @@ export function RewardPage() {
             </div>
             <h2 className="pub-section-title">Dual-Wallet System & Withdrawal Rules</h2>
             <p className="pub-section-desc">
-              Clean separation between operating funds and earned member income guarantees transparent accounting and fast payouts.
+              Clean separation between operating funds and earned member rewards guarantees transparent accounting and fast payouts.
             </p>
           </div>
 
@@ -627,7 +627,7 @@ export function RewardPage() {
                     Business & Advertising
                   </span>
                   <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>
-                    Fund Wallet (P2P Wallet)
+                    Fund Wallet
                   </h3>
                 </div>
               </div>
@@ -656,7 +656,7 @@ export function RewardPage() {
               </div>
             </div>
 
-            {/* Wallet 2: Reward Wallet */}
+            {/* Wallet 2: Reward */}
             <div className="pub-card" style={{ padding: '32px', border: '1px solid #e2e8f0', background: '#ffffff' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
                 <div className="pub-icon-wrapper pub-icon-emerald" style={{ width: '50px', height: '50px', marginBottom: 0 }}>
@@ -664,10 +664,10 @@ export function RewardPage() {
                 </div>
                 <div>
                   <span style={{ fontSize: '0.72rem', fontWeight: '800', color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Cashable Member Income
+                    Cashable Member Rewards
                   </span>
                   <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>
-                    Reward Wallet
+                    Reward
                   </h3>
                 </div>
               </div>
@@ -857,7 +857,7 @@ export function RewardPage() {
 
                 <div style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)', padding: '18px 20px', borderRadius: '12px', border: '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <span style={{ color: '#065f46', fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', display: 'block' }}>Monthly Projected Income</span>
+                    <span style={{ color: '#065f46', fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', display: 'block' }}>Monthly Projected Rewards</span>
                     <span style={{ color: '#047857', fontSize: '0.8rem' }}>(30 Days personal engagement)</span>
                   </div>
                   <span style={{ fontSize: '1.8rem', fontWeight: '900', color: '#065f46' }}>

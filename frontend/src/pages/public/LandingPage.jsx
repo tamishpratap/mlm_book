@@ -163,7 +163,7 @@ export function LandingPage() {
                         <Wallet className="w-4 h-4" />
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>Reward Wallet Balance</div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>Reward Balance</div>
                         <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Available for Web3 Payout</div>
                       </div>
                     </div>
@@ -401,7 +401,7 @@ export function LandingPage() {
               <ul className="pub-checklist" style={{ marginTop: '16px' }}>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
-                  <span>Dual Wallet: Fund Wallet vs Reward Wallet</span>
+                  <span>Dual Wallet: Fund Wallet vs Reward</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
@@ -690,12 +690,12 @@ export function LandingPage() {
                         </div>
                         <div>
                           <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Operational Capital</div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>Fund Wallet (P2P)</div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>Fund Wallet</div>
                         </div>
                       </div>
                       <div style={{ fontSize: '1.7rem', fontWeight: '900', color: '#0284c7', margin: '8px 0' }}>$85.50 USDT</div>
                       <div style={{ fontSize: '0.8rem', color: '#059669', fontWeight: '700' }}>✓ 0.00% Withdrawal Fee (Zero Deductions!)</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>Used for funding ads & P2P transfers</div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>Used for funding ads & transfers</div>
                     </div>
 
                     <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '22px', boxShadow: 'var(--pub-shadow-sm)' }}>
@@ -704,8 +704,8 @@ export function LandingPage() {
                           <Gift className="w-5 h-5 text-emerald-600" />
                         </div>
                         <div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Cashable Income</div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>Reward Wallet</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Cashable Rewards</div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>Reward</div>
                         </div>
                       </div>
                       <div style={{ fontSize: '1.7rem', fontWeight: '900', color: '#059669', margin: '8px 0' }}>$142.75 USDT</div>
@@ -885,7 +885,7 @@ export function LandingPage() {
             </div>
             <h2 className="pub-section-title">How MLM Book Works</h2>
             <p className="pub-section-desc">
-              Joining and succeeding on MLM Book is straightforward. Here is how active members and entrepreneurs turn their daily networking into predictable income.
+              Joining and succeeding on MLM Book is straightforward. Here is how active members and entrepreneurs turn their daily networking into predictable rewards.
             </p>
           </div>
 
@@ -908,7 +908,7 @@ export function LandingPage() {
                 Complete Mobile OTP
               </h3>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
-                Verify your WhatsApp or Mobile number with instant OTP to secure your account, prevent multi-accounting, and unlock your Reward Wallet for instant withdrawals.
+                Verify your WhatsApp or Mobile number with instant OTP to secure your account, prevent multi-accounting, and unlock your Reward for instant withdrawals.
               </p>
             </div>
 
@@ -930,7 +930,7 @@ export function LandingPage() {
                 Scale & Collect USDT
               </h3>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
-                All commissions from ad views, direct introducers, and downline volume credit instantly to your Reward Wallet. Withdraw straight to your personal Web3 USDT wallet 24/7.
+                All commissions from ad views, direct introducers, and downline volume credit instantly to your Reward account. Withdraw straight to your personal Web3 USDT wallet 24/7.
               </p>
             </div>
           </div>
@@ -1015,7 +1015,7 @@ export function LandingPage() {
           <div className="pub-section-header">
             <div className="pub-badge pub-badge-cyan">
               <Coins className="w-3.5 h-3.5" />
-              <span>Automated Income Architecture</span>
+              <span>Automated Reward Architecture</span>
             </div>
             <h2 className="pub-section-title">How Member Rewards Work</h2>
             <p className="pub-section-desc">
@@ -1068,7 +1068,7 @@ export function LandingPage() {
                 Tier 1 to 5 Team Overrides
               </h3>
               <p style={{ color: '#475569', fontSize: '0.93rem', lineHeight: '1.6' }}>
-                Your earnings don't stop at direct referrals. As your downline leaders introduce others across 5 complete tiers, automated override commissions flow continuously up into your Reward Wallet.
+                Your earnings don't stop at direct referrals. As your downline leaders introduce others across 5 complete tiers, automated override commissions flow continuously up into your Reward account.
               </p>
             </div>
 

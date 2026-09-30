@@ -92,7 +92,7 @@ export function EcosystemPage() {
         },
         {
           title: 'Instant Value Distribution',
-          desc: 'Every valid click or engagement immediately credits the member’s Reward Wallet with zero delay.'
+          desc: 'Every valid click or engagement immediately credits the member’s Reward account with zero delay.'
         }
       ]
     },
@@ -129,11 +129,11 @@ export function EcosystemPage() {
       icon: <Wallet className="w-6 h-6 text-amber-600" />,
       features: [
         {
-          title: 'Fund Wallet (P2P Operations)',
-          desc: 'Used for depositing capital, funding business advertising campaigns, creating premium events, and peer-to-peer balance transfers.'
+          title: 'Fund Wallet',
+          desc: 'Used for depositing capital, funding business advertising campaigns, creating premium events, and member-to-member balance transfers.'
         },
         {
-          title: 'Reward Wallet (Cashable Income)',
+          title: 'Reward (Cashable Rewards)',
           desc: 'Receives all earnings from ad interactions, referral commissions, and rank bonuses. Cleanly isolated for audit and payout.'
         },
         {
