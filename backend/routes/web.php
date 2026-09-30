@@ -40,6 +40,8 @@ use App\Http\Controllers\Member\WatchController;
 use App\Http\Middleware\EnsureMemberMobileVerified;
 use App\Http\Middleware\SecurityHeadersMiddleware;
 use App\Http\Middleware\UpdateLastSeenMiddleware;
+use App\Models\Group;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
@@ -71,6 +73,27 @@ Route::get('/register', function (\Illuminate\Http\Request $request) {
     $query = $request->getQueryString();
     $target = ($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/member/register' . ($query ? '?' . $query : '');
     return redirect($target);
+});
+
+// Legal & Compliance Pages Redirects
+Route::get('/privacy-policy', function () {
+    $frontendUrl = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : '');
+    return redirect(($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/privacy-policy');
+})->name('privacy.policy');
+
+Route::get('/privacy', function () {
+    $frontendUrl = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : '');
+    return redirect(($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/privacy-policy');
+});
+
+Route::get('/terms-and-conditions', function () {
+    $frontendUrl = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : '');
+    return redirect(($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/terms-and-conditions');
+})->name('terms.conditions');
+
+Route::get('/terms', function () {
+    $frontendUrl = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : '');
+    return redirect(($frontendUrl ? rtrim($frontendUrl, '/') : '') . '/terms-and-conditions');
 });
 
 // Public Community Invite URL

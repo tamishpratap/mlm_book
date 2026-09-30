@@ -3,6 +3,13 @@ import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 // Layouts
 import MemberLayout from '../layouts/MemberLayout';
 import AuthLayout from '../layouts/AuthLayout';
+import PublicLayout from '../layouts/PublicLayout';
+
+// Public Experience Pages
+import LandingPage from '../pages/public/LandingPage';
+import EcosystemPage from '../pages/public/EcosystemPage';
+import RewardPage from '../pages/public/RewardPage';
+import ContactPage from '../pages/public/ContactPage';
 
 // Guards
 import ProtectedMemberRoute from '../components/common/ProtectedMemberRoute';
@@ -78,6 +85,10 @@ import DepositPage from '../pages/deposit/DepositPage';
 import FeedbackSuggestionsPage from '../pages/feedback/FeedbackSuggestionsPage';
 import WithdrawalPage from '../pages/wallet/WithdrawalPage';
 
+// Legal Pages
+import PrivacyPolicyPage from '../pages/legal/PrivacyPolicyPage';
+import TermsAndConditionsPage from '../pages/legal/TermsAndConditionsPage';
+
 function LegacyGroupRedirect() {
   const { slug } = useParams();
   return <Navigate to={slug ? `/member/community/${slug}` : '/member/community'} replace />;
@@ -86,9 +97,26 @@ function LegacyGroupRedirect() {
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Root redirect */}
-      <Route path="/" element={<Navigate to="/member/home" replace />} />
+      {/* Public Platform Experience Pages */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/ecosystem" element={<EcosystemPage />} />
+        <Route path="/rewards" element={<RewardPage />} />
+        <Route path="/reward" element={<Navigate to="/rewards" replace />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/contact-us" element={<Navigate to="/contact" replace />} />
+      </Route>
+
+      {/* Member base redirect */}
       <Route path="/member" element={<Navigate to="/member/home" replace />} />
+
+      {/* Public Legal & Compliance Routes (Accessible to all guests and members) */}
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/member/privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
+      <Route path="/terms" element={<TermsAndConditionsPage />} />
+      <Route path="/member/terms-and-conditions" element={<TermsAndConditionsPage />} />
 
       {/* Public Auth Routes */}
       <Route element={<PublicMemberRoute />}>
