@@ -14,9 +14,9 @@ use Illuminate\Support\Str;
 class WithdrawalController extends Controller
 {
     /**
-     * Service charge percentage (10% standard platform deduction).
+     * Service charge percentage (0.00% fee on withdrawals; service charge applies only on deposits via admin setting).
      */
-    public const SERVICE_CHARGE_PERCENT = 10.00;
+    public const SERVICE_CHARGE_PERCENT = 0.00;
 
     /**
      * Minimum gross withdrawal allowed.
@@ -73,8 +73,8 @@ class WithdrawalController extends Controller
                 'is_verified' => $member->is_verified,
             ],
             'config' => [
-                'service_charge_percent' => self::SERVICE_CHARGE_PERCENT,
-                'minimum_amount' => self::MINIMUM_WITHDRAWAL_AMOUNT,
+                'service_charge_percent' => (float) Setting::get('withdrawal_fee_percent', self::SERVICE_CHARGE_PERCENT),
+                'minimum_amount' => (float) Setting::get('minimum_withdrawal_amount', self::MINIMUM_WITHDRAWAL_AMOUNT),
                 'currency' => 'USD',
                 'currency_symbol' => '$',
             ],
@@ -122,8 +122,9 @@ class WithdrawalController extends Controller
 
         $grossAmount = round((float) $request->input('gross_amount'), 2);
 
-        // 10% Service Charge Deduction
-        $serviceCharge = round($grossAmount * (self::SERVICE_CHARGE_PERCENT / 100), 2);
+        // Service Charge Deduction (0.00% by default; service charges apply only on fund deposits via admin setting)
+        $serviceChargePercent = (float) Setting::get('withdrawal_fee_percent', self::SERVICE_CHARGE_PERCENT);
+        $serviceCharge = round($grossAmount * ($serviceChargePercent / 100), 2);
         $netAmount = round($grossAmount - $serviceCharge, 2);
 
         // Generate unique human-readable Request ID: e.g. WD20260918-XXXXXX
