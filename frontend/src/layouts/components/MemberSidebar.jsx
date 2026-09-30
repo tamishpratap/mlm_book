@@ -138,14 +138,6 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <span>Home</span>
           </NavLink>
           <NavLink
-            to="/member/dashboard"
-            className={getSideNavClass('/member/dashboard', true)}
-            onClick={onCloseMobile}
-          >
-            <LayoutDashboard size={18} />
-            <span>Analytics Dashboard</span>
-          </NavLink>
-          <NavLink
             to="/member/socials"
             className={getSideNavClass('/member/socials')}
             onClick={onCloseMobile}
@@ -311,7 +303,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
               onCloseMobile?.();
               window.dispatchEvent(new CustomEvent('open-referral-modal'));
             }}
-            style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}
+            style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
           >
             <span
               className="shortcut-icon-badge"

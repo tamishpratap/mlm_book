@@ -15,7 +15,7 @@ import PlatformShortcutsGrid from './components/PlatformShortcutsGrid';
 import DashboardSkeleton from './components/DashboardSkeleton';
 import MissedIntroducerReminderModal from './components/MissedIntroducerReminderModal';
 
-export function DashboardPage() {
+export function DashboardPage({ embedded = false }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
@@ -117,6 +117,69 @@ export function DashboardPage() {
     navigate('/member/account/settings');
   };
 
+  const content = (
+    <div className="member-dashboard-hub" style={embedded ? { padding: 0 } : undefined}>
+      {/* 1. Executive Welcome & Quick Action Header */}
+      <MemberWelcomeBanner
+        member={currentMember}
+        referralNetwork={dashboardData?.referral_network}
+      />
+
+      {/* 2. Wallet & Financial Intelligence Center */}
+      <WalletIntelligenceCard
+        wallets={dashboardData?.wallets}
+      />
+
+      {/* 3. Business Pages Command Center */}
+      <BusinessPagesOverview
+        businessPages={dashboardData?.business_pages}
+      />
+
+      {/* 4. Advertising Campaigns Performance */}
+      <AdCampaignsOverview
+        adCampaigns={dashboardData?.ad_campaigns}
+      />
+
+      {/* 5. Referral Network & Rank Status */}
+      <ReferralNetworkCard
+        referralNetwork={dashboardData?.referral_network}
+      />
+
+      {/* 6. Recent Financial Activity (Deposits & Withdrawals) */}
+      <RecentTransactionsCard
+        transactions={dashboardData?.recent_transactions}
+      />
+
+      {/* 7. Quick Navigation Hub */}
+      <PlatformShortcutsGrid />
+    </div>
+  );
+
+  if (embedded) {
+    return isLoading ? (
+      <DashboardSkeleton />
+    ) : error ? (
+      <div className="member-dashboard-hub">
+        <div className="card" role="alert" style={{ textAlign: 'center', padding: '48px 24px', borderRadius: '16px' }}>
+          <h2 style={{ fontSize: '1.25rem', color: 'var(--color-danger, #ef4444)', marginBottom: '8px' }}>
+            Dashboard Unavailable
+          </h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '18px' }}>{error}</p>
+          <button
+            type="button"
+            className="member-button member-button--primary"
+            onClick={handleRetry}
+            style={{ margin: '0 auto' }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    ) : (
+      content
+    );
+  }
+
   return (
     <>
       <main className="member-main" id="member-dashboard-main">
@@ -140,41 +203,7 @@ export function DashboardPage() {
             </div>
           </div>
         ) : (
-          <div className="member-dashboard-hub">
-            {/* 1. Executive Welcome & Quick Action Header */}
-            <MemberWelcomeBanner
-              member={currentMember}
-              referralNetwork={dashboardData?.referral_network}
-            />
-
-            {/* 2. Wallet & Financial Intelligence Center */}
-            <WalletIntelligenceCard
-              wallets={dashboardData?.wallets}
-            />
-
-            {/* 3. Business Pages Command Center */}
-            <BusinessPagesOverview
-              businessPages={dashboardData?.business_pages}
-            />
-
-            {/* 4. Advertising Campaigns Performance */}
-            <AdCampaignsOverview
-              adCampaigns={dashboardData?.ad_campaigns}
-            />
-
-            {/* 5. Referral Network & Rank Status */}
-            <ReferralNetworkCard
-              referralNetwork={dashboardData?.referral_network}
-            />
-
-            {/* 6. Recent Financial Activity (Deposits & Withdrawals) */}
-            <RecentTransactionsCard
-              transactions={dashboardData?.recent_transactions}
-            />
-
-            {/* 7. Quick Navigation Hub */}
-            <PlatformShortcutsGrid />
-          </div>
+          content
         )}
       </main>
 

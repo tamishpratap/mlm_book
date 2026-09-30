@@ -795,6 +795,7 @@ body.menu-open {
 .shortcut {
     display: flex;
     align-items: center;
+    gap: 10px;
     min-height: 39px;
     padding: 5px 9px;
     border-radius: 11px;
@@ -802,6 +803,17 @@ body.menu-open {
     font-size: 12px;
     font-weight: 500;
     transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.shortcut-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    margin-right: 10px;
 }
 
 .shortcut:hover {
