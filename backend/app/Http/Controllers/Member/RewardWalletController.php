@@ -365,11 +365,23 @@ class RewardWalletController extends Controller
         $page = max(1, (int) $request->input('page', 1));
         $perPage = min(50, max(1, (int) $request->input('per_page', 15)));
 
+        $totalEarned = (float) AdReward::where('member_id', $member->id)
+            ->where('status', AdReward::STATUS_CREDITED)
+            ->sum('reward_amount_usd');
+
+        $todayEarned = (float) AdReward::where('member_id', $member->id)
+            ->where('status', AdReward::STATUS_CREDITED)
+            ->whereDate('created_at', now()->toDateString())
+            ->sum('reward_amount_usd');
+
         $rewards = AdReward::where('member_id', $member->id)
             ->where('status', AdReward::STATUS_CREDITED)
             ->with([
                 'adCampaign' => function ($cq) {
-                    $cq->select(['id', 'campaign_id', 'campaign_name', 'business_page_id']);
+                    $cq->select(['id', 'campaign_id', 'campaign_name', 'business_page_id', 'post_id']);
+                },
+                'adCampaign.post' => function ($pq) {
+                    $pq->select(['id', 'body', 'media_path', 'media_type', 'member_id', 'business_page_id']);
                 },
                 'adCampaign.businessPage' => function ($bq) {
                     $bq->select(['id', 'page_name', 'slug', 'logo']);
@@ -407,6 +419,7 @@ class RewardWalletController extends Controller
                         'name' => $bizPage->page_name,
                         'slug' => $bizPage->slug,
                     ] : null,
+                    'post' => $campaign->post,
                 ] : null,
             ];
         });
@@ -424,6 +437,8 @@ class RewardWalletController extends Controller
                 'wallet' => (float) ($member->wallet ?? 0.00),
                 'reward_balance' => (float) ($member->wallet ?? 0.00),
                 'total_reward_count' => $rewards->total(),
+                'total_earned' => $totalEarned,
+                'today_earned' => $todayEarned,
             ],
         ]);
     }
