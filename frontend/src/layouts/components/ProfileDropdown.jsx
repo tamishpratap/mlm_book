@@ -353,29 +353,6 @@ export function ProfileDropdown({ isOpen, onToggle, onClose, onOpenReferral, onO
             <ChevronRight size={16} />
           </Link>
 
-          <Link
-            className="profile-dropdown__item"
-            to="/member/web3-wallet"
-            role="menuitem"
-            onClick={onClose}
-          >
-            <span>
-              <WalletCards size={18} color="#0284c7" />
-            </span>
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-              <strong style={{ color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Web3 USDT Wallet</strong>
-              {user?.reward_wallet_address && user?.reward_wallet_verified_at ? (
-                <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#047857', background: '#ecfdf5', padding: '2px 8px', borderRadius: '10px' }}>
-                  Verified
-                </span>
-              ) : (
-                <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#64748b', background: '#f1f5f9', padding: '2px 8px', borderRadius: '10px' }}>
-                  Not Configured
-                </span>
-              )}
-            </div>
-            <ChevronRight size={16} />
-          </Link>
 
           <Link
             className="profile-dropdown__item"

@@ -216,7 +216,7 @@ class DashboardController extends Controller
             $directReferralsCount = $member->directReferrals()->count();
             $verifiedDirectReferralsCount = $member->verifiedDirectReferrals()->count();
             $introducer = !empty($member->introducer_id)
-                ? Member::where('user_id', $member->introducer_id)->first(['name', 'user_id', 'avatar_url', 'email'])
+                ? Member::where('user_id', $member->introducer_id)->first(['name', 'user_id', 'profile_photo', 'email'])
                 : null;
 
             $frontendBase = config('app.frontend_url') ?: (app()->isLocal() ? 'http://localhost:5173' : url(''));

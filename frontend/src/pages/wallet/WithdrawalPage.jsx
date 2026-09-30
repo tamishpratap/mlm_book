@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ArrowDownToLine,
   Wallet,
@@ -21,6 +22,7 @@ import withdrawalApi from '../../api/withdrawalApi';
 import accountApi from '../../api/accountApi';
 import useAuth from '../../hooks/useAuth';
 import { getMediaUrl } from '../../utils/assetHelper';
+import { Web3WalletPage } from './Web3WalletPage';
 import '../../styles/member-withdrawal.css';
 
 function AnalyticsRewardsSection() {
@@ -396,14 +398,14 @@ export function WithdrawalPage() {
         </header>
 
         {/* Tabs */}
-        <div className="wallet-tabs" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.25rem' }}>
+        <div className="wallet-tabs" style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.25rem', flexWrap: 'wrap' }}>
           <button
             className={`wallet-tab ${activeTab === 'withdrawal' ? 'is-active' : ''}`}
             onClick={() => setActiveTab('withdrawal')}
             style={{ padding: '0.65rem 1.25rem', border: 'none', background: activeTab === 'withdrawal' ? '#176bff' : '#f1f5f9', color: activeTab === 'withdrawal' ? '#ffffff' : '#176bff', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
           >
             <ArrowDownToLine size={18} />
-            Withdrawal & Stats
+            Withdrawal
           </button>
           <button
             className={`wallet-tab ${activeTab === 'analytics' ? 'is-active' : ''}`}
@@ -413,11 +415,21 @@ export function WithdrawalPage() {
             <BarChart3 size={18} />
             Analytics Rewards
           </button>
+          <button
+            className={`wallet-tab ${activeTab === 'wallet_address' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('wallet_address')}
+            style={{ padding: '0.65rem 1.25rem', border: 'none', background: activeTab === 'wallet_address' ? '#176bff' : '#f1f5f9', color: activeTab === 'wallet_address' ? '#ffffff' : '#176bff', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+          >
+            <Wallet size={18} />
+            Add Wallet Address
+          </button>
         </div>
       </div>
 
       {activeTab === 'analytics' ? (
         <AnalyticsRewardsSection />
+      ) : activeTab === 'wallet_address' ? (
+        <Web3WalletPage embedded={true} />
       ) : (
         <>
           {/* Summary Stats */}
@@ -656,6 +668,22 @@ export function WithdrawalPage() {
                     <span>{memberData.phone}</span>
                   </div>
                 )}
+                <div className="member-identity-row">
+                  <span>BEP-20 Payout Wallet</span>
+                  {memberData?.wallet_address || user?.reward_wallet_address || user?.wallet_address ? (
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#059669', fontWeight: 600 }}>
+                      {`${(memberData?.wallet_address || user?.reward_wallet_address || user?.wallet_address).slice(0, 6)}...${(memberData?.wallet_address || user?.reward_wallet_address || user?.wallet_address).slice(-4)}`}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('wallet_address')}
+                      style={{ color: '#2563eb', padding: 0, fontSize: '0.8rem', fontWeight: 600, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+                    >
+                      + Add BEP20 Wallet
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div style={{ fontSize: '0.875rem', color: '#475569' }}>

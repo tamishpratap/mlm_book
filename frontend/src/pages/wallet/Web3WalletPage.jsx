@@ -22,7 +22,7 @@ import {
 import accountApi from '../../api/accountApi';
 import useAuth from '../../hooks/useAuth';
 
-export function Web3WalletPage() {
+export function Web3WalletPage({ embedded = false }) {
   const { user, setUser } = useAuth();
 
   const [walletData, setWalletData] = useState(null);
@@ -184,29 +184,31 @@ export function Web3WalletPage() {
   const userRegisteredEmail = walletData?.masked_email || walletData?.email || user?.email || '';
 
   return (
-    <div style={{ maxWidth: '920px', margin: '20px auto', padding: '0 16px' }}>
-      {/* Header */}
-      <header className="member-page-heading" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <WalletCards size={26} color="#0284c7" />
-            <span>Web3 USDT Wallet</span>
-          </h1>
-          <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '14px' }}>
-            Manage your verified USDT (BEP-20) wallet address.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Link className="member-button member-button--secondary" to="/member/account/settings">
-            <Shield size={16} aria-hidden="true" />
-            <span>Account Settings</span>
-          </Link>
-          <Link className="member-button member-button--secondary" to="/member/profile">
-            <UserRound size={16} aria-hidden="true" />
-            <span>Profile</span>
-          </Link>
-        </div>
-      </header>
+    <div style={embedded ? { width: '100%', margin: '0', padding: '0' } : { maxWidth: '920px', margin: '20px auto', padding: '0 16px' }}>
+      {/* Header (only show when standalone) */}
+      {!embedded && (
+        <header className="member-page-heading" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: 700, margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <WalletCards size={26} color="#0284c7" />
+              <span>Web3 USDT Wallet</span>
+            </h1>
+            <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '14px' }}>
+              Manage your verified USDT (BEP-20) wallet address.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Link className="member-button member-button--secondary" to="/member/account/settings">
+              <Shield size={16} aria-hidden="true" />
+              <span>Account Settings</span>
+            </Link>
+            <Link className="member-button member-button--secondary" to="/member/profile">
+              <UserRound size={16} aria-hidden="true" />
+              <span>Profile</span>
+            </Link>
+          </div>
+        </header>
+      )}
 
       {/* Global Error Banner */}
       {error && (
