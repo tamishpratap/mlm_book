@@ -113,15 +113,14 @@
 .pub-logo-link {
   display: flex;
   align-items: center;
+  gap: 12px;
   text-decoration: none;
 }
 
 .pub-logo-img {
-  height: 58px;
+  height: 38px;
   width: auto;
-  max-height: 58px;
   object-fit: contain;
-  transition: var(--pub-transition);
 }
 
 .pub-logo-text {
@@ -268,11 +267,6 @@
 }
 
 @media (max-width: 900px) {
-
-  .pub-logo-img {
-    height: 50px;
-    max-height: 50px;
-  }
 
   .pub-nav-links,
   .pub-nav-actions {
