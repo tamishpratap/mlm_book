@@ -71,7 +71,7 @@ export function WithdrawalPage() {
 
   // Real-time calculation
   const parsedGross = parseFloat(grossAmount) || 0;
-  const serviceChargePercent = config?.service_charge_percent || 10.0;
+  const serviceChargePercent = config?.service_charge_percent !== undefined ? parseFloat(config.service_charge_percent) : 0.0;
   const calculatedServiceCharge = parsedGross > 0 ? +(parsedGross * (serviceChargePercent / 100)).toFixed(2) : 0;
   const calculatedNetAmount = parsedGross > 0 ? +(parsedGross - calculatedServiceCharge).toFixed(2) : 0;
 
@@ -142,7 +142,7 @@ export function WithdrawalPage() {
           <span>Withdrawal Section</span>
         </h1>
         <p className="withdrawal-header__desc">
-          Request a withdrawal from your account. All requests are submitted with <strong>Pending</strong> status for admin review with a standard 10% service charge deduction.
+          Request a withdrawal from your account. All requests are submitted with <strong>Pending</strong> status for admin review with {serviceChargePercent > 0 ? `${serviceChargePercent}% service charge` : '0% fee (100% full payout)'}.
         </p>
       </header>
 
@@ -207,7 +207,7 @@ export function WithdrawalPage() {
               <span>Create Withdrawal Request</span>
             </h2>
             <span className="breakdown-badge--charge">
-              10% Service Charge
+              {serviceChargePercent > 0 ? `${serviceChargePercent}% Service Charge` : '0% Fee (Zero Deductions)'}
             </span>
           </div>
 
@@ -407,9 +407,9 @@ export function WithdrawalPage() {
             <div className="withdrawal-card__body">
               <ul className="withdrawal-rule-list">
                 <li className="withdrawal-rule-item">
-                  <TrendingDown size={18} color="#d97706" />
+                  <TrendingDown size={18} color="#059669" />
                   <span>
-                    <strong>10% Platform Deduction:</strong> A 10% service charge is automatically deducted from your gross amount. You will receive the net amount.
+                    <strong>{serviceChargePercent > 0 ? `${serviceChargePercent}% Service Charge` : '0.00% Platform Fee'}:</strong> {serviceChargePercent > 0 ? `A ${serviceChargePercent}% service charge applies to this withdrawal.` : 'There is zero service charge on withdrawals. You receive 100% of your requested amount.'}
                   </span>
                 </li>
                 <li className="withdrawal-rule-item">
