@@ -35,8 +35,8 @@ class DashboardController extends Controller
             // -------------------------------------------------------------
             // 1. Wallets & Financial Metrics (Kitna fund hai, kitna baaki hai, kitna use hua)
             // -------------------------------------------------------------
-            $fundWalletBalance = round((float) ($member->p2p_wallet ?? 0.00), 2);
-            $rewardWalletBalance = round((float) ($member->wallet ?? 0.00), 4);
+            $fundWalletBalance = round((float) ($member->fresh()->p2p_wallet ?? $member->fresh()->ad_balance ?? 0.00), 4);
+            $rewardWalletBalance = round((float) ($member->fresh()->wallet ?? 0.00), 4);
 
             // Total Approved Lifetime Deposits
             $totalDeposited = round((float) AdDeposit::where('member_id', $member->id)
@@ -44,15 +44,15 @@ class DashboardController extends Controller
                 ->sum('net_amount_inr'), 2);
 
             // Total Debited/Committed for Ad Campaigns
-            $totalAdBudgetFunded = round((float) AdCampaign::where('member_id', $member->id)->sum('wallet_debit'), 2);
+            $totalAdBudgetFunded = round((float) AdCampaign::where('member_id', $member->id)->sum('wallet_debit'), 4);
 
             // Total Actually Spent in Ad Campaigns (impressions, clicks, payouts)
-            $totalAdSpent = round((float) AdCampaign::where('member_id', $member->id)->sum('spent_amount'), 2);
+            $totalAdSpent = round((float) AdCampaign::where('member_id', $member->id)->sum('spent_amount'), 4);
 
             // Remaining Budget locked in Active/Running/Approved Ad Campaigns
             $activeAdCampaignsBudgetRemaining = round((float) AdCampaign::where('member_id', $member->id)
                 ->whereIn('status', [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED])
-                ->sum('remaining_amount'), 2);
+                ->sum('remaining_amount'), 4);
 
             // Total Withdrawn Funds
             $totalWithdrawn = round((float) WithdrawalRequest::where('member_id', $member->id)
@@ -194,14 +194,14 @@ class DashboardController extends Controller
             $adCampaignsSummary = [
                 'metrics' => [
                     'total_campaigns' => $allCampaigns->count(),
-                    'active_campaigns' => $allCampaigns->where('status', AdCampaign::STATUS_ACTIVE)->count(),
-                    'pending_review' => $allCampaigns->where('status', AdCampaign::STATUS_PENDING_REVIEW)->count(),
+                    'active_campaigns' => $allCampaigns->whereIn('status', [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED])->count(),
+                    'pending_review' => $allCampaigns->filter(fn($c) => $c->status === AdCampaign::STATUS_PENDING_REVIEW || $c->approval_status === AdCampaign::APPROVAL_PENDING)->count(),
                     'approved_campaigns' => $allCampaigns->where('status', AdCampaign::STATUS_APPROVED)->count(),
                     'paused_campaigns' => $allCampaigns->where('status', AdCampaign::STATUS_PAUSED)->count(),
                     'completed_campaigns' => $allCampaigns->where('status', AdCampaign::STATUS_COMPLETED)->count(),
-                    'total_budget' => round((float) $allCampaigns->sum('budget'), 2),
-                    'total_spent' => round((float) $allCampaigns->sum('spent_amount'), 2),
-                    'total_remaining' => round((float) $allCampaigns->sum('remaining_amount'), 2),
+                    'total_budget' => round((float) $allCampaigns->sum('budget'), 4),
+                    'total_spent' => round((float) $allCampaigns->sum('spent_amount'), 4),
+                    'total_remaining' => round((float) $allCampaigns->sum('remaining_amount'), 4),
                     'total_impressions' => $totalImpressions,
                     'total_clicks' => $totalClicks,
                     'average_ctr' => $avgCtr,

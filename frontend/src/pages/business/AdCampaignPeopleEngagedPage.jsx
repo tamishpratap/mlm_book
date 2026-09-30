@@ -55,6 +55,7 @@ import MemberAvatar from '../../components/common/MemberAvatar';
 import { getAvatarUrl, getInitials, getMediaUrl } from '../../utils/assetHelper';
 import { AddFundsToCampaignModal } from '../../components/business/ads/AddFundsToCampaignModal';
 import { AddFundModal } from '../../components/business/ads/AddFundModal';
+import { formatAdAmount, formatAdCurrency } from '../../utils/adFormatters';
 
 export function AdCampaignPeopleEngagedPage() {
   const { slug, campaignId } = useParams();
@@ -343,8 +344,7 @@ export function AdCampaignPeopleEngagedPage() {
 
   // Helper formatting functions
   const formatMoney = (val) => {
-    const num = parseFloat(val) || 0;
-    return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return formatAdCurrency(val, true);
   };
 
   const getCleanWhatsAppNumber = (phoneStr) => {
@@ -457,9 +457,9 @@ export function AdCampaignPeopleEngagedPage() {
     Boolean(campaign.is_budget_exhausted || campaign.status === 'budget_exhausted')
   );
 
-  const totalFundedAmount = parseFloat(summary.financials?.total_funded || campaign.total_funded || campaign.budget || 0);
-  const spentAmount = parseFloat(summary.financials?.spent_amount || campaign.spent_amount || 0);
-  const remainingAmount = parseFloat(summary.financials?.remaining_budget || campaign.remaining_amount || 0);
+  const totalFundedAmount = parseFloat(summary.financials?.total_funded ?? campaign.total_funded ?? campaign.budget ?? 0);
+  const spentAmount = parseFloat(summary.financials?.spent_amount ?? campaign.spent_amount ?? summary.total_rewards_paid ?? 0);
+  const remainingAmount = Math.max(0, parseFloat((totalFundedAmount - spentAmount).toFixed(4)));
   const budgetSpentPct = totalFundedAmount > 0 ? Math.min(100, Math.round((spentAmount / totalFundedAmount) * 100)) : 0;
 
   return (
@@ -841,7 +841,7 @@ export function AdCampaignPeopleEngagedPage() {
             </div>
             <div>
               <strong style={{ fontSize: '20px', fontWeight: 800, color: '#15803d', display: 'block', lineHeight: 1.1 }}>
-                {formatMoney(summary.total_rewards_paid)}
+                {formatMoney(summary.total_rewards_paid ?? spentAmount ?? 0)}
               </strong>
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Total Rewards Paid</span>
             </div>
@@ -976,7 +976,7 @@ export function AdCampaignPeopleEngagedPage() {
                       Total Dynamic Rewards Credited
                     </span>
                     <span style={{ fontSize: '14px', fontWeight: 700, color: '#2563eb' }}>
-                      {formatMoney(summary.total_rewards_paid || 0)}
+                      {formatMoney(summary.total_rewards_paid ?? spentAmount ?? 0)}
                     </span>
                   </div>
 
@@ -995,7 +995,7 @@ export function AdCampaignPeopleEngagedPage() {
                       Remaining Campaign Budget
                     </span>
                     <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                      {formatMoney(summary.remaining_budget || 0)}
+                      {formatMoney(remainingAmount)}
                     </span>
                   </div>
                 </div>
@@ -1394,23 +1394,31 @@ export function AdCampaignPeopleEngagedPage() {
 
                       {/* Activity Type */}
                       <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
-                        <span
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            backgroundColor: '#ecfdf5',
-                            color: '#065f46',
-                            border: '1px solid #a7f3d0',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                          }}
-                        >
-                          <CheckCircle2 size={13} color="#059669" />
-                          <span>{item.action_label || 'Rewarded Visit'}</span>
-                        </span>
+                        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
+                          <span
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              backgroundColor: '#ecfdf5',
+                              color: '#065f46',
+                              border: '1px solid #a7f3d0',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                            }}
+                          >
+                            <CheckCircle2 size={13} color="#059669" />
+                            <span>{item.action_label || 'Rewarded Visit'}</span>
+                          </span>
+                          {(item.reward_formatted || item.reward_amount_usd > 0 || item.action === 'rewarded') && (
+                            <span style={{ fontSize: '11px', color: '#059669', fontWeight: 700, paddingLeft: '4px' }}>
+                              {item.reward_formatted || `+$${Number(item.reward_amount_usd || 0.025).toFixed(4)} USD`}
+                              {item.tier_label ? ` (${item.tier_label})` : ''}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Contact Options (Mobile/WhatsApp Number + Action Buttons) */}
@@ -1658,7 +1666,7 @@ export function AdCampaignPeopleEngagedPage() {
                     </div>
 
                     {/* Right: Rewarded Visit Badge */}
-                    <div style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                    <div style={{ flexShrink: 0, marginLeft: 'auto', textAlign: 'right' }}>
                       <span
                         style={{
                           padding: '3px 8px',
@@ -1677,6 +1685,12 @@ export function AdCampaignPeopleEngagedPage() {
                         <CheckCircle2 size={12} color="#059669" />
                         <span>{item.action_label || 'Rewarded Visit'}</span>
                       </span>
+                      {(item.reward_formatted || item.reward_amount_usd > 0 || item.action === 'rewarded') && (
+                        <div style={{ fontSize: '11px', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
+                          {item.reward_formatted || `+$${Number(item.reward_amount_usd || 0.025).toFixed(4)} USD`}
+                          {item.tier_label ? ` (${item.tier_label})` : ''}
+                        </div>
+                      )}
                     </div>
                   </div>
 

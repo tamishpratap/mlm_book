@@ -47,6 +47,7 @@ import businessApi from '../../../api/businessApi';
 import { getAvatarUrl, getMediaUrl } from '../../../utils/assetHelper';
 import { VerifiedBadge } from '../../../components/common/VerifiedBadge';
 import { ModalPortal } from '../../common/ModalPortal';
+import { formatAdAmount } from '../../../utils/adFormatters';
 import '../../../styles/member-business-pages.css';
 
 export function AdCampaignDetailModal({
@@ -532,24 +533,29 @@ export function AdCampaignDetailModal({
     if (!memberUser || !memberUser.id) return;
     const cId = currentCampaign.campaign_id || currentCampaign.id;
 
+    const rawInitReward = Number(initialEvent?.reward_amount_usd ?? initialEvent?.metadata?.reward_amount_usd ?? 0);
+    const isInitReward = rawInitReward > 0 || initialEvent?.action === 'rewarded' || initialEvent?.type === 'reward';
+    const formattedInitReward = initialEvent?.reward_formatted || (rawInitReward > 0 ? `+$${rawInitReward.toFixed(4)} USD` : (isInitReward ? '+$0.0250 USD' : '$0.00'));
+    const initTier = initialEvent?.tier_label || initialEvent?.metadata?.tier_label || (isInitReward ? '0+' : null);
+
     setSelectedMemberModal({
       member: memberUser,
       campaign: currentCampaign,
       summary: {
         total_activities: initialEvent ? 1 : 0,
-        interested_count: initialEvent?.action === 'Interested' ? 1 : 0,
-        clicks_count: initialEvent?.action === 'Clicked' || initialEvent?.action === 'Ad Click' ? 1 : 0,
-        landing_visits_count: initialEvent?.action?.includes('Landing') ? 1 : 0,
-        reward_status: initialEvent?.reward_amount_usd > 0 ? 'rewarded' : 'not_rewarded',
-        is_rewarded: initialEvent?.reward_amount_usd > 0,
-        reward_amount_usd: initialEvent?.reward_amount_usd || 0,
-        reward_formatted: initialEvent?.reward_formatted || '$0.00',
+        interested_count: initialEvent?.action === 'Interested' || initialEvent?.action === 'interested' ? 1 : 0,
+        clicks_count: initialEvent?.action === 'Clicked' || initialEvent?.action === 'clicked' || initialEvent?.action === 'Ad Click' ? 1 : 0,
+        landing_visits_count: initialEvent?.action?.includes('Landing') || initialEvent?.action === 'visited_landing_page' ? 1 : 0,
+        reward_status: isInitReward ? 'rewarded' : 'not_rewarded',
+        is_rewarded: isInitReward,
+        reward_amount_usd: rawInitReward > 0 ? rawInitReward : (isInitReward ? 0.025 : 0),
+        reward_formatted: formattedInitReward,
       },
-      reward_detail: initialEvent?.reward_amount_usd > 0 ? {
-        reward_amount_usd: initialEvent.reward_amount_usd,
-        reward_formatted: initialEvent.reward_formatted,
-        tier_label: initialEvent.tier_label,
-        direct_verified_referral_count: initialEvent.direct_verified_referral_count,
+      reward_detail: isInitReward ? {
+        reward_amount_usd: rawInitReward > 0 ? rawInitReward : 0.025,
+        reward_formatted: formattedInitReward,
+        tier_label: initTier,
+        direct_verified_referral_count: initialEvent.direct_verified_referral_count ?? initialEvent.direct_referrals ?? 0,
         qualifying_event_id: initialEvent.event_id,
         status: initialEvent.status || 'credited',
         credited_at: initialEvent.created_at,
@@ -581,25 +587,29 @@ export function AdCampaignDetailModal({
         });
         if (fallbackRes.success && fallbackRes.engagements?.data) {
           const events = fallbackRes.engagements.data;
-          const rewardEvt = events.find((e) => e.reward_amount_usd > 0);
+          const rewardEvt = events.find((e) => Number(e.reward_amount_usd ?? e.metadata?.reward_amount_usd ?? 0) > 0 || e.action === 'rewarded' || e.type === 'reward');
+          const rawFbReward = rewardEvt ? Number(rewardEvt.reward_amount_usd ?? rewardEvt.metadata?.reward_amount_usd ?? 0) : 0;
+          const formattedFbReward = rewardEvt?.reward_formatted || (rawFbReward > 0 ? `+$${rawFbReward.toFixed(4)} USD` : (rewardEvt ? '+$0.0250 USD' : '$0.00'));
+          const fbTier = rewardEvt?.tier_label || rewardEvt?.metadata?.tier_label || (rewardEvt ? '0+' : null);
+
           setSelectedMemberModal({
             member: memberUser,
             campaign: currentCampaign,
             summary: {
               total_activities: events.length,
-              interested_count: events.filter((e) => e.action?.includes('Interested')).length,
-              clicks_count: events.filter((e) => e.action?.includes('Click')).length,
-              landing_visits_count: events.filter((e) => e.action?.includes('Landing')).length,
+              interested_count: events.filter((e) => e.action?.includes('Interested') || e.action === 'interested').length,
+              clicks_count: events.filter((e) => e.action?.includes('Click') || e.action === 'clicked').length,
+              landing_visits_count: events.filter((e) => e.action?.includes('Landing') || e.action === 'visited_landing_page').length,
               reward_status: rewardEvt ? 'rewarded' : 'not_rewarded',
               is_rewarded: Boolean(rewardEvt),
-              reward_amount_usd: rewardEvt?.reward_amount_usd || 0,
-              reward_formatted: rewardEvt?.reward_formatted || '$0.00',
+              reward_amount_usd: rawFbReward > 0 ? rawFbReward : (rewardEvt ? 0.025 : 0),
+              reward_formatted: formattedFbReward,
             },
             reward_detail: rewardEvt ? {
-              reward_amount_usd: rewardEvt.reward_amount_usd,
-              reward_formatted: rewardEvt.reward_formatted,
-              tier_label: rewardEvt.tier_label,
-              direct_verified_referral_count: rewardEvt.direct_verified_referral_count,
+              reward_amount_usd: rawFbReward > 0 ? rawFbReward : 0.025,
+              reward_formatted: formattedFbReward,
+              tier_label: fbTier,
+              direct_verified_referral_count: rewardEvt.direct_verified_referral_count ?? rewardEvt.direct_referrals ?? 0,
               qualifying_event_id: rewardEvt.event_id,
               status: rewardEvt.status || 'credited',
               credited_at: rewardEvt.created_at,
@@ -732,9 +742,9 @@ export function AdCampaignDetailModal({
     : 0;
   const feeAmount = currentCampaign.fee_amount !== undefined && currentCampaign.fee_amount !== null && !isNaN(Number(currentCampaign.fee_amount))
     ? parseFloat(currentCampaign.fee_amount)
-    : (feePercent > 0 ? Math.round(totalFunded * (feePercent / 100) * 100) / 100 : 0);
+    : (feePercent > 0 ? Math.round(totalFunded * (feePercent / 100) * 10000) / 10000 : 0);
   const spent = parseFloat(currentCampaign.spent_amount) || 0;
-  const remaining = parseFloat(currentCampaign.remaining_amount) || Math.max(0, totalFunded - spent);
+  const remaining = Math.max(0, parseFloat((totalFunded - spent).toFixed(4)));
 
   const isLow = Boolean(currentCampaign.is_budget_low);
   const isExhausted = Boolean(currentCampaign.is_budget_exhausted || status === 'budget_exhausted');
@@ -1241,7 +1251,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Original Budget</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#4f7df3', marginTop: '4px' }}>
-                      ${origBudget.toFixed(2)}
+                      ${formatAdAmount(origBudget)}
                     </div>
                   </div>
 
@@ -1249,7 +1259,7 @@ export function AdCampaignDetailModal({
                     <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Top-Up Added</span>
                       <div style={{ fontSize: '16px', fontWeight: 800, color: '#16a34a', marginTop: '4px' }}>
-                        +${additionalFunding.toFixed(2)}
+                        +${formatAdAmount(additionalFunding)}
                       </div>
                     </div>
                   )}
@@ -1257,7 +1267,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Total Funded</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b', marginTop: '4px' }}>
-                      ${totalFunded.toFixed(2)}
+                      ${formatAdAmount(totalFunded)}
                     </div>
                   </div>
 
@@ -1265,7 +1275,7 @@ export function AdCampaignDetailModal({
                     <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({feePercent}%)</span>
                       <div style={{ fontSize: '16px', fontWeight: 800, color: '#64748b', marginTop: '4px' }}>
-                        ${feeAmount.toFixed(2)}
+                        ${formatAdAmount(feeAmount)}
                       </div>
                     </div>
                   )}
@@ -1273,7 +1283,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Rewards Paid</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#dc2626', marginTop: '4px' }}>
-                      ${spent.toFixed(4)}
+                      ${formatAdAmount(spent)}
                     </div>
                   </div>
 
@@ -1287,7 +1297,7 @@ export function AdCampaignDetailModal({
                         marginTop: '4px',
                       }}
                     >
-                      ${remaining.toFixed(4)}
+                      ${formatAdAmount(remaining)}
                     </div>
                   </div>
                 </div>
@@ -2007,6 +2017,7 @@ export function AdCampaignDetailModal({
                           onClick={() => {
                             setSearchInputValue('');
                             setEngagementSearch('');
+                            setEngagementPage(1);
                           }}
                         />
                       </span>
@@ -2031,7 +2042,10 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setEngagementActionFilter('all')}
+                          onClick={() => {
+                            setEngagementActionFilter('all');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
@@ -2055,7 +2069,10 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setRewardStatusFilter('all')}
+                          onClick={() => {
+                            setRewardStatusFilter('all');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
@@ -2079,7 +2096,10 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setVerificationFilter('all')}
+                          onClick={() => {
+                            setVerificationFilter('all');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
@@ -2103,7 +2123,12 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setDatePreset('all')}
+                          onClick={() => {
+                            setDatePreset('all');
+                            setCustomStartDate('');
+                            setCustomEndDate('');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
@@ -2127,7 +2152,10 @@ export function AdCampaignDetailModal({
                         <X
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
-                          onClick={() => setSortOrder('newest')}
+                          onClick={() => {
+                            setSortOrder('newest');
+                            setEngagementPage(1);
+                          }}
                         />
                       </span>
                     )}
@@ -2453,7 +2481,10 @@ export function AdCampaignDetailModal({
                           const phoneClean = user?.phone ? String(user.phone).replace(/[^0-9+]/g, '') : null;
                           const hasPhone = Boolean(phoneClean);
                           const hasEmail = Boolean(user?.email);
-                          const isReward = item.reward_amount_usd > 0;
+                          const rawRewardAmt = Number(item.reward_amount_usd ?? item.metadata?.reward_amount_usd ?? 0);
+                          const isReward = rawRewardAmt > 0 || item.action === 'rewarded' || item.type === 'reward';
+                          const formattedReward = item.reward_formatted || (rawRewardAmt > 0 ? `+$${rawRewardAmt.toFixed(4)} USD` : (isReward ? '+$0.0250 USD' : '$0.00'));
+                          const tierLabel = item.tier_label || item.metadata?.tier_label || (isReward ? '0+' : null);
                           const isSelected = user?.id ? selectedMemberIds.includes(user.id) : false;
                           const waMessage = encodeURIComponent(
                             `Hi ${user?.name || 'there'}, regarding our ad campaign "${currentCampaign.campaign_name}" on MLM_Book:`
@@ -2562,11 +2593,11 @@ export function AdCampaignDetailModal({
                                 {isReward ? (
                                   <div>
                                     <div style={{ fontWeight: 800, color: '#059669', fontSize: '13px' }}>
-                                      {item.reward_formatted}
+                                      {formattedReward}
                                     </div>
-                                    {item.tier_label && (
+                                    {tierLabel && (
                                       <div style={{ fontSize: '10.5px', color: '#047857', fontWeight: 600 }}>
-                                        {item.tier_label}
+                                        {tierLabel}
                                       </div>
                                     )}
                                   </div>
@@ -2777,8 +2808,11 @@ export function AdCampaignDetailModal({
                       const phoneClean = user?.phone ? String(user.phone).replace(/[^0-9+]/g, '') : null;
                       const hasPhone = Boolean(phoneClean);
                       const hasEmail = Boolean(user?.email);
-                      const isReward = item.reward_amount_usd > 0;
                       const isSelected = user?.id ? selectedMemberIds.includes(user.id) : false;
+                      const rawRewardAmt = Number(item.reward_amount_usd ?? item.metadata?.reward_amount_usd ?? 0);
+                      const isReward = rawRewardAmt > 0 || item.action === 'rewarded' || item.type === 'reward';
+                      const formattedReward = item.reward_formatted || (rawRewardAmt > 0 ? `+$${rawRewardAmt.toFixed(4)} USD` : (isReward ? '+$0.0250 USD' : '$0.00'));
+                      const tierLabel = item.tier_label || item.metadata?.tier_label || (isReward ? '0+' : null);
                       const waMessage = encodeURIComponent(
                         `Hi ${user?.name || 'there'}, regarding our ad campaign "${currentCampaign.campaign_name}" on MLM_Book:`
                       );
@@ -2885,8 +2919,13 @@ export function AdCampaignDetailModal({
                                 Reward
                               </span>
                               <div style={{ fontSize: '13px', fontWeight: 800, color: isReward ? '#059669' : '#94a3b8' }}>
-                                {isReward ? item.reward_formatted : '$0.00'}
+                                {isReward ? formattedReward : '$0.00'}
                               </div>
+                              {isReward && tierLabel && (
+                                <div style={{ fontSize: '10.5px', color: '#047857', fontWeight: 600, marginTop: '1px' }}>
+                                  {tierLabel}
+                                </div>
+                              )}
                             </div>
 
                             <div style={{ textAlign: 'right' }}>
@@ -3364,7 +3403,7 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Total Funded</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b', marginTop: '3px' }}>
-                      ${(engagementSummary.financials?.total_funded || totalFunded).toFixed(2)}
+                      ${formatAdAmount(engagementSummary.financials?.total_funded || totalFunded)}
                     </div>
                   </div>
 
@@ -3372,7 +3411,7 @@ export function AdCampaignDetailModal({
                     <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Platform Fee ({feePercent}%)</span>
                       <div style={{ fontSize: '16px', fontWeight: 800, color: '#64748b', marginTop: '3px' }}>
-                        ${(engagementSummary.financials?.platform_fee_amount || feeAmount).toFixed(2)}
+                        ${formatAdAmount(engagementSummary.financials?.platform_fee_amount || feeAmount)}
                       </div>
                     </div>
                   )}
@@ -3380,14 +3419,14 @@ export function AdCampaignDetailModal({
                   <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Authoritative Rewards Paid</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#dc2626', marginTop: '3px' }}>
-                      ${engagementSummary.total_rewards_paid.toFixed(4)}
+                      ${formatAdAmount(engagementSummary.total_rewards_paid)}
                     </div>
                   </div>
 
                   <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Current Running Budget</span>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: isExhausted ? '#b91c1c' : '#15803d', marginTop: '3px' }}>
-                      ${(engagementSummary.financials?.remaining_budget || remaining).toFixed(4)}
+                      ${formatAdAmount(engagementSummary.financials?.remaining_budget || remaining)}
                     </div>
                   </div>
                 </div>
@@ -4441,7 +4480,10 @@ export function AdCampaignDetailModal({
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative' }}>
                     {selectedMemberModal.timeline.map((evt, idx) => {
                       const pill = getActionPill(evt.action_label || evt.action, evt.type);
-                      const isReward = evt.reward_amount_usd > 0;
+                      const rawRewardAmt = Number(evt.reward_amount_usd ?? evt.metadata?.reward_amount_usd ?? 0);
+                      const isReward = rawRewardAmt > 0 || evt.action === 'rewarded' || evt.type === 'reward';
+                      const formattedReward = evt.reward_formatted || (rawRewardAmt > 0 ? `+$${rawRewardAmt.toFixed(4)} USD` : (isReward ? '+$0.0250 USD' : '$0.00'));
+                      const tierLabel = evt.tier_label || evt.metadata?.tier_label || (isReward ? '0+' : null);
 
                       return (
                         <div
@@ -4493,11 +4535,11 @@ export function AdCampaignDetailModal({
                             {isReward ? (
                               <div>
                                 <div style={{ fontSize: '13px', fontWeight: 800, color: '#059669' }}>
-                                  {evt.reward_formatted}
+                                  {formattedReward}
                                 </div>
-                                {evt.tier_label && (
+                                {tierLabel && (
                                   <div style={{ fontSize: '10.5px', color: '#047857', fontWeight: 600 }}>
-                                    {evt.tier_label}
+                                    {tierLabel}
                                   </div>
                                 )}
                               </div>

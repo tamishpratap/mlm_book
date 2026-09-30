@@ -8,7 +8,7 @@ env.*
 *.env.*
 !*.env.example
 !.env.example
-
+backend.zip 
 # Dependencies
 node_modules/
 vendor/
@@ -45,3 +45,4 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+*.zip

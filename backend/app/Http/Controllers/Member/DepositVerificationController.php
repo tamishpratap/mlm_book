@@ -205,10 +205,10 @@ class DepositVerificationController extends Controller
         // Internal calculation formula: Net Amount = Received Amount / (1 + service_charge / 100)
         // Equivalent to: (Received Amount / (100 + service charge)) * 100
         if ($feePercent > 0.00) {
-            $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 2);
-            $feeAmount = round($verifiedAmount - $netAmount, 2);
+            $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 4);
+            $feeAmount = round($verifiedAmount - $netAmount, 4);
         } else {
-            $netAmount = $verifiedAmount;
+            $netAmount = round($verifiedAmount, 4);
             $feeAmount = 0.00;
         }
 
@@ -337,10 +337,10 @@ class DepositVerificationController extends Controller
             // Formula requested: Net Amount = Received Amount / (1 + feePercent / 100)
             $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
             if ($feePercent > 0.00) {
-                $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 2);
-                $feeAmount = round($verifiedAmount - $netAmount, 2);
+                $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 4);
+                $feeAmount = round($verifiedAmount - $netAmount, 4);
             } else {
-                $netAmount = $verifiedAmount;
+                $netAmount = round($verifiedAmount, 4);
                 $feeAmount = 0.00;
             }
 
@@ -547,17 +547,17 @@ class DepositVerificationController extends Controller
             // Formula: Net Amount = Received Amount / (1 + feePercent / 100)
             $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
             if ($feePercent > 0.00) {
-                $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 2);
-                $feeAmount = round($verifiedAmount - $netAmount, 2);
+                $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 4);
+                $feeAmount = round($verifiedAmount - $netAmount, 4);
             } else {
-                $netAmount = $verifiedAmount;
+                $netAmount = round($verifiedAmount, 4);
                 $feeAmount = 0.00;
             }
 
             // 1. Atomically Credit Member's Fund Wallet (p2p_wallet) immediately!
             $lockedMember = \App\Models\Member::where('id', $member->id)->lockForUpdate()->first();
             $previousP2pBalance = (float) ($lockedMember->p2p_wallet ?? 0.00);
-            $newP2pBalance = round($previousP2pBalance + $netAmount, 2);
+            $newP2pBalance = round($previousP2pBalance + $netAmount, 4);
             $lockedMember->p2p_wallet = $newP2pBalance;
             $lockedMember->save();
 
@@ -731,7 +731,7 @@ class DepositVerificationController extends Controller
 
         // Refresh member record to guarantee latest p2p_wallet balance
         $fresh = $member->fresh() ?? $member;
-        $fundWallet = (float) ($fresh->p2p_wallet ?? 0.00);
+        $fundWallet = round((float) ($fresh->p2p_wallet ?? $fresh->ad_balance ?? 0.00), 4);
 
         try {
 

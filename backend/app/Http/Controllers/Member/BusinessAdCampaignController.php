@@ -71,6 +71,9 @@ class BusinessAdCampaignController extends Controller
 
         $campaigns->getCollection()->transform(function (AdCampaign $c) {
             $c->ctr = $c->ctr;
+            $totalFunded = (float) ($c->total_funded ?? ((float) $c->budget + (float) ($c->additional_funding ?? 0.00)));
+            $spent = (float) ($c->spent_amount ?? 0.00);
+            $c->remaining_amount = max(0.00, round($totalFunded - $spent, 4));
             return $c;
         });
 
@@ -79,19 +82,27 @@ class BusinessAdCampaignController extends Controller
         $totalClicks = AdClick::whereIn('ad_campaign_id', $pageCampaignIds)->count();
         $avgCtr = $totalImpressions > 0 ? round(($totalClicks / $totalImpressions) * 100, 2) : 0.00;
 
-        $availableAdFunds = round((float) ($member->p2p_wallet ?? 0.00), 2);
+        $freshMember = $member->fresh() ?? $member;
+        $availableAdFunds = round((float) ($freshMember->p2p_wallet ?? $freshMember->ad_balance ?? 0.00), 4);
         $campaignFeePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
+
+        $totalBudget = round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('budget'), 4);
+        $totalSpent = round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('spent_amount'), 4);
+        $totalRemaining = max(0.00, round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('remaining_amount'), 4));
 
         $metrics = [
             'total_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->count(),
-            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_ACTIVE)->count(),
-            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PENDING_REVIEW)->count(),
+            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->whereIn('status', [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED])->count(),
+            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where(function ($q) {
+                $q->where('status', AdCampaign::STATUS_PENDING_REVIEW)
+                  ->orWhere('approval_status', AdCampaign::APPROVAL_PENDING);
+            })->count(),
             'approved_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_APPROVED)->count(),
             'paused_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PAUSED)->count(),
             'completed_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_COMPLETED)->count(),
-            'total_budget' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('budget'), 2),
-            'total_spent' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('spent_amount'), 2),
-            'total_remaining' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('remaining_amount'), 2),
+            'total_budget' => $totalBudget,
+            'total_spent' => $totalSpent,
+            'total_remaining' => $totalRemaining,
             'total_impressions' => $totalImpressions,
             'total_clicks' => $totalClicks,
             'average_ctr' => $avgCtr,
@@ -181,10 +192,10 @@ class BusinessAdCampaignController extends Controller
             }
         }
 
-        $campaignBudget = round((float) $validated['budget'], 2);
+        $campaignBudget = round((float) $validated['budget'], 4);
         $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
-        $feeAmount = round($campaignBudget * ($feePercent / 100), 2);
-        $totalWalletDebit = round($campaignBudget + $feeAmount, 2);
+        $feeAmount = round($campaignBudget * ($feePercent / 100), 4);
+        $totalWalletDebit = round($campaignBudget + $feeAmount, 4);
 
         // Atomic budget reservation and fee debit from member's available ad balance
         $campaign = DB::transaction(function () use ($member, $businessPage, $validated, $campaignBudget, $feePercent, $feeAmount, $totalWalletDebit) {
@@ -207,7 +218,7 @@ class BusinessAdCampaignController extends Controller
             $availableFunds = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
             if ($availableFunds < $totalWalletDebit) {
-                $shortfall = round($totalWalletDebit - $availableFunds, 2);
+                $shortfall = round($totalWalletDebit - $availableFunds, 4);
                 $insufficientMsg = $feeAmount > 0
                     ? "Insufficient advertising funds. Campaign Budget: \${$campaignBudget} USD, Platform Fee ({$feePercent}%): \${$feeAmount} USD, Total Required: \${$totalWalletDebit} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please add funds."
                     : "Insufficient advertising funds. Campaign Budget: \${$campaignBudget} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please add funds.";
@@ -217,7 +228,7 @@ class BusinessAdCampaignController extends Controller
             }
 
             // Deduct total debit (budget + platform fee) from member's Fund Wallet (p2p_wallet)
-            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 2);
+            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 4);
             $lockedMember->save();
 
             return AdCampaign::create([
@@ -304,10 +315,10 @@ class BusinessAdCampaignController extends Controller
             'amount.min' => 'Minimum top-up amount is $1.00 USD.',
         ]);
 
-        $topUpAmount = round((float) $validated['amount'], 2);
+        $topUpAmount = round((float) $validated['amount'], 4);
         $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
-        $feeAmount = round($topUpAmount * ($feePercent / 100), 2);
-        $totalWalletDebit = round($topUpAmount + $feeAmount, 2);
+        $feeAmount = round($topUpAmount * ($feePercent / 100), 4);
+        $totalWalletDebit = round($topUpAmount + $feeAmount, 4);
 
         $updatedCampaign = DB::transaction(function () use ($campaign, $member, $topUpAmount, $feeAmount, $totalWalletDebit) {
             /** @var Member $lockedMember */
@@ -315,7 +326,7 @@ class BusinessAdCampaignController extends Controller
             $availableFunds = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
             if ($availableFunds < $totalWalletDebit) {
-                $shortfall = round($totalWalletDebit - $availableFunds, 2);
+                $shortfall = round($totalWalletDebit - $availableFunds, 4);
                 $insufficientTopUpMsg = $feeAmount > 0
                     ? "Insufficient advertising funds to add funds. Top-up Amount: \${$topUpAmount} USD, Platform Fee: \${$feeAmount} USD, Total Required: \${$totalWalletDebit} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please deposit funds first."
                     : "Insufficient advertising funds to add funds. Top-up Amount: \${$topUpAmount} USD, Available: \${$availableFunds} USD. Shortfall: \${$shortfall} USD. Please deposit funds first.";
@@ -325,17 +336,17 @@ class BusinessAdCampaignController extends Controller
             }
 
             // Deduct total debit (top-up + fee) from member's Fund Wallet (p2p_wallet)
-            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 2);
+            $lockedMember->p2p_wallet = round($availableFunds - $totalWalletDebit, 4);
             $lockedMember->save();
 
             /** @var AdCampaign $lockedCampaign */
             $lockedCampaign = AdCampaign::where('id', $campaign->id)->lockForUpdate()->first();
 
-            $newAdditional = round((float) ($lockedCampaign->additional_funding ?? 0.00) + $topUpAmount, 2);
-            $newTotalFunded = round((float) $lockedCampaign->budget + $newAdditional, 2);
-            $newRemaining = round((float) ($lockedCampaign->remaining_amount ?? 0.00) + $topUpAmount, 2);
-            $newFeeAmount = round((float) ($lockedCampaign->fee_amount ?? 0.00) + $feeAmount, 2);
-            $newWalletDebit = round((float) ($lockedCampaign->wallet_debit ?? 0.00) + $totalWalletDebit, 2);
+            $newAdditional = round((float) ($lockedCampaign->additional_funding ?? 0.00) + $topUpAmount, 4);
+            $newTotalFunded = round((float) $lockedCampaign->budget + $newAdditional, 4);
+            $newRemaining = round((float) ($lockedCampaign->remaining_amount ?? 0.00) + $topUpAmount, 4);
+            $newFeeAmount = round((float) ($lockedCampaign->fee_amount ?? 0.00) + $feeAmount, 4);
+            $newWalletDebit = round((float) ($lockedCampaign->wallet_debit ?? 0.00) + $totalWalletDebit, 4);
 
             $lockedCampaign->additional_funding = $newAdditional;
             $lockedCampaign->total_funded = $newTotalFunded;
@@ -360,7 +371,7 @@ class BusinessAdCampaignController extends Controller
             'success' => true,
             'message' => "Successfully added \${$topUpAmount} USD to campaign '{$campaign->campaign_name}'. New running budget: \${$updatedCampaign->remaining_amount} USD.",
             'campaign' => $updatedCampaign->fresh(['post', 'owner:id,name,user_id,email', 'businessPage:id,page_name,slug']),
-            'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? 0.00), 2),
+            'available_ad_funds' => round((float) ($member->fresh()->p2p_wallet ?? $member->fresh()->ad_balance ?? 0.00), 4),
         ]);
     }
 
@@ -436,13 +447,13 @@ class BusinessAdCampaignController extends Controller
 
         DB::transaction(function () use ($campaign, $member, $validated, &$updateData) {
             if (isset($validated['budget'])) {
-                $newBudget = round((float) $validated['budget'], 2);
+                $newBudget = round((float) $validated['budget'], 4);
                 $feePercent = (float) Setting::get('campaign_platform_fee_percent', 0.00);
-                $newFeeAmount = round($newBudget * ($feePercent / 100), 2);
-                $newTotalDebit = round($newBudget + $newFeeAmount, 2);
+                $newFeeAmount = round($newBudget * ($feePercent / 100), 4);
+                $newTotalDebit = round($newBudget + $newFeeAmount, 4);
 
-                $oldTotalDebit = (float) ($campaign->wallet_debit ?: round((float) $campaign->budget + ((float) $campaign->budget * ($feePercent / 100)), 2));
-                $deltaDebit = round($newTotalDebit - $oldTotalDebit, 2);
+                $oldTotalDebit = (float) ($campaign->wallet_debit ?: round((float) $campaign->budget + ((float) $campaign->budget * ($feePercent / 100)), 4));
+                $deltaDebit = round($newTotalDebit - $oldTotalDebit, 4);
 
                 if ($deltaDebit > 0) {
                     /** @var Member $lockedMember */
@@ -450,7 +461,7 @@ class BusinessAdCampaignController extends Controller
                     $available = (float) ($lockedMember->p2p_wallet ?? 0.00);
 
                     if ($available < $deltaDebit) {
-                        $shortfall = round($deltaDebit - $available, 2);
+                        $shortfall = round($deltaDebit - $available, 4);
                         throw ValidationException::withMessages([
                             'budget' => [
                                 "Insufficient advertising funds to increase budget. Additional required (budget + fee): \${$deltaDebit} USD, Available: \${$available} USD. Shortfall: \${$shortfall} USD."
@@ -458,19 +469,20 @@ class BusinessAdCampaignController extends Controller
                         ]);
                     }
 
-                    $lockedMember->p2p_wallet = round($available - $deltaDebit, 2);
+                    $lockedMember->p2p_wallet = round($available - $deltaDebit, 4);
                     $lockedMember->save();
                 } elseif ($deltaDebit < 0) {
                     $refund = abs($deltaDebit);
                     /** @var Member $lockedMember */
                     $lockedMember = Member::where('id', $member->id)->lockForUpdate()->first();
                     if ($lockedMember) {
-                        $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $refund, 2);
+                        $lockedMember->p2p_wallet = round((float) ($lockedMember->p2p_wallet ?? 0.00) + $refund, 4);
                         $lockedMember->save();
                     }
                 }
 
                 $updateData['budget'] = $newBudget;
+                $updateData['total_funded'] = $newBudget;
                 $updateData['remaining_amount'] = $newBudget;
                 $updateData['fee_percent'] = $feePercent;
                 $updateData['fee_amount'] = $newFeeAmount;
@@ -770,7 +782,7 @@ class BusinessAdCampaignController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Campaign closed successfully. $' . number_format($refundedAmount, 2) . ' USD refunded to your P2P Fund Wallet.',
+            'message' => 'Campaign closed successfully. $' . number_format($refundedAmount, 4) . ' USD refunded to your P2P Fund Wallet.',
             'refunded_amount' => $refundedAmount,
             'campaign' => $freshCampaign,
         ]);
@@ -1939,23 +1951,26 @@ class BusinessAdCampaignController extends Controller
         $pageCampaignIds = AdCampaign::where('business_page_id', $businessPage->id)->pluck('id');
         $totalImpressions = AdImpression::whereIn('ad_campaign_id', $pageCampaignIds)->count();
         $totalClicks = AdClick::whereIn('ad_campaign_id', $pageCampaignIds)->count();
-        $totalRewardsPaid = round((float) AdReward::whereIn('ad_campaign_id', $pageCampaignIds)->where('status', AdReward::STATUS_CREDITED)->sum('reward_amount_usd'), 2);
+        $totalRewardsPaid = round((float) AdReward::whereIn('ad_campaign_id', $pageCampaignIds)->where('status', AdReward::STATUS_CREDITED)->sum('reward_amount_usd'), 4);
         $totalVerifiedVisits = AdReward::whereIn('ad_campaign_id', $pageCampaignIds)->where('status', AdReward::STATUS_CREDITED)->count();
         $avgCtr = $totalImpressions > 0 ? round(($totalClicks / $totalImpressions) * 100, 2) : 0.00;
 
         $metrics = [
             'total_campaigns' => $pageCampaignIds->count(),
-            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_ACTIVE)->count(),
-            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PENDING_REVIEW)->count(),
+            'active_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->whereIn('status', [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED])->count(),
+            'pending_review' => AdCampaign::where('business_page_id', $businessPage->id)->where(function ($q) {
+                $q->where('status', AdCampaign::STATUS_PENDING_REVIEW)
+                  ->orWhere('approval_status', AdCampaign::APPROVAL_PENDING);
+            })->count(),
             'approved_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_APPROVED)->count(),
             'paused_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_PAUSED)->count(),
             'completed_campaigns' => AdCampaign::where('business_page_id', $businessPage->id)->where('status', AdCampaign::STATUS_COMPLETED)->count(),
-            'total_budget' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('budget'), 2),
-            'total_platform_fees' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('fee_amount'), 2),
-            'total_wallet_debits' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('wallet_debit'), 2),
+            'total_budget' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('budget'), 4),
+            'total_platform_fees' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('fee_amount'), 4),
+            'total_wallet_debits' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('wallet_debit'), 4),
             'total_rewards_paid' => $totalRewardsPaid,
-            'total_spent' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('spent_amount'), 2),
-            'total_remaining' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('remaining_amount'), 2),
+            'total_spent' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('spent_amount'), 4),
+            'total_remaining' => round((float) AdCampaign::where('business_page_id', $businessPage->id)->sum('remaining_amount'), 4),
             'total_verified_visits' => $totalVerifiedVisits,
             'total_reward_count' => $totalVerifiedVisits,
             'total_impressions' => $totalImpressions,
@@ -1992,8 +2007,9 @@ class BusinessAdCampaignController extends Controller
         $impressionsCount = AdImpression::where('ad_campaign_id', $campaign->id)->count();
         $clicksCount = AdClick::where('ad_campaign_id', $campaign->id)->count();
         $rewardsCount = AdReward::where('ad_campaign_id', $campaign->id)->where('status', AdReward::STATUS_CREDITED)->count();
-        $rewardsPaid = round((float) ($campaign->spent_amount ?? 0.00), 2);
-        $remainingBudget = round((float) ($campaign->remaining_amount ?? 0.00), 2);
+        $totalFunded = round((float) ($campaign->total_funded ?? $campaign->budget ?? 0.00), 4);
+        $rewardsPaid = round((float) ($campaign->spent_amount ?? 0.00), 4);
+        $remainingBudget = max(0.00, round($totalFunded - $rewardsPaid, 4));
         $ctr = $impressionsCount > 0 ? round(($clicksCount / $impressionsCount) * 100, 2) : 0.00;
 
         return response()->json([
@@ -2001,6 +2017,8 @@ class BusinessAdCampaignController extends Controller
             'campaign' => $campaign->load(['post', 'owner:id,name,user_id,email', 'approver:id,name,email']),
             'metrics' => [
                 'budget' => (float) $campaign->budget,
+                'additional_funding' => (float) ($campaign->additional_funding ?? 0.00),
+                'total_funded' => $totalFunded,
                 'fee_percent' => (float) ($campaign->fee_percent ?? 2.50),
                 'fee_amount' => (float) ($campaign->fee_amount ?? 0.00),
                 'wallet_debit' => (float) ($campaign->wallet_debit ?? 0.00),
@@ -2015,9 +2033,11 @@ class BusinessAdCampaignController extends Controller
                 'ctr' => $ctr,
                 'financial_reconciliation' => [
                     'initial_campaign_budget' => (float) $campaign->budget,
+                    'additional_funding' => (float) ($campaign->additional_funding ?? 0.00),
+                    'total_funded' => $totalFunded,
                     'rewards_paid' => $rewardsPaid,
                     'remaining_campaign_budget' => $remainingBudget,
-                    'reconciles_exactly' => round((float) $campaign->budget, 2) === round($rewardsPaid + $remainingBudget, 2),
+                    'reconciles_exactly' => round($totalFunded, 4) === round($rewardsPaid + $remainingBudget, 4),
                 ],
             ],
         ]);
@@ -2038,119 +2058,94 @@ class BusinessAdCampaignController extends Controller
             ], 403);
         }
 
-        // Authoritative query: ONLY successfully credited rewards for this specific campaign
-        $query = AdReward::query()
-            ->where('ad_campaign_id', $campaign->id)
-            ->where('status', AdReward::STATUS_CREDITED)
-            ->with(['member:id,name,user_id,email,phone,profile_photo,mobile_verified_at,city,country']);
+        $engagementService = app(AdCampaignEngagementService::class);
 
-        // Prevent manipulation to expose unrewarded interactions
-        if (in_array($request->input('reward_status'), ['not_rewarded', 'pending', 'failed', 'rejected']) ||
-            in_array($request->input('action'), ['interested', 'clicked', 'clicks', 'visited_landing_page'])) {
-            $query->whereRaw('0 = 1');
-        }
-
-        // 1. Keyword search (name, user_id, email, phone, or member_id)
-        if ($request->filled('q')) {
-            $search = trim((string) $request->input('q'));
-            $query->where(function ($sq) use ($search) {
-                $sq->whereHas('member', function ($mq) use ($search) {
-                    $mq->where('name', 'like', "%{$search}%")
-                        ->orWhere('user_id', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                });
-                if (is_numeric($search)) {
-                    $sq->orWhere('ad_rewards.member_id', (int) $search);
-                }
-            });
-        }
-
-        // 2. Mobile verification filter
-        $verifiedOnly = $request->boolean('verified_only') || $request->input('verification') === 'verified';
-        $verificationFilter = $request->input('verification', $verifiedOnly ? 'verified' : 'all');
-        if ($verificationFilter === 'verified') {
-            $query->whereHas('member', fn ($mq) => $mq->whereNotNull('mobile_verified_at'));
-        } elseif ($verificationFilter === 'unverified') {
-            $query->whereHas('member', fn ($mq) => $mq->whereNull('mobile_verified_at'));
-        }
-
-        // 3. Date filtering
-        $datePreset = $request->input('date_preset', 'all');
-        if ($datePreset === 'today') {
-            $query->where('ad_rewards.created_at', '>=', now()->startOfDay());
-        } elseif ($datePreset === 'yesterday') {
-            $query->whereBetween('ad_rewards.created_at', [
-                now()->subDay()->startOfDay(),
-                now()->subDay()->endOfDay(),
-            ]);
-        } elseif ($datePreset === 'last_7_days') {
-            $query->where('ad_rewards.created_at', '>=', now()->subDays(7)->startOfDay());
-        } elseif ($datePreset === 'last_30_days') {
-            $query->where('ad_rewards.created_at', '>=', now()->subDays(30)->startOfDay());
-        } elseif ($datePreset === 'custom' || $request->filled('start_date') || $request->filled('end_date') || $request->filled('date_from') || $request->filled('date_to')) {
-            $startDate = $request->input('start_date', $request->input('date_from'));
-            $endDate = $request->input('end_date', $request->input('date_to'));
-            if ($startDate && $endDate && strtotime($startDate) > strtotime($endDate)) {
-                $temp = $startDate;
-                $startDate = $endDate;
-                $endDate = $temp;
-            }
-            if ($startDate) {
-                $query->where('ad_rewards.created_at', '>=', date('Y-m-d 00:00:00', strtotime($startDate)));
-            }
-            if ($endDate) {
-                $query->where('ad_rewards.created_at', '<=', date('Y-m-d 23:59:59', strtotime($endDate)));
-            }
-        }
-
-        // 4. Member ID filter (if specified)
-        if ($request->filled('member_id')) {
-            $query->where('ad_rewards.member_id', $request->input('member_id'));
-        }
-
-        // 5. Sorting
-        $sort = $request->input('sort', 'newest');
-        if ($sort === 'oldest') {
-            $query->orderBy('ad_rewards.created_at', 'asc')->orderBy('ad_rewards.id', 'asc');
-        } elseif ($sort === 'name_asc') {
-            $query->join('members', 'ad_rewards.member_id', '=', 'members.id')
-                ->select('ad_rewards.*')
-                ->orderBy('members.name', 'asc');
-        } elseif ($sort === 'highest_reward' || $sort === 'reward_desc') {
-            $query->orderByDesc('ad_rewards.reward_amount_usd')->orderByDesc('ad_rewards.created_at');
-        } elseif ($sort === 'lowest_reward' || $sort === 'reward_asc') {
-            $query->orderBy('ad_rewards.reward_amount_usd', 'asc')->orderBy('ad_rewards.created_at', 'asc');
-        } else {
-            $query->orderByDesc('ad_rewards.created_at')->orderByDesc('ad_rewards.id');
-        }
+        $filters = [
+            'action' => $request->input('action', 'all'),
+            'reward_status' => $request->input('reward_status', 'all'),
+            'verification' => $request->input('verification', $request->boolean('verified_only') ? 'verified' : 'all'),
+            'date_preset' => $request->input('date_preset', 'all'),
+            'start_date' => $request->input('start_date', $request->input('date_from')),
+            'end_date' => $request->input('end_date', $request->input('date_to')),
+            'sort' => $request->input('sort', 'newest'),
+            'q' => trim((string) $request->input('q')),
+            'member_id' => $request->input('member_id'),
+        ];
 
         // Server-Side Pagination
         $page = max(1, (int) $request->input('page', 1));
         $perPage = min(50, max(1, (int) $request->input('per_page', 15)));
 
-        $paginated = $query->paginate($perPage, ['ad_rewards.*'], 'page', $page);
+        $query = $engagementService->getActivitiesQuery($campaign, $filters);
 
-        $data = collect($paginated->items())->map(function (AdReward $reward) {
-            $member = $reward->member;
-            $rewardAmount = (float) ($reward->reward_amount_usd ?? 0.00);
+        // Filtered unique members count
+        $filteredUniqueMembers = (clone $query)
+            ->whereNotNull('ad_campaign_activities.member_id')
+            ->distinct('ad_campaign_activities.member_id')
+            ->count('ad_campaign_activities.member_id');
+
+        $paginated = $query->paginate($perPage, ['ad_campaign_activities.*'], 'page', $page);
+
+        // Preload credited rewards for members in this page to display reward details accurately
+        $memberIds = collect($paginated->items())->pluck('member_id')->filter()->unique()->toArray();
+        $creditedRewardsByMember = AdReward::where('ad_campaign_id', $campaign->id)
+            ->where('status', AdReward::STATUS_CREDITED)
+            ->whereIn('member_id', $memberIds)
+            ->get()
+            ->keyBy('member_id');
+
+        $data = collect($paginated->items())->map(function (AdCampaignActivity $act) use ($creditedRewardsByMember, $campaign) {
+            $member = $act->member;
+            $actReward = $act->reward ?: ($act->member_id ? ($creditedRewardsByMember[$act->member_id] ?? null) : null);
+
+            // Extract metadata snapshots
+            $metaReward = isset($act->metadata['reward_amount_usd']) ? (float) $act->metadata['reward_amount_usd'] : 0.00;
+            $metaTier = $act->metadata['tier_label'] ?? null;
+            $metaDirectReferrals = $act->metadata['direct_verified_referral_count'] ?? null;
+
+            // Authoritative reward amount resolution:
+            // 1. From linked or preloaded AdReward model
+            // 2. From metadata snapshot stored on the activity
+            // 3. Fallback for 'rewarded' action: campaign fixed reward or standard 0.0250 USD
+            $rewardAmount = 0.00;
+            if ($actReward && (float) $actReward->reward_amount_usd > 0) {
+                $rewardAmount = (float) $actReward->reward_amount_usd;
+            } elseif ($metaReward > 0) {
+                $rewardAmount = $metaReward;
+            } elseif ($act->action === AdCampaignActivity::ACTION_REWARDED) {
+                $rewardAmount = (float) ($campaign->fixed_verified_visit_reward ?: 0.0250);
+            }
+
+            // Tier label resolution:
+            $tierLabel = $actReward?->tier_label ?? $metaTier;
+            if (!$tierLabel && ($rewardAmount > 0 || $act->action === AdCampaignActivity::ACTION_REWARDED)) {
+                $tierLabel = '0+';
+            }
+
+            $directReferrals = $actReward ? (int) $actReward->direct_verified_referral_count : (int) ($metaDirectReferrals ?? 0);
 
             return [
-                'id' => 'reward_' . $reward->id,
-                'activity_id' => $reward->id,
-                'event_id' => $reward->qualifying_event_id,
-                'type' => 'reward',
-                'action' => 'Rewarded Visit',
-                'action_label' => 'Rewarded Visit',
+                'id' => 'act_' . $act->id,
+                'activity_id' => $act->id,
+                'event_id' => $act->qualifying_event_id,
+                'type' => $act->action,
+                'action' => $act->action,
+                'action_label' => $act->action_label ?: ucfirst(str_replace('_', ' ', $act->action)),
                 'reward_amount_usd' => $rewardAmount,
                 'reward_amount_exact' => number_format($rewardAmount, 4, '.', ''),
-                'status' => $reward->status,
-                'created_at' => $reward->created_at?->toIso8601String(),
-                'timestamp' => $reward->created_at?->timestamp ?? 0,
+                'reward_formatted' => $rewardAmount > 0 ? '+$' . number_format($rewardAmount, 4, '.', '') . ' USD' : '$0.00',
+                'tier_label' => $tierLabel,
+                'direct_verified_referral_count' => $directReferrals,
+                'direct_referrals' => $directReferrals,
+                'status' => $actReward ? $actReward->status : ($act->action === AdCampaignActivity::ACTION_FAILED ? 'failed' : 'completed'),
+                'created_at' => $act->created_at?->toIso8601String(),
+                'timestamp' => $act->created_at?->timestamp ?? 0,
+                'metadata' => $act->metadata,
                 'user' => $member ? [
                     'id' => $member->id,
                     'name' => $member->name,
                     'username' => $member->user_id,
+                    'user_id' => $member->user_id,
                     'email' => $member->email,
                     'phone' => $member->phone,
                     'profile_photo' => $member->profile_photo,
@@ -2161,21 +2156,21 @@ class BusinessAdCampaignController extends Controller
                     'country' => $member->country,
                 ] : [
                     'id' => null,
-                    'name' => 'Verified Member',
+                    'name' => 'Platform Visitor',
                     'username' => null,
+                    'user_id' => null,
                     'email' => null,
                     'phone' => null,
                     'profile_photo' => null,
                     'avatar' => null,
                     'avatar_url' => null,
-                    'is_verified' => true,
+                    'is_verified' => false,
                     'city' => null,
                     'country' => null,
                 ],
             ];
         });
 
-        $engagementService = app(AdCampaignEngagementService::class);
         $summary = $engagementService->getSummary($campaign);
 
         return response()->json([
@@ -2189,7 +2184,7 @@ class BusinessAdCampaignController extends Controller
                 'per_page' => $paginated->perPage(),
                 'total' => $paginated->total(),
                 'last_page' => $paginated->lastPage(),
-                'filtered_unique_members' => $paginated->total(),
+                'filtered_unique_members' => $filteredUniqueMembers,
             ],
             'summary' => $summary,
         ]);
