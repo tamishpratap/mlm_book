@@ -124,6 +124,7 @@ export function EcosystemPage() {
       q: 'How do members qualify for campaign rewards?',
       a: 'To qualify for rewards, members must complete mobile/WhatsApp verification, browse active sponsored campaigns in the Socials or Watch feed, and complete the required engagement condition defined by the campaign.',
     },
+    },
       id: 'financial',
       badge: 'Dual-Wallet System',
       title: '5. Dual-Wallet Financial Infrastructure',
@@ -612,6 +613,85 @@ export function EcosystemPage() {
                   <div className="pub-icon-wrapper pub-icon-purple" style={{ width: '46px', height: '46px', marginBottom: 0 }}>
                     <Rss className="w-5 h-5" />
                   </div>
+                  </div>
+                  <span className="eco-tag eco-tag--emerald">Campaign Earnings</span>
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', margin: '0 0 10px' }}>
+                  Qualifying Campaign Interaction Rewards
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.55', margin: '0 0 16px' }}>
+                  Get paid cashable USDT whenever you view sponsored business posts or complete qualifying campaign actions. Reward credits are immediately updated in your transparent ledger.
+                </p>
+                <ul className="pub-checklist" style={{ marginTop: 'auto' }}>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Instant credit per verified campaign interaction</span>
+                  </li>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Clear, transparent reward qualification rules</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Card 2 - Replaced with Watch Video Hub & Discovery */}
+              <div className="eco-suite-card eco-suite-card--user">
+                <div className="eco-suite-icon-row">
+                  <div className="pub-icon-wrapper pub-icon-indigo" style={{ width: '46px', height: '46px', marginBottom: 0 }}>
+                    <TvMinimalPlay className="w-5 h-5" />
+                  </div>
+                  <span className="eco-tag eco-tag--blue">Media Discovery</span>
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', margin: '0 0 10px' }}>
+                  Watch Video Hub & Creator Reels
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.55', margin: '0 0 16px' }}>
+                  Discover captivating video content through the dedicated Watch Hub. Enjoy short-form creator reels, watch product video showcases, and engage with verified media.
+                </p>
+                <ul className="pub-checklist" style={{ marginTop: 'auto' }}>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Explore vertical video reels & publisher feeds</span>
+                  </li>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Support content creators & brand showcases</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Card 3 - Replaced with Community Groups & Networking */}
+              <div className="eco-suite-card eco-suite-card--user">
+                <div className="eco-suite-icon-row">
+                  <div className="pub-icon-wrapper pub-icon-amber" style={{ width: '46px', height: '46px', marginBottom: 0 }}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <span className="eco-tag eco-tag--amber">Community Hubs</span>
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', margin: '0 0 10px' }}>
+                  Community Discussion Hubs
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.55', margin: '0 0 16px' }}>
+                  Join public or private interest-based communities. Connect with fellow members, share strategies, participate in discussions, and expand your professional circle.
+                </p>
+                <ul className="pub-checklist" style={{ marginTop: 'auto' }}>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Join niche groups around shared passions</span>
+                  </li>
+                  <li className="pub-checklist-item">
+                    <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                    <span>Community moderation and active timelines</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Card 4 - Socials Feed & Ephemeral Stories */}
+              <div className="eco-suite-card eco-suite-card--user">
+                <div className="eco-suite-icon-row">
+                  <div className="pub-icon-wrapper pub-icon-purple" style={{ width: '46px', height: '46px', marginBottom: 0 }}>
+                    <Rss className="w-5 h-5" />
+                  </div>
                   <span className="eco-tag eco-tag--purple">Social Network</span>
                 </div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', margin: '0 0 10px' }}>
@@ -1017,6 +1097,7 @@ export function EcosystemPage() {
               </h3>
               <p style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: '1.55', margin: 0 }}>
                 Official Blue Check Badges are granted only after administrative review of business documentation, ensuring our community interacts with verified, reputable merchants.
+              </p>
               </p>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
                 Scale an international network community with 0 registration fees. Leverage automated introducer links, real-time team connection tracking, and rank bonuses.

@@ -39,6 +39,26 @@ export function LandingPage() {
       <main className="home-container" id="home-landing">
         {/* Section 1 — Hero */}
         <HomeHero />
+        
+export function LandingPage() {
+  useEffect(() => {
+    document.title = 'MLM Book - The Next-Generation Digital Social & Business Ecosystem';
+  }, []);
+
+  return (
+    <div
+      className="pub-home-landing-wrapper"
+      style={{
+        padding: '24px 16px 80px',
+        maxWidth: '1240px',
+        margin: '0 auto',
+        width: '100%',
+        boxSizing: 'border-box',
+      }}
+    >
+      <main className="home-container" id="home-landing">
+        {/* Section 1 — Hero */}
+        <HomeHero />
 
         {/* Section 2 — What is MLM Book? (Ecosystem Overview) */}
         <HomeWhatIs />
@@ -1245,112 +1265,35 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ====================================================================
-          SECTION 6: WHY MEMBERS JOIN MLM BOOK
-          ==================================================================== */}
-      <section className="pub-section">
-        <div className="pub-container">
-          <div className="pub-section-header">
-            <div className="pub-badge pub-badge-cyan">
-              <Users className="w-3.5 h-3.5" />
-              <span>For Networkers, Affiliates & Builders</span>
-            </div>
-            <h2 className="pub-section-title">Why Members Join MLM Book</h2>
-            <p className="pub-section-desc">
-              Whether you are an aspiring direct seller or a seasoned master distributor, MLM Book is the digital headquarters you have always wished existed.
-            </p>
-          </div>
+        {/* Section 2 — What is MLM Book? (Ecosystem Overview) */}
+        <HomeWhatIs />
 
-          <div className="pub-grid-3">
-            <div className="pub-card">
-              <div className="pub-icon-wrapper pub-icon-indigo">
-                <Globe className="w-6 h-6" />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', marginBottom: '10px' }}>
-                Safe from Shadowbans
-              </h3>
-              <p style={{ color: '#475569', fontSize: '0.93rem', lineHeight: '1.6' }}>
-                Tired of having your accounts suspended on mainstream networks for talking about compensation plans or product opportunities? On MLM Book, direct sales is celebrated. Post freely, connect authentically, and build without fear.
-              </p>
-            </div>
+        {/* Section 3 — What Can You Do on MLM Book? */}
+        <HomeCapabilities />
 
-            <div className="pub-card">
-              <div className="pub-icon-wrapper pub-icon-emerald">
-                <Coins className="w-6 h-6" />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', marginBottom: '10px' }}>
-                Get Paid for Your Attention
-              </h3>
-              <p style={{ color: '#475569', fontSize: '0.93rem', lineHeight: '1.6' }}>
-                Your attention has immense economic value. Instead of enriching Silicon Valley billionaires, our automated reward engine pays you real USDT for watching videos, evaluating campaigns, and participating in the platform.
-              </p>
-            </div>
+        {/* Section 4 — How MLM Book Works */}
+        <HomeWorkflowSteps />
 
-            <div className="pub-card">
-              <div className="pub-icon-wrapper pub-icon-purple">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', marginBottom: '10px' }}>
-                Global Cross-Border Team Growth
-              </h3>
-              <p style={{ color: '#475569', fontSize: '0.93rem', lineHeight: '1.6' }}>
-                Direct selling is global. Connect with leaders across North America, Europe, Asia, Africa, and Latin America. Use our automated translation and messaging to launch teams in new territories without leaving your home.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Section 5 — How Advertising Works */}
+        <HomeAdvertisingProcess />
 
-      {/* ====================================================================
-          SECTION 7: WHY CHOOSE MLM BOOK? (The Ultimate Differentiator)
-          ==================================================================== */}
-      <section className="pub-section" style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="pub-container">
-          <div className="pub-section-header">
-            <div className="pub-badge pub-badge-amber">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Competitive Advantages</span>
-            </div>
-            <h2 className="pub-section-title">Why Choose MLM Book?</h2>
-            <p className="pub-section-desc">
-              How does MLM Book compare against traditional social platforms and outdated MLM forums? See the stark difference for yourself.
-            </p>
-          </div>
+        {/* Section 6 — How Member Rewards Work */}
+        <HomeMemberRewards />
 
-          <div style={{ maxWidth: '960px', margin: '0 auto', background: '#ffffff', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: 'var(--pub-shadow-md)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', background: '#f1f5f9', padding: '18px 24px', fontWeight: '800', fontSize: '0.9rem', color: '#0f172a', borderBottom: '1px solid #e2e8f0' }}>
-              <div>Feature / Capability</div>
-              <div style={{ textAlign: 'center' }}>Traditional Social Networks</div>
-              <div style={{ textAlign: 'center', color: '#4f7df3' }}>{platformName}</div>
-            </div>
+        {/* Section 7 — What Determines Your Reward? */}
+        <HomeRewardDeterminants />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '16px 24px', borderBottom: '1px solid #f1f5f9', alignItems: 'center' }}>
-              <div>
-                <strong style={{ color: '#0f172a' }}>MLM-Friendly Content Policy</strong>
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Ability to share compensation plans & products</div>
-              </div>
-              <div style={{ textAlign: 'center', color: '#dc2626' }}>❌ Instant Shadowban</div>
-              <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ 100% Supported</div>
-            </div>
+        {/* Section 8 — Business Owner Benefits */}
+        <HomeBusinessBenefits />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '16px 24px', borderBottom: '1px solid #f1f5f9', alignItems: 'center' }}>
-              <div>
-                <strong style={{ color: '#0f172a' }}>Audience Relevance</strong>
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Percentage of users interested in network marketing</div>
-              </div>
-              <div style={{ textAlign: 'center', color: '#dc2626' }}>Less than 0.5%</div>
-              <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>100% Dedicated</div>
-            </div>
+        {/* Section 9 — Member Benefits */}
+        <HomeMemberBenefits />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '16px 24px', borderBottom: '1px solid #f1f5f9', alignItems: 'center' }}>
-              <div>
-                <strong style={{ color: '#0f172a' }}>Ad Campaign Budget Protection</strong>
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>100% Instant refund on cancelled ad budget</div>
-              </div>
-              <div style={{ textAlign: 'center', color: '#dc2626' }}>❌ Strict No-Refunds</div>
-              <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ 100% Refunded</div>
-            </div>
+        {/* Section 10 — Business Campaigns & Event Campaigns */}
+        <HomeCampaignTypes />
 
+        {/* Section 11 — Reward Wallet */}
+        <HomeRewardWallet />
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '16px 24px', borderBottom: '1px solid #f1f5f9', alignItems: 'center' }}>
               <div>
                 <strong style={{ color: '#0f172a' }}>Multi-Tier Community Referral Growth</strong>
@@ -1360,53 +1303,21 @@ export function LandingPage() {
               <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ 5-Tier Referral Network</div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '16px 24px', alignItems: 'center' }}>
-              <div>
-                <strong style={{ color: '#0f172a' }}>Member Crypto Payouts</strong>
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Instant daily USDT rewards for ad views & activity</div>
-              </div>
-              <div style={{ textAlign: 'center', color: '#dc2626' }}>$0 (Platform keeps all)</div>
-              <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ Daily Web3 USDT</div>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Section 12 — Trust & Verification */}
+        <HomeTrustVerification />
 
-      {/* ====================================================================
-          SECTION 8: BOTTOM CTA BANNER
-          ==================================================================== */}
-      <section className="pub-section" style={{ background: '#ffffff' }}>
-        <div className="pub-container">
-          <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', borderRadius: '28px', padding: '64px 36px', textAlign: 'center', color: '#ffffff', position: 'relative', overflow: 'hidden', boxShadow: '0 24px 60px rgba(15, 23, 42, 0.25)' }}>
-            <div style={{ position: 'relative', zIndex: 1, maxWidth: '680px', margin: '0 auto' }}>
-              <div className="pub-badge" style={{ background: 'rgba(255, 255, 255, 0.12)', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.2)', marginBottom: '20px' }}>
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Join Over 50,000+ Verified Network Leaders</span>
-              </div>
+        {/* Section 13 — End-to-End Workflow */}
+        <HomeEndToEndWorkflow />
 
-              <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.85rem)', fontWeight: '800', color: '#ffffff', marginBottom: '16px', lineHeight: '1.2' }}>
-                Ready to Experience the Future of Network Marketing?
-              </h2>
+        {/* Section 14 — Why Choose Us */}
+        <HomeWhyChoose />
 
-              <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '32px' }}>
-                Sign up free in under a minute. Connect with top leaders in your company, promote your business without bans, and start collecting daily USDT rewards.
-              </p>
+        {/* Section 15 — FAQ Accordion */}
+        <HomeFaqAccordion />
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                <Link to="/member/register" className="pub-btn pub-btn-accent pub-btn-lg">
-                  <Sparkles className="w-5 h-5" />
-                  <span>Create Free Account Now</span>
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-                <Link to="/rewards" className="pub-btn pub-btn-white pub-btn-lg">
-                  <Coins className="w-5 h-5 text-amber-500" />
-                  <span>View Rewards System</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Section 16 — Bottom CTA Banner */}
+        <HomeCtaBanner />
+      </main>
     </div>
   );
 }
