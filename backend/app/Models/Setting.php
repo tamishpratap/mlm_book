@@ -61,7 +61,7 @@ class Setting extends Model
             'meta_description' => 'Connect, collaborate, and trade in a secure business social network.',
             'meta_keywords' => 'mlm, social network, business, marketplace, communities',
             'social_facebook' => 'https://facebook.com/mlmbook',
-            'social_twitter' => 'https://twitter.com/mlmbook',
+            'social_twitter' => null,
             'social_instagram' => 'https://instagram.com/mlmbook',
             'social_linkedin' => 'https://linkedin.com/company/mlmbook',
             'social_youtube' => 'https://youtube.com/mlmbook',
