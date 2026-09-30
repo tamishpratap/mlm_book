@@ -9,8 +9,9 @@ import {
   DollarSign,
   RefreshCw,
   MousePointerClick,
-  Wallet,
   Users,
+  X,
+  Wallet,
 } from 'lucide-react';
 import businessApi from '../../../api/businessApi';
 import { formatAdAmount } from '../../../utils/adFormatters';
@@ -18,6 +19,7 @@ import { CreateAdCampaignModal } from './CreateAdCampaignModal';
 import { AdCampaignDetailModal } from './AdCampaignDetailModal';
 import { AddFundModal } from './AddFundModal';
 import { AddFundsToCampaignModal } from './AddFundsToCampaignModal';
+import { getMediaUrl } from '../../../utils/assetHelper';
 
 export function BusinessAdCampaignsList({
   page,
@@ -52,6 +54,7 @@ export function BusinessAdCampaignsList({
   const [detailCampaign, setDetailCampaign] = useState(null);
   const [detailInitialTab, setDetailInitialTab] = useState('overview');
   const [topUpCampaign, setTopUpCampaign] = useState(null);
+  const [previewCampaign, setPreviewCampaign] = useState(null);
 
   const fetchCampaigns = useCallback(async () => {
     if (!page?.slug) return;
@@ -61,9 +64,17 @@ export function BusinessAdCampaignsList({
     try {
       let finalStatus = statusFilter;
       if (!finalStatus) {
-        finalStatus = viewMode === 'running'
-          ? 'draft,pending_review,approved,active,paused,rejected,stopped'
-          : 'completed,cancelled';
+        if (viewMode === 'running') {
+          finalStatus = 'draft,approved,active,paused';
+        } else if (viewMode === 'pending') {
+          finalStatus = 'pending_review';
+        } else if (viewMode === 'rejected') {
+          finalStatus = 'rejected';
+        } else if (viewMode === 'stopped') {
+          finalStatus = 'stopped';
+        } else {
+          finalStatus = 'completed,cancelled';
+        }
       }
 
       const params = {
@@ -152,7 +163,7 @@ export function BusinessAdCampaignsList({
       case 'paused':
         return { bg: '#ffedd5', color: '#c2410c', label: 'Paused' };
       case 'stopped':
-        return { bg: '#f1f5f9', color: '#475569', label: 'Stopped' };
+        return { bg: '#fee2e2', color: '#dc2626', label: 'Stopped' };
       case 'completed':
         return { bg: '#f1f5f9', color: '#475569', label: 'Completed' };
       case 'cancelled':
@@ -266,6 +277,45 @@ export function BusinessAdCampaignsList({
           </div>
           <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>Active vs in-review ads</div>
         </div>
+
+        <div className="card" style={{ padding: '18px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--color-text-secondary, #64748b)' }}>Rejected</span>
+            <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+              <AlertCircle size={15} />
+            </div>
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#ef4444', marginTop: '8px' }}>
+            {Number(metrics.rejected_campaigns ?? 0)}
+          </div>
+          <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>Rejected campaigns</div>
+        </div>
+
+        <div className="card" style={{ padding: '18px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--color-text-secondary, #64748b)' }}>Stopped / Paused</span>
+            <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(100, 116, 139, 0.1)', color: '#64748b' }}>
+              <Megaphone size={15} />
+            </div>
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#64748b', marginTop: '8px' }}>
+            {Number(metrics.stopped_campaigns ?? 0)} / {Number(metrics.paused_campaigns ?? 0)}
+          </div>
+          <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>Stopped vs paused ads</div>
+        </div>
+
+        <div className="card" style={{ padding: '18px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--color-text-secondary, #64748b)' }}>Closed</span>
+            <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: 'rgba(71, 85, 105, 0.1)', color: '#475569' }}>
+              <Megaphone size={15} />
+            </div>
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#475569', marginTop: '8px' }}>
+            {Number(metrics.closed_campaigns ?? 0)}
+          </div>
+          <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>Completed or cancelled</div>
+        </div>
       </div>
 
       {/* Control Header & Filters */}
@@ -290,44 +340,37 @@ export function BusinessAdCampaignsList({
               backgroundColor: '#f1f5f9',
               borderRadius: '10px',
               padding: '4px',
+              flexWrap: 'wrap',
+              gap: '4px',
             }}
           >
-            <button
-              type="button"
-              onClick={() => setViewMode('running')}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                backgroundColor: viewMode === 'running' ? '#ffffff' : 'transparent',
-                color: viewMode === 'running' ? '#0f172a' : '#64748b',
-                border: 'none',
-                boxShadow: viewMode === 'running' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              Running Ads
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('closed')}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                backgroundColor: viewMode === 'closed' ? '#ffffff' : 'transparent',
-                color: viewMode === 'closed' ? '#0f172a' : '#64748b',
-                border: 'none',
-                boxShadow: viewMode === 'closed' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              Closed Ads
-            </button>
+            {[
+              { id: 'running', label: 'Running Ads' },
+              { id: 'pending', label: 'Pending Ads' },
+              { id: 'rejected', label: 'Rejected Ads' },
+              { id: 'stopped', label: 'Stop Ads' },
+              { id: 'closed', label: 'Closed Ads' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setViewMode(tab.id)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  backgroundColor: viewMode === tab.id ? '#ffffff' : 'transparent',
+                  color: viewMode === tab.id ? '#0f172a' : '#64748b',
+                  border: 'none',
+                  boxShadow: viewMode === tab.id ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           {/* Right: Actions */}
@@ -409,30 +452,7 @@ export function BusinessAdCampaignsList({
               />
             </div>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="biz-filter-select"
-              style={{ padding: '9px 14px', borderRadius: '10px' }}
-            >
-              <option value="">All Statuses</option>
-              {viewMode === 'running' ? (
-                <>
-                  <option value="draft">Drafts</option>
-                  <option value="pending_review">Pending Review</option>
-                  <option value="approved">Approved</option>
-                  <option value="active">Active</option>
-                  <option value="paused">Paused</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="stopped">Stopped</option>
-                </>
-              ) : (
-                <>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Closed / Cancelled</option>
-                </>
-              )}
-            </select>
+
 
             <button
               type="button"
@@ -731,6 +751,27 @@ export function BusinessAdCampaignsList({
                   <button
                     type="button"
                     className="btn btn-secondary"
+                    onClick={() => setPreviewCampaign(camp)}
+                    disabled={!camp.post || (!camp.post.media_urls?.length && !camp.post.media_path)}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      opacity: (!camp.post || (!camp.post.media_urls?.length && !camp.post.media_path)) ? 0.5 : 1,
+                    }}
+                    title="View post media"
+                  >
+                    <Eye size={14} />
+                    <span>View</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
                     onClick={() => {
                       setDetailInitialTab('overview');
                       setDetailCampaign(camp);
@@ -819,6 +860,132 @@ export function BusinessAdCampaignsList({
             fetchCampaigns();
           }}
         />
+      )}
+
+      {/* Preview Media Modal */}
+      {previewCampaign && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+          onClick={() => setPreviewCampaign(null)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              position: 'relative',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#1e293b' }}>
+                Ad Preview: {previewCampaign.campaign_name}
+              </h3>
+              <button
+                type="button"
+                className="mini-button"
+                onClick={() => setPreviewCampaign(null)}
+                style={{ padding: '6px', borderRadius: '50%' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {previewCampaign.post?.body && (
+                <p style={{ margin: 0, fontSize: '14px', color: '#334155', lineHeight: 1.5 }}>
+                  {previewCampaign.post.body}
+                </p>
+              )}
+              {previewCampaign.post?.media_urls && previewCampaign.post.media_urls.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {previewCampaign.post.media_urls.map((url, idx) => {
+                    const isVid = previewCampaign.post.media_type === 'video' || /\.(mp4|webm|mov|ogg)$/i.test(url);
+                    return isVid ? (
+                      <video
+                        key={idx}
+                        src={getMediaUrl(url)}
+                        controls
+                        style={{
+                          width: '100%',
+                          borderRadius: '12px',
+                          maxHeight: '400px',
+                          backgroundColor: '#000',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      />
+                    ) : (
+                      <img
+                        key={idx}
+                        src={getMediaUrl(url)}
+                        alt="Ad Media"
+                        style={{
+                          width: '100%',
+                          borderRadius: '12px',
+                          objectFit: 'contain',
+                          maxHeight: '400px',
+                          backgroundColor: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              ) : previewCampaign.post?.media_path ? (
+                (() => {
+                  const isVid = previewCampaign.post.media_type === 'video' || /\.(mp4|webm|mov|ogg)$/i.test(previewCampaign.post.media_path);
+                  return isVid ? (
+                    <video
+                      src={getMediaUrl(previewCampaign.post.media_path)}
+                      controls
+                      style={{
+                        width: '100%',
+                        borderRadius: '12px',
+                        maxHeight: '400px',
+                        backgroundColor: '#000',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={getMediaUrl(previewCampaign.post.media_path)}
+                      alt="Ad Media"
+                      style={{
+                        width: '100%',
+                        borderRadius: '12px',
+                        objectFit: 'contain',
+                        maxHeight: '400px',
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    />
+                  );
+                })()
+              ) : (
+                <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', backgroundColor: '#f1f5f9', borderRadius: '12px' }}>
+                  No media available for this ad.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -328,17 +328,11 @@ export function ProfileDropdown({ isOpen, onToggle, onClose, onOpenReferral, onO
             <ChevronRight size={16} />
           </Link>
 
-          <button
+          <Link
             className="profile-dropdown__item"
-            type="button"
+            to="/member/withdrawal"
             role="menuitem"
-            onClick={() => {
-              onClose();
-              if (onOpenRewardWallet) {
-                onOpenRewardWallet();
-              }
-            }}
-            style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}
+            onClick={onClose}
           >
             <span>
               <Wallet size={18} color="#059669" />
@@ -357,7 +351,7 @@ export function ProfileDropdown({ isOpen, onToggle, onClose, onOpenReferral, onO
               </div>
             </div>
             <ChevronRight size={16} />
-          </button>
+          </Link>
 
           <Link
             className="profile-dropdown__item"
