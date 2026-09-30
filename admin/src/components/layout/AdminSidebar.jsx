@@ -118,11 +118,11 @@ const NAV_GROUPS = [
       {
         label: 'Withdrawal Request',
         icon: ArrowUpRight,
-        to: '/admin/funds/withdrawals',
-        basePath: '/admin/funds/withdrawals',
-        ownerKey: '/admin/funds/withdrawals',
+        basePath: '/admin/funds/withdrawal',
+        ownerKey: '/admin/funds/withdrawal',
         children: [
           { label: 'Withdrawal Requests', to: '/admin/funds/withdrawals' },
+          { label: 'Withdrawal Settings', to: '/admin/funds/withdrawal-settings' },
         ],
       },
       {

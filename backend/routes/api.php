@@ -387,8 +387,10 @@ Route::prefix('admin')->group(function () {
             Route::post('/deposits/{id}/approve', [AdDepositSettingsController::class, 'approveDeposit']);
             Route::post('/deposits/{id}/reject', [AdDepositSettingsController::class, 'rejectDeposit']);
 
-            // Withdrawal Requests Management
+            // Withdrawal Requests & Settings Management
             Route::prefix('withdrawals')->group(function () {
+                Route::get('/settings', [WithdrawalManagementController::class, 'getSettings']);
+                Route::post('/settings', [WithdrawalManagementController::class, 'updateSettings']);
                 Route::get('/', [WithdrawalManagementController::class, 'index']);
                 Route::get('/metrics', [WithdrawalManagementController::class, 'metrics']);
                 Route::get('/{id}', [WithdrawalManagementController::class, 'show']);
@@ -400,6 +402,8 @@ Route::prefix('admin')->group(function () {
 
         // Direct alias for withdrawals
         Route::prefix('withdrawals')->group(function () {
+            Route::get('/settings', [WithdrawalManagementController::class, 'getSettings']);
+            Route::post('/settings', [WithdrawalManagementController::class, 'updateSettings']);
             Route::get('/', [WithdrawalManagementController::class, 'index']);
             Route::get('/metrics', [WithdrawalManagementController::class, 'metrics']);
             Route::get('/{id}', [WithdrawalManagementController::class, 'show']);

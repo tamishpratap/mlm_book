@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Member;
+use App\Models\Setting;
 use App\Models\WithdrawalRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -348,5 +349,76 @@ class WithdrawalManagementController extends Controller
                 ]),
             ]);
         });
+    }
+
+    /**
+     * Get dynamic withdrawal configuration settings.
+     */
+    public function getSettings(): JsonResponse
+    {
+        $serviceCharge = (float) Setting::get('withdrawal_service_charge_percent', 10.00);
+        $minAmount = (float) Setting::get('minimum_withdrawal_amount', 5.00);
+        $maxAmount = (float) Setting::get('maximum_withdrawal_amount', 10000.00);
+        $status = Setting::get('withdrawal_status', 'enabled');
+        $instructions = Setting::get(
+            'withdrawal_instructions',
+            'Withdrawals are processed in USDT (BEP-20) to your verified payout wallet address. Processing takes 15-60 minutes after admin approval.'
+        );
+
+        return response()->json([
+            'success' => true,
+            'settings' => [
+                'withdrawal_service_charge_percent' => $serviceCharge,
+                'service_charge_percent' => $serviceCharge,
+                'minimum_withdrawal_amount' => $minAmount,
+                'maximum_withdrawal_amount' => $maxAmount,
+                'withdrawal_status' => $status,
+                'withdrawal_instructions' => $instructions,
+                'currency' => 'USDT',
+                'network' => 'BEP-20',
+            ],
+        ]);
+    }
+
+    /**
+     * Update dynamic withdrawal configuration settings.
+     */
+    public function updateSettings(Request $request): JsonResponse
+    {
+        $request->validate([
+            'withdrawal_service_charge_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'service_charge_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'minimum_withdrawal_amount' => ['nullable', 'numeric', 'min:0.01', 'max:1000000'],
+            'maximum_withdrawal_amount' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
+            'withdrawal_status' => ['nullable', 'string', 'in:enabled,disabled'],
+            'withdrawal_instructions' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        if ($request->has('withdrawal_service_charge_percent') || $request->has('service_charge_percent')) {
+            $feeVal = $request->input('withdrawal_service_charge_percent', $request->input('service_charge_percent'));
+            $feePercent = round(max(0.00, min(100.00, (float) $feeVal)), 2);
+            Setting::set('withdrawal_service_charge_percent', number_format($feePercent, 2, '.', ''), 'withdrawals');
+        }
+
+        if ($request->has('minimum_withdrawal_amount')) {
+            $minVal = round(max(0.01, (float) $request->input('minimum_withdrawal_amount')), 2);
+            Setting::set('minimum_withdrawal_amount', number_format($minVal, 2, '.', ''), 'withdrawals');
+        }
+
+        if ($request->has('maximum_withdrawal_amount')) {
+            $maxVal = round(max(0.00, (float) $request->input('maximum_withdrawal_amount')), 2);
+            Setting::set('maximum_withdrawal_amount', number_format($maxVal, 2, '.', ''), 'withdrawals');
+        }
+
+        if ($request->has('withdrawal_status')) {
+            $statusVal = strtolower(trim($request->input('withdrawal_status'))) === 'disabled' ? 'disabled' : 'enabled';
+            Setting::set('withdrawal_status', $statusVal, 'withdrawals');
+        }
+
+        if ($request->has('withdrawal_instructions')) {
+            Setting::set('withdrawal_instructions', trim((string) $request->input('withdrawal_instructions')), 'withdrawals');
+        }
+
+        return $this->getSettings();
     }
 }
