@@ -23,6 +23,11 @@ Route::prefix('auth')->group(function () {
     Route::post('/admin/login', [MobileAuthController::class, 'adminLogin']);
     Route::post('/member/register', [MobileAuthController::class, 'memberRegister']);
     Route::post('/member/register/verify', [MobileAuthController::class, 'verifyMemberRegistration']);
+    Route::get('/google/pending', [\App\Http\Controllers\Member\MemberAuthController::class, 'getPendingGoogleSignup']);
+    Route::post('/google/complete', [\App\Http\Controllers\Member\MemberAuthController::class, 'completeGoogleSignup']);
+    Route::get('/check-phone', [\App\Http\Controllers\Member\MemberAuthController::class, 'checkPhone']);
+    Route::get('/check-introducer', [\App\Http\Controllers\Member\MemberAuthController::class, 'checkIntroducer']);
+    Route::get('/check-user-id', [\App\Http\Controllers\Member\MemberAuthController::class, 'checkUserId']);
 });
 
 // Member Protected Mobile Endpoints

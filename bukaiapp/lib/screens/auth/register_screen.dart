@@ -1,11 +1,24 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/google_auth_service.dart';
 import '../../providers/auth_provider.dart';
+import 'login_screen.dart';
 import 'otp_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final String? initialError;
+  final String? initialErrorMessage;
+  final String? email;
+  final String? ref;
+
+  const RegisterScreen({
+    super.key,
+    this.initialError,
+    this.initialErrorMessage,
+    this.email,
+    this.ref,
+  });
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -23,6 +36,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _selectedCountryCode = '+91';
   bool _obscurePassword = true;
   bool _isGoogleLoading = false;
+  late bool _showAccountExists;
+  String? _customErrorMessage;
 
   final List<String> _countryCodes = [
     '+91', // India
@@ -40,6 +55,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     '+27', // South Africa
     '+61', // Australia
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _showAccountExists = widget.initialError == 'account_exists';
+    _customErrorMessage = widget.initialErrorMessage;
+    if (widget.ref != null && widget.ref!.isNotEmpty) {
+      _introducerController.text = widget.ref!;
+    }
+    if (widget.email != null && widget.email!.isNotEmpty) {
+      _emailController.text = widget.email!;
+    }
+  }
 
   @override
   void dispose() {
@@ -139,7 +167,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
 
-      await Future.delayed(const Duration(seconds: 1));
+      GoogleAuthService.launchGoogleAuth(
+        mode: 'register',
+        ref: _introducerController.text.trim(),
+      );
     } finally {
       if (mounted) {
         setState(() => _isGoogleLoading = false);
@@ -258,8 +289,116 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 28),
 
+                        // Account Exists Google Banner (matches web UX exactly)
+                        if (_showAccountExists)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 24),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFBFDBFE)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF2563EB).withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFDBEAFE),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.info_outline_rounded,
+                                        color: Color(0xFF2563EB),
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Account Already Exists',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF1E3A8A),
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'An MLM Book account already exists for this Google account. Please log in instead.',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              height: 1.45,
+                                              color: Color(0xFF1E40AF),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                Row(
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => LoginScreen(
+                                              email: widget.email,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF2563EB),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        elevation: 0,
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Login',
+                                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                                          ),
+                                          SizedBox(width: 6),
+                                          Icon(Icons.arrow_forward_rounded, size: 16),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() => _showAccountExists = false);
+                                      },
+                                      child: const Text('Dismiss', style: TextStyle(color: Color(0xFF64748B))),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
                         // Error message if any
-                        if (auth.errorMessage != null)
+                        if ((_customErrorMessage ?? auth.errorMessage) != null && !_showAccountExists)
                           Container(
                             margin: const EdgeInsets.only(bottom: 20),
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -274,7 +413,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    auth.errorMessage!,
+                                    _customErrorMessage ?? auth.errorMessage!,
                                     style: const TextStyle(
                                       color: Color(0xFFB91C1C),
                                       fontSize: 13,
