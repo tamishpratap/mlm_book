@@ -223,37 +223,28 @@ export function RewardPage() {
           </p>
 
           {/* Quick Metrics Bar */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '24px',
-              flexWrap: 'wrap',
-              marginTop: '32px'
-            }}
-          >
-            <div style={{ background: '#ffffff', padding: '12px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: 'var(--pub-shadow-sm)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="pub-quick-metrics-bar">
+            <div className="pub-quick-metric-card">
               <Award className="w-5 h-5 text-blue-600" />
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Starter Reward</div>
-                <div style={{ fontSize: '1rem', fontWeight: '800', color: '#0f172a' }}>$0.0250 / Ad (0 Referrals)</div>
+                <div className="pub-quick-metric-label">Starter Reward</div>
+                <div className="pub-quick-metric-value">$0.0250 / Ad (0 Referrals)</div>
               </div>
             </div>
 
-            <div style={{ background: '#ffffff', padding: '12px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: 'var(--pub-shadow-sm)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="pub-quick-metric-card">
               <TrendingUp className="w-5 h-5 text-emerald-600" />
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Apex Rank Reward</div>
-                <div style={{ fontSize: '1rem', fontWeight: '800', color: '#0f172a' }}>$1.0000 / Ad (Master Leader)</div>
+                <div className="pub-quick-metric-label">Apex Rank Reward</div>
+                <div className="pub-quick-metric-value">$1.0000 / Ad (Master Leader)</div>
               </div>
             </div>
 
-            <div style={{ background: '#ffffff', padding: '12px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: 'var(--pub-shadow-sm)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="pub-quick-metric-card">
               <ShieldCheck className="w-5 h-5 text-indigo-600" />
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Ad Close Refund</div>
-                <div style={{ fontSize: '1rem', fontWeight: '800', color: '#059669' }}>100% Instant To Fund Wallet</div>
+                <div className="pub-quick-metric-label">Ad Close Refund</div>
+                <div className="pub-quick-metric-value" style={{ color: '#059669' }}>100% Instant To Fund Wallet</div>
               </div>
             </div>
           </div>
@@ -614,7 +605,7 @@ export function RewardPage() {
 
           <div className="pub-grid-2" style={{ marginBottom: '32px' }}>
             {/* Wallet 1: Fund Wallet */}
-            <div className="pub-card" style={{ padding: '32px', border: '1px solid #e2e8f0', background: '#ffffff' }}>
+            <div className="pub-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
                 <div className="pub-icon-wrapper pub-icon-cyan" style={{ width: '50px', height: '50px', marginBottom: 0 }}>
                   <Wallet className="w-6 h-6 text-sky-600" />
@@ -633,24 +624,24 @@ export function RewardPage() {
                 Your dedicated wallet for launching campaigns, business page boosts, and peer-to-peer balance transfers.
               </p>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Deposit Methods:</span>
-                  <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>Instant Web3 USDT (BEP-20)</span>
+              <div className="pub-wallet-specs">
+                <div className="pub-spec-row">
+                  <span className="pub-spec-label">Deposit Methods:</span>
+                  <span className="pub-spec-val">Instant Web3 USDT (BEP-20)</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Minimum Withdrawal:</span>
-                  <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>$5.00 USD</span>
+                <div className="pub-spec-row">
+                  <span className="pub-spec-label">Minimum Withdrawal:</span>
+                  <span className="pub-spec-val">$5.00 USD</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Campaign Refund Destination:</span>
-                  <span style={{ fontWeight: '700', color: '#0284c7', fontSize: '0.88rem' }}>Direct to Fund Wallet</span>
+                <div className="pub-spec-row">
+                  <span className="pub-spec-label">Campaign Refund Destination:</span>
+                  <span className="pub-spec-val" style={{ color: '#0284c7' }}>Direct to Fund Wallet</span>
                 </div>
               </div>
             </div>
 
             {/* Wallet 2: Reward */}
-            <div className="pub-card" style={{ padding: '32px', border: '1px solid #e2e8f0', background: '#ffffff' }}>
+            <div className="pub-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
                 <div className="pub-icon-wrapper pub-icon-emerald" style={{ width: '50px', height: '50px', marginBottom: 0 }}>
                   <Gift className="w-6 h-6 text-emerald-600" />
@@ -669,37 +660,25 @@ export function RewardPage() {
                 Collects all your verified ad view payouts, and rank bonuses in real time.
               </p>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Earning Sources:</span>
-                  <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>Ad views ($0.025 - $1.00) + Referrals</span>
+              <div className="pub-wallet-specs">
+                <div className="pub-spec-row">
+                  <span className="pub-spec-label">Earning Sources:</span>
+                  <span className="pub-spec-val">Ad views ($0.025 - $1.00) + Referrals</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Minimum Withdrawal:</span>
-                  <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.88rem' }}>$5.00 USD</span>
+                <div className="pub-spec-row">
+                  <span className="pub-spec-label">Minimum Withdrawal:</span>
+                  <span className="pub-spec-val">$5.00 USD</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Rejection Guarantee:</span>
-                  <span style={{ fontWeight: '700', color: '#059669', fontSize: '0.88rem' }}>100% Gross Refund to Wallet</span>
+                <div className="pub-spec-row">
+                  <span className="pub-spec-label">Rejection Guarantee:</span>
+                  <span className="pub-spec-val" style={{ color: '#059669' }}>100% Gross Refund to Wallet</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Safety & Withdrawal Process Banner */}
-          <div
-            style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '16px',
-              padding: '24px 28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '20px'
-            }}
-          >
+          <div className="pub-safety-box">
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <ShieldCheck className="w-8 h-8 text-emerald-600 flex-shrink-0" />
               <div>
