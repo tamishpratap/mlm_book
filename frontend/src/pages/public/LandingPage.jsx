@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BrandingContext } from '../../context/brandingContextDef';
 import { AuthContext } from '../../context/AuthContext';
@@ -47,18 +47,171 @@ export function LandingPage() {
 
   const platformName = siteName || 'MLM Book';
 
+  const canvasRef = useRef(null);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    const heroSection = canvas.closest('.pub-hero-section') || canvas.parentElement;
+
+    let width = 0;
+    let height = 0;
+
+    const resize = () => {
+      const rect = heroSection.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Mouse interaction
+    let mouse = { x: null, y: null, radius: 160 };
+    const handleMouseMove = (e) => {
+      const rect = heroSection.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    };
+    const handleMouseLeave = () => {
+      mouse.x = null;
+      mouse.y = null;
+    };
+
+    heroSection.addEventListener('mousemove', handleMouseMove);
+    heroSection.addEventListener('mouseleave', handleMouseLeave);
+
+    // Network Node Configuration
+    const count = Math.min(Math.max(Math.floor(width / 26), 32), 65);
+    const nodes = [];
+    const colors = ['#3b82f6', '#10b981', '#6366f1', '#0ea5e9'];
+
+    for (let i = 0; i < count; i++) {
+      nodes.push({
+        x: Math.random() * (width || 1200),
+        y: Math.random() * (height || 600),
+        vx: (Math.random() - 0.5) * 1.1,
+        vy: (Math.random() - 0.5) * 1.1,
+        radius: Math.random() * 2.5 + 2.5,
+        color: colors[i % colors.length],
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: 0.03 + Math.random() * 0.02,
+      });
+    }
+
+    const maxDist = 140;
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Draw connecting web lines between nearby nodes
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < maxDist) {
+            const alpha = (1 - dist / maxDist) * 0.35;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.strokeStyle = `rgba(79, 125, 243, ${alpha})`;
+            ctx.lineWidth = 1.3;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 2. Draw dynamic interactive connections to mouse cursor
+      if (mouse.x !== null && mouse.y !== null) {
+        for (let i = 0; i < nodes.length; i++) {
+          const dx = nodes[i].x - mouse.x;
+          const dy = nodes[i].y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < mouse.radius) {
+            const alpha = (1 - dist / mouse.radius) * 0.6;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 3. Move, pulse, and render glowing nodes
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        n.x += n.vx;
+        n.y += n.vy;
+
+        if (n.x < 0 || n.x > width) n.vx *= -1;
+        if (n.y < 0 || n.y > height) n.vy *= -1;
+
+        n.pulse += n.pulseSpeed;
+        const currentRadius = n.radius + Math.sin(n.pulse) * 0.9;
+
+        // Outer glow halo
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, currentRadius + 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = n.color;
+        ctx.globalAlpha = 0.25;
+        ctx.fill();
+
+        // Inner solid core
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, currentRadius, 0, Math.PI * 2);
+        ctx.fillStyle = n.color;
+        ctx.globalAlpha = 0.9;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      heroSection.removeEventListener('mousemove', handleMouseMove);
+      heroSection.removeEventListener('mouseleave', handleMouseLeave);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
 
   return (
     <div>
       {/* ====================================================================
-          1. HERO SECTION (Clean, High-Readability Hero & Floating Preview)
+          1. HERO SECTION (Living Network Constellation & Ecosystem Showcase)
           ==================================================================== */}
       <section className="pub-hero-section">
-        {/* Calm Ambient Background - Zero Distraction For Text Readability */}
-        <div className="pub-hero-ambient-bg" aria-hidden="true">
-          <div className="pub-ambient-glow-right"></div>
-          <div className="pub-ambient-soft-mesh"></div>
+        {/* Modern Fluid Aurora & Interactive Network Layer */}
+        <div className="pub-hero-aurora-bg" aria-hidden="true">
+          {/* Live Interactive Constellation Canvas */}
+          <canvas ref={canvasRef} className="pub-network-canvas" />
+
+          {/* Subtle Clean Tech Dot Grid */}
+          <div className="pub-hero-dots"></div>
+
+          {/* Morphing Liquid Aurora Mesh Gradient Blobs */}
+          <div className="pub-aurora-blob blob-1"></div>
+          <div className="pub-aurora-blob blob-2"></div>
+          <div className="pub-aurora-blob blob-3"></div>
+          <div className="pub-aurora-blob blob-4"></div>
         </div>
 
         <div className="pub-container">
@@ -120,85 +273,97 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Right Visual Floating Mockup */}
-            <div className="pub-hero-mockup-wrapper">
-              <div className="pub-floating-badge pub-floating-badge-top">
-                <span className="pub-pulse-indicator"></span>
-                <span>Active Global Networkers Live</span>
-              </div>
+            {/* Right Visual: Living Ecosystem Architecture Card */}
+            <div className="pub-hero-visual">
+              <div className="pub-visual-glow-ring"></div>
 
-              <div className="pub-floating-badge pub-floating-badge-bottom">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span style={{ fontWeight: '600', color: '#0f172a' }}>USDT Rewards Streaming</span>
-              </div>
-
-              <div className="pub-mockup-card">
-                <div className="pub-mockup-header">
-                  <div className="pub-mockup-dots">
-                    <span className="pub-mockup-dot red"></span>
-                    <span className="pub-mockup-dot yellow"></span>
-                    <span className="pub-mockup-dot green"></span>
+              <div className="pub-hero-mockup-card">
+                {/* Card Interior Header */}
+                <div className="pub-hero-card-header">
+                  <div className="pub-card-mac-dots">
+                    <span className="dot red"></span>
+                    <span className="dot yellow"></span>
+                    <span className="dot green"></span>
                   </div>
-                  <div className="pub-mockup-title">mlmbook.com/dashboard</div>
+                  <div className="pub-card-header-badge">
+                    <span className="pub-radar-dot"></span>
+                    <span>Platform Ecosystem</span>
+                  </div>
+                  <span className="pub-live-tag">Verified Platform</span>
                 </div>
 
-                <div className="pub-mockup-body">
-                  <div className="pub-mockup-user-bar">
-                    <div className="pub-mockup-avatar">
-                      <span>JD</span>
+                {/* 4 Authentic Engine Modules (Real features, zero fake data) */}
+                <div className="pub-hero-feature-list">
+                  {/* Module 1 */}
+                  <div className="pub-hero-feature-item">
+                    <div className="pub-feature-icon-box pub-icon-indigo">
+                      <MessageSquare className="w-5 h-5 text-indigo-600" />
                     </div>
-                    <div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: '700', color: '#0f172a' }}>Global Top Leader</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b' }}>Verified Diamond Executive</div>
-                    </div>
-                    <div style={{ marginLeft: 'auto' }}>
-                      <span className="pub-status-pill green">Active Rank #4</span>
+                    <div className="pub-feature-text">
+                      <div className="pub-feature-title">
+                        <span>Direct Selling Social Network</span>
+                        <span className="pub-feature-pill blue">0% Shadowbans</span>
+                      </div>
+                      <div className="pub-feature-desc">
+                        Connect with verified leaders, share business stories, and publish updates in an MLM-friendly network.
+                      </div>
                     </div>
                   </div>
 
-                  <div className="pub-mockup-stat-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="pub-icon-wrapper pub-icon-emerald" style={{ width: '40px', height: '40px', marginBottom: 0, borderRadius: '10px' }}>
-                        <Wallet className="w-4 h-4" />
+                  {/* Module 2 */}
+                  <div className="pub-hero-feature-item">
+                    <div className="pub-feature-icon-box pub-icon-purple">
+                      <TvMinimalPlay className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="pub-feature-text">
+                      <div className="pub-feature-title">
+                        <span>Pay-Per-View Sponsored Ads</span>
+                        <span className="pub-feature-pill purple">$0.025 – $1.00</span>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>Reward Balance</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Available for Web3 Payout</div>
+                      <div className="pub-feature-desc">
+                        Advertisers reach 100% targeted network marketers. Members earn verified rewards with atomic smart ledger payouts.
                       </div>
                     </div>
-                    <span style={{ fontSize: '1.1rem', fontWeight: '800', color: '#059669' }}>1,480.50 USDT</span>
                   </div>
 
-                  <div className="pub-mockup-stat-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="pub-icon-wrapper pub-icon-cyan" style={{ width: '40px', height: '40px', marginBottom: 0, borderRadius: '10px' }}>
-                        <TrendingUp className="w-4 h-4" />
+                  {/* Module 3 */}
+                  <div className="pub-hero-feature-item">
+                    <div className="pub-feature-icon-box pub-icon-cyan">
+                      <Users className="w-5 h-5 text-sky-600" />
+                    </div>
+                    <div className="pub-feature-text">
+                      <div className="pub-feature-title">
+                        <span>5-Generation Genealogy Tree</span>
+                        <span className="pub-feature-pill cyan">5 Tiers Deep</span>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>Active Ad Campaigns</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>High-CTR Audience Outreach</div>
+                      <div className="pub-feature-desc">
+                        Transparent downline tracking, introducer rewards, and automated real-time rank qualifications.
                       </div>
                     </div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#0284c7' }}>99.4% Delivery</span>
                   </div>
 
-                  <div className="pub-mockup-stat-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="pub-icon-wrapper pub-icon-purple" style={{ width: '40px', height: '40px', marginBottom: 0, borderRadius: '10px' }}>
-                        <Users className="w-4 h-4" />
+                  {/* Module 4 */}
+                  <div className="pub-hero-feature-item">
+                    <div className="pub-feature-icon-box pub-icon-emerald">
+                      <Wallet className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="pub-feature-text">
+                      <div className="pub-feature-title">
+                        <span>Dual Wallet & Instant Payouts</span>
+                        <span className="pub-feature-pill green">0.00% Withdrawal Fee</span>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>Community Network Tree</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Active Tier 1-5 Members</div>
+                      <div className="pub-feature-desc">
+                        Clean isolation between Fund Wallet and Reward. On-chain Web3 USDT (BEP-20) withdrawals with zero deductions.
                       </div>
                     </div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#7e22ce' }}>3,240 Members</span>
                   </div>
                 </div>
 
-                <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                  <Link to="/rewards" style={{ color: '#4f7df3', fontSize: '0.85rem', fontWeight: '600', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span>Learn how rewards are calculated</span>
+                {/* Card Footer Link */}
+                <div className="pub-hero-card-footer">
+                  <Link to="/ecosystem" className="pub-hero-card-link">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Explore complete platform architecture</span>
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>
