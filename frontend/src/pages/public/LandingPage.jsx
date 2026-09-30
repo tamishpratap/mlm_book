@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BrandingContext } from '../../context/brandingContextDef';
 import { AuthContext } from '../../context/AuthContext';
@@ -47,19 +47,171 @@ export function LandingPage() {
 
   const platformName = siteName || 'MLM Book';
 
-  // State for the interactive member dashboard preview
-  const [activePortalTab, setActivePortalTab] = useState('feed');
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    const heroSection = canvas.closest('.pub-hero-section') || canvas.parentElement;
+
+    let width = 0;
+    let height = 0;
+
+    const resize = () => {
+      const rect = heroSection.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Mouse interaction
+    let mouse = { x: null, y: null, radius: 160 };
+    const handleMouseMove = (e) => {
+      const rect = heroSection.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    };
+    const handleMouseLeave = () => {
+      mouse.x = null;
+      mouse.y = null;
+    };
+
+    heroSection.addEventListener('mousemove', handleMouseMove);
+    heroSection.addEventListener('mouseleave', handleMouseLeave);
+
+    // Network Node Configuration
+    const count = Math.min(Math.max(Math.floor(width / 26), 32), 65);
+    const nodes = [];
+    const colors = ['#3b82f6', '#10b981', '#6366f1', '#0ea5e9'];
+
+    for (let i = 0; i < count; i++) {
+      nodes.push({
+        x: Math.random() * (width || 1200),
+        y: Math.random() * (height || 600),
+        vx: (Math.random() - 0.5) * 1.1,
+        vy: (Math.random() - 0.5) * 1.1,
+        radius: Math.random() * 2.5 + 2.5,
+        color: colors[i % colors.length],
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: 0.03 + Math.random() * 0.02,
+      });
+    }
+
+    const maxDist = 140;
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Draw connecting web lines between nearby nodes
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < maxDist) {
+            const alpha = (1 - dist / maxDist) * 0.35;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.strokeStyle = `rgba(79, 125, 243, ${alpha})`;
+            ctx.lineWidth = 1.3;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 2. Draw dynamic interactive connections to mouse cursor
+      if (mouse.x !== null && mouse.y !== null) {
+        for (let i = 0; i < nodes.length; i++) {
+          const dx = nodes[i].x - mouse.x;
+          const dy = nodes[i].y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < mouse.radius) {
+            const alpha = (1 - dist / mouse.radius) * 0.6;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 3. Move, pulse, and render glowing nodes
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        n.x += n.vx;
+        n.y += n.vy;
+
+        if (n.x < 0 || n.x > width) n.vx *= -1;
+        if (n.y < 0 || n.y > height) n.vy *= -1;
+
+        n.pulse += n.pulseSpeed;
+        const currentRadius = n.radius + Math.sin(n.pulse) * 0.9;
+
+        // Outer glow halo
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, currentRadius + 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = n.color;
+        ctx.globalAlpha = 0.25;
+        ctx.fill();
+
+        // Inner solid core
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, currentRadius, 0, Math.PI * 2);
+        ctx.fillStyle = n.color;
+        ctx.globalAlpha = 0.9;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      heroSection.removeEventListener('mousemove', handleMouseMove);
+      heroSection.removeEventListener('mouseleave', handleMouseLeave);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
 
   return (
     <div>
       {/* ====================================================================
-          1. HERO SECTION (Clean, High-Readability Hero & Floating Preview)
+          1. HERO SECTION (Living Network Constellation & Ecosystem Showcase)
           ==================================================================== */}
       <section className="pub-hero-section">
-        {/* Calm Ambient Background - Zero Distraction For Text Readability */}
-        <div className="pub-hero-ambient-bg" aria-hidden="true">
-          <div className="pub-ambient-glow-right"></div>
-          <div className="pub-ambient-soft-mesh"></div>
+        {/* Modern Fluid Aurora & Interactive Network Layer */}
+        <div className="pub-hero-aurora-bg" aria-hidden="true">
+          {/* Live Interactive Constellation Canvas */}
+          <canvas ref={canvasRef} className="pub-network-canvas" />
+
+          {/* Subtle Clean Tech Dot Grid */}
+          <div className="pub-hero-dots"></div>
+
+          {/* Morphing Liquid Aurora Mesh Gradient Blobs */}
+          <div className="pub-aurora-blob blob-1"></div>
+          <div className="pub-aurora-blob blob-2"></div>
+          <div className="pub-aurora-blob blob-3"></div>
+          <div className="pub-aurora-blob blob-4"></div>
         </div>
 
         <div className="pub-container">
@@ -121,111 +273,107 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Right Visual Floating Mockup */}
-            <div className="pub-hero-mockup-wrapper">
-              <div className="pub-floating-badge pub-floating-badge-top">
-                <span className="pub-pulse-indicator"></span>
-                <span>Active Global Networkers Live</span>
-              </div>
+            {/* Right Visual: Living Ecosystem Architecture Card */}
+            <div className="pub-hero-visual">
+              <div className="pub-visual-glow-ring"></div>
 
-              <div className="pub-floating-badge pub-floating-badge-bottom">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span style={{ fontWeight: '600', color: '#0f172a' }}>USDT Rewards Streaming</span>
-              </div>
-
-              <div className="pub-mockup-card">
-                <div className="pub-mockup-header">
-                  <div className="pub-mockup-dots">
-                    <span className="pub-mockup-dot red"></span>
-                    <span className="pub-mockup-dot yellow"></span>
-                    <span className="pub-mockup-dot green"></span>
+              <div className="pub-hero-mockup-card">
+                {/* 1. Window Header Bar */}
+                <div className="pub-hero-card-header">
+                  <div className="pub-card-mac-dots">
+                    <span className="dot red"></span>
+                    <span className="dot yellow"></span>
+                    <span className="dot green"></span>
                   </div>
-                  <div className="pub-mockup-title">mlmbook.com/dashboard</div>
-                </div>
-
-                <div className="pub-mockup-body">
-                  <div className="pub-mockup-user-bar">
-                    <div className="pub-mockup-avatar">
-                      <span>JD</span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: '700', color: '#0f172a' }}>Global Top Leader</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b' }}>Verified Diamond Executive</div>
-                    </div>
-                    <div style={{ marginLeft: 'auto' }}>
-                      <span className="pub-status-pill green">Active Rank #4</span>
-                    </div>
+                  <div className="pub-card-url-pill">
+                    <Lock className="w-3 h-3 text-emerald-600" />
+                    <span>mlmbook.com/community</span>
                   </div>
-
-                  <div className="pub-mockup-stat-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="pub-icon-wrapper pub-icon-emerald" style={{ width: '40px', height: '40px', marginBottom: 0, borderRadius: '10px' }}>
-                        <Wallet className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>Reward Wallet Balance</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Available for Web3 Payout</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '1.1rem', fontWeight: '800', color: '#059669' }}>1,480.50 USDT</span>
-                  </div>
-
-                  <div className="pub-mockup-stat-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="pub-icon-wrapper pub-icon-cyan" style={{ width: '40px', height: '40px', marginBottom: 0, borderRadius: '10px' }}>
-                        <TrendingUp className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>Active Ad Campaigns</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>High-CTR Audience Outreach</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#0284c7' }}>99.4% Delivery</span>
-                  </div>
-
-                  <div className="pub-mockup-stat-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="pub-icon-wrapper pub-icon-purple" style={{ width: '40px', height: '40px', marginBottom: 0, borderRadius: '10px' }}>
-                        <Users className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>Community Network Tree</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Active Tier 1-5 Members</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#7e22ce' }}>3,240 Members</span>
+                  <div className="pub-card-status-badge">
+                    <span className="pub-radar-dot"></span>
+                    <span>100% Free Access</span>
                   </div>
                 </div>
 
-                <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                  <Link to="/rewards" style={{ color: '#4f7df3', fontSize: '0.85rem', fontWeight: '600', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span>Learn how rewards are calculated</span>
-                    <ChevronRight className="w-4 h-4" />
+                {/* 2. Interactive Social Community Feed Spotlight */}
+                <div className="pub-hero-social-post">
+                  <div className="pub-post-author-row">
+                    <div className="pub-author-info">
+                      <div className="pub-author-avatar">MB</div>
+                      <div>
+                        <div className="pub-author-name">
+                          <span>Direct Selling Community</span>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                        </div>
+                        <div className="pub-author-sub">Global Networkers Feed • Live</div>
+                      </div>
+                    </div>
+                    <span className="pub-post-badge">0% Shadowbans</span>
+                  </div>
+
+                  <p className="pub-post-content">
+                    "Connect with top direct selling leaders worldwide. Share business presentations, recruit motivated partners, and earn verified rewards — completely free without censorship."
+                  </p>
+
+                  <div className="pub-post-actions-row">
+                    <div className="pub-post-stats">
+                      <span>❤️ 342 Likes</span>
+                      <span>💬 58 Comments</span>
+                      <span>🔗 24 Shares</span>
+                    </div>
+                    <span className="pub-reward-chip">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Reward Active</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3. Three Spacious, High-Impact Value Pillars (NO ghic-pich!) */}
+                <div className="pub-hero-triad">
+                  <div className="pub-triad-card">
+                    <div className="pub-triad-icon pub-icon-purple">
+                      <TvMinimalPlay className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="pub-triad-title">Watch & Earn</div>
+                    <div className="pub-triad-value" style={{ color: '#7e22ce' }}>$0.025 – $1.00</div>
+                    <div className="pub-triad-sub">Per Video View</div>
+                  </div>
+
+                  <div className="pub-triad-card">
+                    <div className="pub-triad-icon pub-icon-cyan">
+                      <Users className="w-5 h-5 text-sky-600" />
+                    </div>
+                    <div className="pub-triad-title">Team Network</div>
+                    <div className="pub-triad-value" style={{ color: '#0284c7' }}>5 Free Tiers</div>
+                    <div className="pub-triad-sub">0 Joining Fee</div>
+                  </div>
+
+                  <div className="pub-triad-card">
+                    <div className="pub-triad-icon pub-icon-emerald">
+                      <Wallet className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="pub-triad-title">Web3 Payouts</div>
+                    <div className="pub-triad-value" style={{ color: '#059669' }}>100% Payout</div>
+                    <div className="pub-triad-sub">Instant USDT</div>
+                  </div>
+                </div>
+
+                {/* 4. Welcoming Trust & Benefits Ribbon */}
+                <div className="pub-hero-free-banner">
+                  <div className="pub-free-banner-text">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>Free Registration • No Investment Required</span>
+                  </div>
+                  <Link to="/rewards" className="pub-free-banner-link">
+                    <span>View Reward Rules</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Stats Bar */}
-          <div className="pub-stats-strip">
-            <div className="pub-stat-item">
-              <div className="pub-stat-value">50,000+</div>
-              <div className="pub-stat-label">Verified Members</div>
-            </div>
-            <div className="pub-stat-item">
-              <div className="pub-stat-value">12,400+</div>
-              <div className="pub-stat-label">Business Pages</div>
-            </div>
-            <div className="pub-stat-item">
-              <div className="pub-stat-value">$1.2M+</div>
-              <div className="pub-stat-label">Rewards Distributed</div>
-            </div>
-            <div className="pub-stat-item">
-              <div className="pub-stat-value">99.8%</div>
-              <div className="pub-stat-label">Uptime & Reliability</div>
-            </div>
-          </div>
+
         </div>
       </section>
 
@@ -373,7 +521,7 @@ export function LandingPage() {
               <ul className="pub-checklist" style={{ marginTop: '16px' }}>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
-                  <span>Visual 5-Generation Genealogy Tree</span>
+                  <span>Multi-Tier Community Team Connections</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
@@ -401,11 +549,11 @@ export function LandingPage() {
               <ul className="pub-checklist" style={{ marginTop: '16px' }}>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
-                  <span>Dual Wallet: Fund Wallet vs Reward Wallet</span>
+                  <span>Dual Wallet: Fund Wallet vs Reward</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
-                  <span>0% Fee on Fund Wallet Withdrawals</span>
+                  <span>100% Payout on Fund Wallet Withdrawals</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
@@ -417,308 +565,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ====================================================================
-          NEW SECTION: INSIDE YOUR MEMBER DASHBOARD (Interactive Live Preview)
-          (Directly showcasing what members get when logged in)
-          ==================================================================== */}
-      <section className="pub-section" style={{ background: '#f8fafc' }}>
-        <div className="pub-container">
-          <div className="pub-section-header" style={{ marginBottom: '36px' }}>
-            <div className="pub-badge pub-badge-emerald pub-anim-pulse">
-              <Eye className="w-3.5 h-3.5" />
-              <span>Member Experience Preview</span>
-            </div>
-            <h2 className="pub-section-title">Inside Your Member Dashboard</h2>
-            <p className="pub-section-desc">
-              Wondering what you see after logging in? Explore the real live modules that empower 50,000+ networkers every day. Click through the tabs below.
-            </p>
-          </div>
 
-          {/* Interactive Portal Tabs */}
-          <div className="pub-portal-tabs-nav">
-            <button
-              type="button"
-              className={`pub-portal-tab-btn ${activePortalTab === 'feed' ? 'active' : ''}`}
-              onClick={() => setActivePortalTab('feed')}
-            >
-              <MessageSquare className="w-4 h-4 text-blue-600" />
-              <span>1. Socials Feed</span>
-            </button>
-
-            <button
-              type="button"
-              className={`pub-portal-tab-btn ${activePortalTab === 'watch' ? 'active' : ''}`}
-              onClick={() => setActivePortalTab('watch')}
-            >
-              <TvMinimalPlay className="w-4 h-4 text-purple-600" />
-              <span>2. Watch-To-Earn Hub</span>
-            </button>
-
-            <button
-              type="button"
-              className={`pub-portal-tab-btn ${activePortalTab === 'team' ? 'active' : ''}`}
-              onClick={() => setActivePortalTab('team')}
-            >
-              <Users className="w-4 h-4 text-emerald-600" />
-              <span>3. Team Connections</span>
-            </button>
-
-            <button
-              type="button"
-              className={`pub-portal-tab-btn ${activePortalTab === 'wallet' ? 'active' : ''}`}
-              onClick={() => setActivePortalTab('wallet')}
-            >
-              <Wallet className="w-4 h-4 text-amber-600" />
-              <span>4. Dual-Wallet Hub</span>
-            </button>
-          </div>
-
-          {/* Tab Content Display Card */}
-          <div className="pub-portal-preview-card">
-            {/* Top Browser Bar */}
-            <div className="pub-mock-browser-bar">
-              <div className="pub-mock-browser-dots">
-                <span className="pub-mock-dot" style={{ background: '#ef4444' }}></span>
-                <span className="pub-mock-dot" style={{ background: '#f59e0b' }}></span>
-                <span className="pub-mock-dot" style={{ background: '#10b981' }}></span>
-              </div>
-              <div style={{ background: '#ffffff', borderRadius: '8px', padding: '4px 14px', fontSize: '0.78rem', color: '#64748b', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Lock className="w-3 h-3 text-emerald-600" />
-                <span>mlmbook.com/member/{activePortalTab}</span>
-              </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#059669', background: '#ecfdf5', padding: '3px 8px', borderRadius: '6px' }}>
-                  ● Verified Session
-                </span>
-              </div>
-            </div>
-
-            {/* Dynamic Tab Body */}
-            <div style={{ padding: '36px' }}>
-              {/* TAB 1: SOCIALS FEED */}
-              {activePortalTab === 'feed' && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px', marginBottom: '20px' }}>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Live Social Stream
-                      </span>
-                      <h3 style={{ fontSize: '1.45rem', fontWeight: '800', color: '#0f172a', margin: '2px 0 0' }}>
-                        Member Feed, Business Updates & Stories
-                      </h3>
-                    </div>
-                    <Link to="/member/register" className="pub-btn pub-btn-sm pub-btn-primary">
-                      <span>Join The Discussion</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-
-                  <p style={{ color: '#475569', fontSize: '0.94rem', lineHeight: '1.6', marginBottom: '24px' }}>
-                    Unlike generic social platforms where sharing your direct-selling opportunity gets you shadowbanned, MLM Book is built 100% for network marketing. Post updates, run community polls, upload video testimonials, and connect with motivated builders.
-                  </p>
-
-                  {/* Mock Feed Post Card */}
-                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                      <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#3b82f6', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '1rem' }}>
-                        RS
-                      </div>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontWeight: '800', color: '#0f172a', fontSize: '0.95rem' }}>Rajesh Sharma</span>
-                          <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                          <span style={{ fontSize: '0.72rem', background: '#dbeafe', color: '#1d4ed8', fontWeight: '700', padding: '2px 6px', borderRadius: '4px' }}>
-                            Master Leader ($1.00/ad)
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Founder, Global Wellness Leaders • 2h ago</span>
-                      </div>
-                    </div>
-
-                    <p style={{ color: '#334155', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '16px' }}>
-                      🚀 Incredible team milestone! Our organization just crossed 500 verified members across 6 countries on MLM Book. Our business page has generated over 1,200 targeted leads this month alone. Network marketing is about empowering people! #DirectSelling #Leadership
-                    </p>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '12px', color: '#64748b', fontSize: '0.82rem' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        ❤️ 184 Likes • 42 Comments
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#3b82f6', fontWeight: '600' }}>
-                        🔗 26 Network Shares
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: WATCH-TO-EARN HUB */}
-              {activePortalTab === 'watch' && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px', marginBottom: '20px' }}>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Video-To-Earn Experience
-                      </span>
-                      <h3 style={{ fontSize: '1.45rem', fontWeight: '800', color: '#0f172a', margin: '2px 0 0' }}>
-                        Watch Video Reels & Earn Instant Crypto
-                      </h3>
-                    </div>
-                    <Link to="/rewards" className="pub-btn pub-btn-sm pub-btn-outline">
-                      <span>Reward Details</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-
-                  <p style={{ color: '#475569', fontSize: '0.94rem', lineHeight: '1.6', marginBottom: '24px' }}>
-                    Our dedicated Watch hub showcases video pitches, product unveilings, and executive training. Members receive real USDT rewards for watching verified campaigns, while advertisers enjoy guaranteed retention and full presentation views.
-                  </p>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
-                      <div style={{ position: 'relative', height: '160px', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', marginBottom: '14px' }}>
-                        <PlayCircle className="w-12 h-12 text-white opacity-90" />
-                        <span style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem' }}>
-                          0:45 / 1:00
-                        </span>
-                        <span style={{ position: 'absolute', top: '10px', left: '10px', background: '#10b981', color: '#ffffff', padding: '3px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '700' }}>
-                          ⚡ Reward Active
-                        </span>
-                      </div>
-                      <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.95rem', marginBottom: '4px' }}>
-                        Global Crypto Ecosystem Presentation
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.8rem', color: '#64748b' }}>
-                        <span>Earned: <strong>$0.2500 USDT</strong></span>
-                        <span style={{ color: '#059669', fontWeight: '700' }}>✓ 100% Watched</span>
-                      </div>
-                    </div>
-
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a', marginBottom: '10px' }}>
-                        Why Watch-To-Earn Works:
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem', color: '#475569' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                          <span>Guaranteed minimum view duration prevents quick skips</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                          <span>Payout matches your rank: $0.025 to $1.00 USD</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                          <span>Zero bots: Mobile OTP verified human members only</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: TEAM GENEALOGY & CONNECTIONS */}
-              {activePortalTab === 'team' && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px', marginBottom: '20px' }}>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Genealogy & Relationship Tracking
-                      </span>
-                      <h3 style={{ fontSize: '1.45rem', fontWeight: '800', color: '#0f172a', margin: '2px 0 0' }}>
-                        Visual Downline Tree & Verified Connections
-                      </h3>
-                    </div>
-                    <Link to="/member/register" className="pub-btn pub-btn-sm pub-btn-primary">
-                      <span>Start Building Your Team</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-
-                  <p style={{ color: '#475569', fontSize: '0.94rem', lineHeight: '1.6', marginBottom: '24px' }}>
-                    Track your direct introducers, monitor connection requests, and unlock rank milestones. On MLM Book, <strong style={{ color: '#0f172a' }}>Team Count = Accepted Verified Connections</strong>. Build genuine relationships and watch your rank tier scale up.
-                  </p>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-                    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px', boxShadow: 'var(--pub-shadow-sm)' }}>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Direct Referrals</div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>18 Active</div>
-                      <div style={{ fontSize: '0.78rem', color: '#059669', marginTop: '4px' }}>✓ 100% Mobile Verified</div>
-                    </div>
-
-                    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px', boxShadow: 'var(--pub-shadow-sm)' }}>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Verified Team Connections</div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#3b82f6', marginTop: '4px' }}>142 Users</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>Connected Across 8 Countries</div>
-                    </div>
-
-                    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '18px', boxShadow: 'var(--pub-shadow-sm)' }}>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Current Rank</div>
-                      <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#10b981', marginTop: '4px' }}>Leaders Rank</div>
-                      <div style={{ fontSize: '0.78rem', color: '#0f172a', fontWeight: '700', marginTop: '4px' }}>$0.2500 USD / Ad View</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 4: DUAL-WALLET HUB */}
-              {activePortalTab === 'wallet' && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px', marginBottom: '20px' }}>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Financial Infrastructure
-                      </span>
-                      <h3 style={{ fontSize: '1.45rem', fontWeight: '800', color: '#0f172a', margin: '2px 0 0' }}>
-                        Dual-Wallet Accounting & Web3 Withdrawals
-                      </h3>
-                    </div>
-                    <Link to="/rewards" className="pub-btn pub-btn-sm pub-btn-outline">
-                      <span>View Fee Rules</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-
-                  <p style={{ color: '#475569', fontSize: '0.94rem', lineHeight: '1.6', marginBottom: '24px' }}>
-                    Separating business marketing funds from member earnings guarantees clear audit trails. Request payouts with zero delays via Binance Smart Chain (USDT BEP-20).
-                  </p>
-
-                  <div className="pub-grid-2">
-                    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '22px', boxShadow: 'var(--pub-shadow-sm)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                        <div className="pub-icon-wrapper pub-icon-cyan" style={{ width: '38px', height: '38px', marginBottom: 0 }}>
-                          <Wallet className="w-5 h-5 text-sky-600" />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Operational Capital</div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>Fund Wallet (P2P)</div>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: '1.7rem', fontWeight: '900', color: '#0284c7', margin: '8px 0' }}>$85.50 USDT</div>
-                      <div style={{ fontSize: '0.8rem', color: '#059669', fontWeight: '700' }}>✓ 0.00% Withdrawal Fee (Zero Deductions!)</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>Used for funding ads & P2P transfers</div>
-                    </div>
-
-                    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '22px', boxShadow: 'var(--pub-shadow-sm)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                        <div className="pub-icon-wrapper pub-icon-emerald" style={{ width: '38px', height: '38px', marginBottom: 0 }}>
-                          <Gift className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Cashable Income</div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>Reward Wallet</div>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: '1.7rem', fontWeight: '900', color: '#059669', margin: '8px 0' }}>$142.75 USDT</div>
-                      <div style={{ fontSize: '0.8rem', color: '#059669', fontWeight: '700' }}>0.00% Withdrawal Fee (Zero Deductions!) • Min $5.00</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>All ad engagement & downline rewards</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ====================================================================
           NEW SECTION: THE 6 CORE PLATFORM ENGINES (Unified Ecosystem)
@@ -885,7 +732,7 @@ export function LandingPage() {
             </div>
             <h2 className="pub-section-title">How MLM Book Works</h2>
             <p className="pub-section-desc">
-              Joining and succeeding on MLM Book is straightforward. Here is how active members and entrepreneurs turn their daily networking into predictable income.
+              Joining and succeeding on MLM Book is straightforward. Here is how active members and entrepreneurs turn their daily networking into predictable rewards.
             </p>
           </div>
 
@@ -908,7 +755,7 @@ export function LandingPage() {
                 Complete Mobile OTP
               </h3>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
-                Verify your WhatsApp or Mobile number with instant OTP to secure your account, prevent multi-accounting, and unlock your Reward Wallet for instant withdrawals.
+                Verify your WhatsApp or Mobile number with instant OTP to secure your account, prevent multi-accounting, and unlock your Reward for instant withdrawals.
               </p>
             </div>
 
@@ -930,7 +777,7 @@ export function LandingPage() {
                 Scale & Collect USDT
               </h3>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
-                All commissions from ad views, direct introducers, and downline volume credit instantly to your Reward Wallet. Withdraw straight to your personal Web3 USDT wallet 24/7.
+                All commissions from ad views, direct introducers, and downline volume credit instantly to your Reward account. Withdraw straight to your personal Web3 USDT wallet 24/7.
               </p>
             </div>
           </div>
@@ -1015,7 +862,7 @@ export function LandingPage() {
           <div className="pub-section-header">
             <div className="pub-badge pub-badge-cyan">
               <Coins className="w-3.5 h-3.5" />
-              <span>Automated Income Architecture</span>
+              <span>Automated Reward Architecture</span>
             </div>
             <h2 className="pub-section-title">How Member Rewards Work</h2>
             <p className="pub-section-desc">
@@ -1068,7 +915,7 @@ export function LandingPage() {
                 Tier 1 to 5 Team Overrides
               </h3>
               <p style={{ color: '#475569', fontSize: '0.93rem', lineHeight: '1.6' }}>
-                Your earnings don't stop at direct referrals. As your downline leaders introduce others across 5 complete tiers, automated override commissions flow continuously up into your Reward Wallet.
+                Your earnings don't stop at direct referrals. As your downline leaders introduce others across 5 complete tiers, automated override commissions flow continuously up into your Reward account.
               </p>
             </div>
 
@@ -1418,11 +1265,11 @@ export function LandingPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '16px 24px', borderBottom: '1px solid #f1f5f9', alignItems: 'center' }}>
               <div>
-                <strong style={{ color: '#0f172a' }}>Direct Selling Genealogy Tree</strong>
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Automated visual tracking of downline depth</div>
+                <strong style={{ color: '#0f172a' }}>Multi-Tier Community Referral Growth</strong>
+                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>100% Free registration with 5-tier referral rewards</div>
               </div>
               <div style={{ textAlign: 'center', color: '#dc2626' }}>❌ Not Available</div>
-              <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ 5-Generation Tree</div>
+              <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ 5-Tier Referral Network</div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '16px 24px', alignItems: 'center' }}>
