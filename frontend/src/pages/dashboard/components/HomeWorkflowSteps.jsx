@@ -90,7 +90,7 @@ const WORKFLOW_STEPS = [
     icon: Wallet,
     color: 'amber',
     description: 'Successfully issued rewards are credited to the member’s Wallet.',
-    link: '/member/web3-wallet',
+    link: '/member/withdrawal',
     linkText: 'View Wallet',
   },
 ];

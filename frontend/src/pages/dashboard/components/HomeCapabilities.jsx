@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import {
   LayoutGrid,
   Rss,
-  TvMinimalPlay,
+  Wallet,
   Users,
   Building2,
   CalendarDays,
@@ -22,13 +22,13 @@ const FEATURES = [
     linkText: 'Open Socials',
   },
   {
-    icon: TvMinimalPlay,
-    title: 'Watch',
-    tag: 'Video',
+    icon: Wallet,
+    title: 'Reward Wallet',
+    tag: 'USDT (BEP-20)',
     badgeColor: 'green',
-    description: 'Discover and share video content through the dedicated Watch experience.',
-    path: '/member/watch',
-    linkText: 'Explore Watch',
+    description: 'Earn campaign rewards, track real-time wallet balances and request instant withdrawals.',
+    path: '/member/withdrawal',
+    linkText: 'View Wallet',
   },
   {
     icon: Users,

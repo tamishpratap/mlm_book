@@ -3,22 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import dashboardApi from '../../api/dashboardApi';
 
-// Subcomponents (16 Sections in exact specified order)
+// Essential Subcomponents for Streamlined Home Experience
 import HomeHero from './components/HomeHero';
-import HomeWhatIs from './components/HomeWhatIs';
+import HomeVideoHub from './components/HomeVideoHub';
 import HomeCapabilities from './components/HomeCapabilities';
-import HomeWorkflowSteps from './components/HomeWorkflowSteps';
-import HomeAdvertisingProcess from './components/HomeAdvertisingProcess';
-import HomeMemberRewards from './components/HomeMemberRewards';
-import HomeRewardDeterminants from './components/HomeRewardDeterminants';
-import HomeBusinessBenefits from './components/HomeBusinessBenefits';
-import HomeMemberBenefits from './components/HomeMemberBenefits';
-import HomeCampaignTypes from './components/HomeCampaignTypes';
-import HomeRewardWallet from './components/HomeRewardWallet';
-import HomeTrustVerification from './components/HomeTrustVerification';
-import HomeEndToEndWorkflow from './components/HomeEndToEndWorkflow';
-import HomeWhyChoose from './components/HomeWhyChoose';
-import HomeFaqAccordion from './components/HomeFaqAccordion';
 import HomeCtaBanner from './components/HomeCtaBanner';
 import HomeSkeleton from './components/HomeSkeleton';
 import MissedIntroducerReminderModal from './components/MissedIntroducerReminderModal';
@@ -150,52 +138,16 @@ export function HomePage() {
           </div>
         ) : (
           <div className="home-container">
-            {/* Section 1 — Hero */}
+            {/* 1. Hero Introduction */}
             <HomeHero memberName={currentMember?.name} />
 
-            {/* Section 2 — What is MLM Book? */}
-            <HomeWhatIs />
+            {/* 2. Interactive Video Learning Center & Official Message */}
+            <HomeVideoHub />
 
-            {/* Section 3 — What Can You Do on MLM Book? */}
+            {/* 3. Core Platform Capabilities & Modules */}
             <HomeCapabilities />
 
-            {/* Section 4 — How MLM Book Works */}
-            <HomeWorkflowSteps />
-
-            {/* Section 5 — How Advertising Works */}
-            <HomeAdvertisingProcess />
-
-            {/* Section 6 — How Member Rewards Work */}
-            <HomeMemberRewards />
-
-            {/* Section 7 — What Determines Your Reward? */}
-            <HomeRewardDeterminants />
-
-            {/* Section 8 — Business Owner Benefits */}
-            <HomeBusinessBenefits />
-
-            {/* Section 9 — Member Benefits */}
-            <HomeMemberBenefits />
-
-            {/* Section 10 — Business Campaigns & Event Campaigns */}
-            <HomeCampaignTypes />
-
-            {/* Section 11 — Reward Wallet */}
-            <HomeRewardWallet />
-
-            {/* Section 12 — Trust & Verification */}
-            <HomeTrustVerification />
-
-            {/* Section 13 — End-to-End Workflow */}
-            <HomeEndToEndWorkflow />
-
-            {/* Section 14 — Why MLM Book? */}
-            <HomeWhyChoose />
-
-            {/* Section 15 — FAQ */}
-            <HomeFaqAccordion />
-
-            {/* Section 16 — Final CTA */}
+            {/* 4. Action & Community Next Steps */}
             <HomeCtaBanner />
           </div>
         )}

@@ -2282,22 +2282,25 @@ body.menu-open {
 
 .video-hub-tabs {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
     margin-bottom: 24px;
 }
 
 .video-hub-tab-btn {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
+    gap: 10px;
+    padding: 12px 14px;
     background: var(--color-surface-alt, #f8fafc);
     border: 1px solid var(--color-border-soft, #e2e8f0);
     border-radius: 14px;
     text-align: left;
     cursor: pointer;
     transition: all 0.2s ease;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .video-hub-tab-btn:hover {

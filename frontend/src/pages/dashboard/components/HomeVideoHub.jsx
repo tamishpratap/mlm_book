@@ -5,7 +5,8 @@ import {
   Play,
   Sparkles,
   CheckCircle2,
-  Video,
+  Gift,
+  Wallet,
   ArrowRight,
   ExternalLink,
   Rss,
@@ -18,7 +19,7 @@ import {
 const VIDEO_PLAYLIST = [
   {
     id: 'overview',
-    title: 'A Message About MLM Book & Our Vision',
+    title: 'About MLM Book & Vision',
     category: 'Introduction',
     duration: '3:45',
     videoId: 'L_LUpnjgPso', // Official MLM Book overview video placeholder
@@ -36,8 +37,8 @@ const VIDEO_PLAYLIST = [
   },
   {
     id: 'socials',
-    title: 'Social Stream, Media Sharing & Stories',
-    category: 'Socials & Feed',
+    title: 'Social Stream & Stories',
+    category: 'Socials',
     duration: '2:30',
     videoId: 'dQw4w9WgXcQ',
     icon: Rss,
@@ -53,40 +54,40 @@ const VIDEO_PLAYLIST = [
     actionText: 'Go to Social Feed',
   },
   {
-    id: 'watch',
-    title: 'Watch Video Hub & Creator Platform',
-    category: 'Video Streaming',
-    duration: '4:15',
+    id: 'rewards',
+    title: 'How to Earn Rewards',
+    category: 'Rewards',
+    duration: '3:20',
     videoId: 'jNQXAC9IVRw',
-    icon: Video,
+    icon: Gift,
     badgeColor: 'green',
     description:
-      'Discover high-impact videos from community creators, industry mentors, and brands. Filter trending videos, save your favorite masterclasses, and build your own audience.',
+      'Learn how eligible verified members earn USDT rewards by engaging with promoted posts, showing interest in campaigns, and managing their BEP-20 reward wallet.',
     highlights: [
-      'Dedicated Watch feed with category filters and trending streams.',
-      'Fast 1080p video streaming with zero buffer delays.',
-      'Save, bookmark, and share videos with your network.',
+      'Earn real rewards by showing interest in verified business campaigns.',
+      'Transparent calculation with real-time credited wallet ledger.',
+      'Instant payout requests to your verified BEP-20 USDT wallet address.',
     ],
-    actionLink: '/member/watch',
-    actionText: 'Explore Watch Hub',
+    actionLink: '/member/withdrawal',
+    actionText: 'View Reward Wallet',
   },
   {
     id: 'business',
-    title: 'Business Pages, Directory & Team Roles',
-    category: 'Business & Growth',
+    title: 'Pages & Advertising',
+    category: 'Business',
     duration: '3:10',
     videoId: 'M7lc1UVf-VE',
     icon: Building2,
     badgeColor: 'purple',
     description:
-      'Establish your brand presence. Create verified business pages, invite team members with specific roles (Admin, Editor, Moderator), and receive customer inquiries in your business inbox.',
+      'Establish your brand presence. Create verified business pages, invite team members with specific roles (Admin, Editor, Moderator), and launch advertising campaigns to reach real members.',
     highlights: [
       'Showcase your company profile in the Global Business Directory.',
       'Manage multi-user team permissions with granular roles.',
       'Dedicated business messenger inbox and lead management.',
     ],
-    actionLink: '/member/business-directory',
-    actionText: 'Browse Business Directory',
+    actionLink: '/member/business-pages',
+    actionText: 'Manage Business Pages',
   },
 ];
 
@@ -137,9 +138,9 @@ export function HomeVideoHub() {
               <span>{isTheaterMode ? 'Standard View' : 'Cinematic Theater View'}</span>
             </button>
 
-            <Link to="/member/watch" className="member-button member-button--secondary" style={{ fontSize: '13px', padding: '8px 14px' }}>
-              <Video size={15} aria-hidden="true" />
-              <span>All Videos</span>
+            <Link to="/member/withdrawal" className="member-button member-button--secondary" style={{ fontSize: '13px', padding: '8px 14px' }}>
+              <Wallet size={15} aria-hidden="true" />
+              <span>Reward Wallet</span>
               <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </div>

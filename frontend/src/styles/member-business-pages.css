@@ -182,30 +182,34 @@
     gap: 20px;
 }
 
-/* Business Card Styling */
+/* ==========================================================================
+   Executive Modern Business Card Styling
+   ========================================================================== */
 .biz-card {
     display: flex;
     flex-direction: column;
-    background: var(--color-surface, #ffffff);
-    border: 1px solid var(--color-border, #e7ecf4);
-    border-radius: var(--radius-lg, 18px);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: var(--shadow-sm, 0 2px 8px rgba(34, 49, 78, 0.035));
-    transition: transform var(--transition-fast, 160ms ease), box-shadow var(--transition-fast, 160ms ease);
+    box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease;
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
+    position: relative;
 }
 
 .biz-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md, 0 8px 24px rgba(34, 49, 78, 0.055));
+    transform: translateY(-4px);
+    border-color: #cbd5e1;
+    box-shadow: 0 16px 32px -6px rgba(15, 23, 42, 0.1), 0 4px 12px rgba(37, 99, 235, 0.08);
 }
 
 .biz-card__cover {
-    height: 110px;
+    height: 124px;
     width: 100%;
-    background: linear-gradient(135deg, #4f7df3 0%, #8a2be2 100%);
+    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 50%, #4f46e5 100%);
     position: relative;
     overflow: hidden;
 }
@@ -214,34 +218,88 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.biz-card:hover .biz-card__cover img {
+    transform: scale(1.04);
+}
+
+.biz-card__cover-gradient {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 50%, #4f46e5 100%);
+}
+
+.biz-card__cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.5) 100%);
+    pointer-events: none;
+}
+
+/* Floating Status / Visibility Badge */
+.biz-card__floating-pill {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.biz-card__live-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #10b981;
 }
 
 .biz-card__body {
-    padding: 24px;
+    padding: 0 20px 20px 20px;
     display: flex;
     flex-direction: column;
     flex: 1;
-    gap: 12px;
+    gap: 10px;
     position: relative;
-    margin-top: -36px;
     min-width: 0;
     box-sizing: border-box;
+}
+
+.biz-card__avatar-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: -32px;
+    margin-bottom: 2px;
+    z-index: 3;
 }
 
 .biz-card__avatar {
     width: 64px;
     height: 64px;
-    border-radius: 14px;
-    border: 3px solid var(--color-surface, #ffffff);
-    background: var(--color-surface-alt, #f4f6fa);
-    box-shadow: var(--shadow-sm, 0 2px 8px rgba(34, 49, 78, 0.035));
+    border-radius: 16px;
+    border: 3.5px solid #ffffff;
+    background: #ffffff;
+    box-shadow: 0 8px 18px -4px rgba(15, 23, 42, 0.14);
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--color-primary, #4f7df3);
+    flex-shrink: 0;
 }
 
 .biz-card__avatar img {
@@ -250,39 +308,53 @@
     object-fit: cover;
 }
 
+.biz-card__avatar-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
 .biz-card__header {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     min-width: 0;
 }
 
 .biz-card__title {
-    font-size: 16px;
+    font-size: 1.05rem;
     font-weight: 700;
-    color: var(--color-text, #1d2738);
-    display: flex;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.35;
+    min-width: 0;
+}
+
+.biz-card__title-link {
+    display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin: 0;
-    min-width: 0;
+    color: #0f172a;
+    text-decoration: none;
+    transition: color 0.15s ease;
     overflow-wrap: break-word;
     word-break: break-word;
 }
 
-.biz-card__title-link,
-.biz-card__title a {
-    min-width: 0;
-    max-width: 100%;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    color: inherit;
-    text-decoration: none;
+.biz-card__title-link:hover {
+    color: #2563eb;
 }
 
 .biz-card__username {
-    font-size: 13px;
-    color: var(--color-text-muted, #98a2b3);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64748b;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -295,62 +367,47 @@
     gap: 6px;
     flex-wrap: wrap;
     min-width: 0;
+    margin-top: 2px;
 }
 
 .biz-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 11px;
-    font-size: 12px;
+    gap: 5px;
+    padding: 3px 9px;
+    font-size: 11.5px;
     font-weight: 600;
-    border-radius: 20px;
+    border-radius: 6px;
+    line-height: 1.4;
 }
 
 .biz-badge--category {
-    background: rgba(79, 125, 243, 0.08);
-    color: var(--color-primary, #4f7df3);
-}
-
-.biz-badge--visibility {
-    background: rgba(104, 115, 134, 0.08);
-    color: var(--color-text-secondary, #687386);
-}
-
-.biz-badge--verified {
-    background: rgba(32, 200, 117, 0.1);
-    color: var(--color-success, #20c875);
-}
-
-.biz-badge--unverified {
-    background: rgba(152, 162, 179, 0.12);
-    color: var(--color-text-muted, #98a2b3);
-}
-
-.biz-badge--status {
-    background: rgba(32, 200, 117, 0.1);
-    color: var(--color-success, #20c875);
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #dbeafe;
 }
 
 .biz-card__description {
-    font-size: 13px;
-    color: var(--color-text-secondary, #687386);
-    line-height: 1.45;
+    font-size: 0.835rem;
+    color: #475569;
+    line-height: 1.5;
+    margin: 2px 0 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    min-height: 38px;
 }
 
 .biz-card__meta {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    font-size: 12.5px;
-    color: var(--color-text-muted, #98a2b3);
+    gap: 5px;
+    font-size: 12px;
+    color: #64748b;
     margin-top: auto;
-    padding-top: 10px;
-    border-top: 1px dashed var(--color-border, #e7ecf4);
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
     min-width: 0;
 }
 
@@ -359,137 +416,85 @@
     align-items: center;
     gap: 6px;
     min-width: 0;
-}
-
-.biz-card__meta-item span {
-    min-width: 0;
+    font-weight: 500;
 }
 
 .biz-card__actions {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: 12px;
     width: 100%;
     box-sizing: border-box;
 }
 
 .biz-card__btn-view {
-    flex: 1 1 auto;
+    flex: 1;
     min-width: 0;
-    height: 44px;
-    min-height: 44px;
-    max-height: 44px;
+    height: 38px;
     padding: 0 16px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 8px;
+    gap: 6px;
     font-size: 13.5px;
     font-weight: 600;
-    border-radius: 12px !important;
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
     text-decoration: none;
-    box-sizing: border-box !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: transform var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease), background var(--transition-fast, 0.15s ease);
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.22);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
-.biz-card__btn-view svg,
-.biz-card__btn-view i {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    display: inline-block;
-    vertical-align: middle;
+.biz-card__btn-view:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.32);
+    opacity: 0.95;
 }
 
-.biz-card__delete-form {
-    display: inline-flex;
-    margin: 0;
-    padding: 0;
-    flex: 0 0 44px;
-    width: 44px;
-    height: 44px;
-    box-sizing: border-box;
-}
-
-/* Icon-Only Action Buttons (Edit & Delete) */
-.biz-card__action-btn,
-.biz-card .biz-card__action-btn,
-.biz-card__actions .biz-card__action-btn,
-.biz-card__actions a.biz-card__action-btn,
-.biz-card__actions button.biz-card__action-btn {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    max-width: 44px !important;
-    min-height: 44px !important;
-    max-height: 44px !important;
-    flex: 0 0 44px !important;
+.biz-card__action-btn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    flex: 0 0 38px !important;
     padding: 0 !important;
     margin: 0 !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    box-sizing: border-box !important;
     cursor: pointer;
-    text-decoration: none;
-    line-height: 1 !important;
-    text-indent: 0 !important;
-    overflow: hidden;
-    transition: transform var(--transition-fast, 0.15s ease), background var(--transition-fast, 0.15s ease), border-color var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease);
+    box-sizing: border-box;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.biz-card__action-btn svg,
-.biz-card__action-btn i {
-    width: 18px !important;
-    height: 18px !important;
-    min-width: 18px !important;
-    min-height: 18px !important;
-    flex-shrink: 0 !important;
-    display: block !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    pointer-events: none;
-}
-
-/* Specific Edit Button */
-.biz-card__action-btn--edit,
-.biz-card__actions .biz-card__action-btn--edit {
-    background: #ffffff !important;
+.biz-card__action-btn--edit {
+    background: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
-    color: #26354f !important;
-    box-shadow: 0 1px 3px rgba(34, 49, 78, 0.05) !important;
+    color: #475569 !important;
 }
 
-.biz-card__action-btn--edit:hover,
-.biz-card__actions .biz-card__action-btn--edit:hover {
-    background: #f6f8fc !important;
-    border-color: #cbd5e1 !important;
-    color: #4f7df3 !important;
+.biz-card__action-btn--edit:hover {
+    background: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    color: #2563eb !important;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(79, 125, 243, 0.15) !important;
 }
 
-/* Specific Delete Button */
-.biz-card__action-btn--delete,
-.biz-card__actions .biz-card__action-btn--delete {
+.biz-card__action-btn--delete {
     background: #fff1f2 !important;
-    border: 1px solid #fecdd3 !important;
+    border: 1px solid #ffe4e6 !important;
     color: #e11d48 !important;
-    box-shadow: none !important;
 }
 
-.biz-card__action-btn--delete:hover,
-.biz-card__actions .biz-card__action-btn--delete:hover {
-    background: #ffe4e6 !important;
-    border-color: #fda4af !important;
+.biz-card__action-btn--delete:hover {
+    background: #fee2e2 !important;
+    border-color: #fecdd3 !important;
     color: #be123c !important;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(225, 29, 72, 0.15) !important;
 }
 
 .biz-page {
@@ -1580,18 +1585,18 @@ textarea.biz-search-input {
     }
 
     .biz-card__btn-view {
-        height: 42px !important;
-        min-height: 42px !important;
+        height: 38px !important;
+        min-height: 38px !important;
         font-size: 13px !important;
         padding: 0 14px !important;
     }
 
     .biz-card__action-btn {
-        width: 42px !important;
-        height: 42px !important;
-        min-width: 42px !important;
-        min-height: 42px !important;
-        flex: 0 0 42px !important;
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        min-height: 38px !important;
+        flex: 0 0 38px !important;
     }
 
     /* Business Directory Mobile Filter Responsiveness (768px) */
