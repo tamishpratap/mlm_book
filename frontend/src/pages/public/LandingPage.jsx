@@ -278,85 +278,95 @@ export function LandingPage() {
               <div className="pub-visual-glow-ring"></div>
 
               <div className="pub-hero-mockup-card">
-                {/* Card Interior Header */}
+                {/* 1. Window Header Bar */}
                 <div className="pub-hero-card-header">
                   <div className="pub-card-mac-dots">
                     <span className="dot red"></span>
                     <span className="dot yellow"></span>
                     <span className="dot green"></span>
                   </div>
-                  <div className="pub-card-header-badge">
+                  <div className="pub-card-url-pill">
+                    <Lock className="w-3 h-3 text-emerald-600" />
+                    <span>mlmbook.com/community</span>
+                  </div>
+                  <div className="pub-card-status-badge">
                     <span className="pub-radar-dot"></span>
-                    <span>100% Free Member Community</span>
-                  </div>
-                  <span className="pub-live-tag">Zero Registration Fee</span>
-                </div>
-
-                {/* 4 Authentic Engine Modules (2x2 Grid, Zero Fake Data) */}
-                <div className="pub-hero-feature-list">
-                  {/* Module 1 */}
-                  <div className="pub-hero-feature-item">
-                    <div className="pub-feature-item-top">
-                      <div className="pub-feature-icon-box pub-icon-indigo">
-                        <MessageSquare className="w-4 h-4 text-indigo-600" />
-                      </div>
-                      <span className="pub-feature-pill blue">0% Shadowbans</span>
-                    </div>
-                    <div className="pub-feature-title">Community Social Feed</div>
-                    <div className="pub-feature-desc">
-                      Share business posts, build connections, and network with verified entrepreneurs without censorship.
-                    </div>
-                  </div>
-
-                  {/* Module 2 */}
-                  <div className="pub-hero-feature-item">
-                    <div className="pub-feature-item-top">
-                      <div className="pub-feature-icon-box pub-icon-purple">
-                        <TvMinimalPlay className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <span className="pub-feature-pill purple">$0.025 – $1.00</span>
-                    </div>
-                    <div className="pub-feature-title">Watch & Earn Video Ads</div>
-                    <div className="pub-feature-desc">
-                      Explore sponsored brand videos and receive verified daily rewards directly into your account.
-                    </div>
-                  </div>
-
-                  {/* Module 3 */}
-                  <div className="pub-hero-feature-item">
-                    <div className="pub-feature-item-top">
-                      <div className="pub-feature-icon-box pub-icon-cyan">
-                        <Users className="w-4 h-4 text-sky-600" />
-                      </div>
-                      <span className="pub-feature-pill cyan">100% Free Joining</span>
-                    </div>
-                    <div className="pub-feature-title">5-Tier Team Connections</div>
-                    <div className="pub-feature-desc">
-                      Zero fee to join. Earn team referral bonuses across 5 active tiers as your network expands.
-                    </div>
-                  </div>
-
-                  {/* Module 4 */}
-                  <div className="pub-hero-feature-item">
-                    <div className="pub-feature-item-top">
-                      <div className="pub-feature-icon-box pub-icon-emerald">
-                        <Wallet className="w-4 h-4 text-emerald-600" />
-                      </div>
-                      <span className="pub-feature-pill green">0.00% Withdrawal Fee</span>
-                    </div>
-                    <div className="pub-feature-title">Dual Wallet & Web3 Payouts</div>
-                    <div className="pub-feature-desc">
-                      Safe separation of Fund Wallet and Reward. 100% full payout on USDT withdrawals anytime.
-                    </div>
+                    <span>100% Free Access</span>
                   </div>
                 </div>
 
-                {/* Card Footer Link */}
-                <div className="pub-hero-card-footer">
-                  <Link to="/rewards" className="pub-hero-card-link">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Free Registration • No Investment Required • Instant USDT Rewards</span>
-                    <ChevronRight className="w-4 h-4 ml-auto" />
+                {/* 2. Interactive Social Community Feed Spotlight */}
+                <div className="pub-hero-social-post">
+                  <div className="pub-post-author-row">
+                    <div className="pub-author-info">
+                      <div className="pub-author-avatar">MB</div>
+                      <div>
+                        <div className="pub-author-name">
+                          <span>Direct Selling Community</span>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                        </div>
+                        <div className="pub-author-sub">Global Networkers Feed • Live</div>
+                      </div>
+                    </div>
+                    <span className="pub-post-badge">0% Shadowbans</span>
+                  </div>
+
+                  <p className="pub-post-content">
+                    "Connect with top direct selling leaders worldwide. Share business presentations, recruit motivated partners, and earn verified rewards — completely free without censorship."
+                  </p>
+
+                  <div className="pub-post-actions-row">
+                    <div className="pub-post-stats">
+                      <span>❤️ 342 Likes</span>
+                      <span>💬 58 Comments</span>
+                      <span>🔗 24 Shares</span>
+                    </div>
+                    <span className="pub-reward-chip">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Reward Active</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3. Three Spacious, High-Impact Value Pillars (NO ghic-pich!) */}
+                <div className="pub-hero-triad">
+                  <div className="pub-triad-card">
+                    <div className="pub-triad-icon pub-icon-purple">
+                      <TvMinimalPlay className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="pub-triad-title">Watch & Earn</div>
+                    <div className="pub-triad-value" style={{ color: '#7e22ce' }}>$0.025 – $1.00</div>
+                    <div className="pub-triad-sub">Per Video View</div>
+                  </div>
+
+                  <div className="pub-triad-card">
+                    <div className="pub-triad-icon pub-icon-cyan">
+                      <Users className="w-5 h-5 text-sky-600" />
+                    </div>
+                    <div className="pub-triad-title">Team Network</div>
+                    <div className="pub-triad-value" style={{ color: '#0284c7' }}>5 Free Tiers</div>
+                    <div className="pub-triad-sub">0 Joining Fee</div>
+                  </div>
+
+                  <div className="pub-triad-card">
+                    <div className="pub-triad-icon pub-icon-emerald">
+                      <Wallet className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="pub-triad-title">Web3 Payouts</div>
+                    <div className="pub-triad-value" style={{ color: '#059669' }}>0.00% Fee</div>
+                    <div className="pub-triad-sub">Instant USDT</div>
+                  </div>
+                </div>
+
+                {/* 4. Welcoming Trust & Benefits Ribbon */}
+                <div className="pub-hero-free-banner">
+                  <div className="pub-free-banner-text">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>Free Registration • No Investment Required</span>
+                  </div>
+                  <Link to="/rewards" className="pub-free-banner-link">
+                    <span>View Reward Rules</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
