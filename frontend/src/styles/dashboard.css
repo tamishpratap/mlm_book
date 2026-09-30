@@ -156,12 +156,13 @@ svg {
     display: flex;
     align-items: center;
     flex: 0 0 auto;
-    width: 50px;
+    width: 60px;
 }
 
-.brand img {
-    width: 50px;
-    height: 50px;
+.brand img,
+.mlm-book-header-logo {
+    width: 60px;
+    height: 60px;
     object-fit: contain;
 }
 
@@ -1515,9 +1516,10 @@ body.menu-open {
     }
 
     .brand,
-    .brand img {
-        width: 46px;
-        height: 46px;
+    .brand img,
+    .mlm-book-header-logo {
+        width: 54px;
+        height: 54px;
     }
 
     .search-box {
@@ -1779,9 +1781,10 @@ body.menu-open {
     }
 
     .brand,
-    .brand img {
-        width: 38px;
-        height: 38px;
+    .brand img,
+    .mlm-book-header-logo {
+        width: 48px;
+        height: 48px;
     }
 
     .topbar .search-box {

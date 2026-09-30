@@ -181,8 +181,8 @@ img {
 .member-auth-logo {
     display: inline-flex;
     align-items: center;
-    width: 96px;
-    min-height: 96px;
+    width: 132px;
+    min-height: 132px;
     transition: transform var(--member-transition-fast);
 }
 
@@ -190,7 +190,8 @@ img {
     transform: translateY(-1px);
 }
 
-.member-auth-logo img {
+.member-auth-logo img,
+.mlm-book-auth-logo {
     width: 100%;
     height: auto;
     object-fit: contain;
@@ -972,8 +973,8 @@ img {
     }
 
     .member-auth-logo {
-        width: 88px;
-        min-height: 88px;
+        width: 120px;
+        min-height: 120px;
     }
 
     .member-auth-message {
@@ -1041,8 +1042,8 @@ img {
     }
 
     .member-auth-logo {
-        width: 80px;
-        min-height: 80px;
+        width: 108px;
+        min-height: 108px;
     }
 
     .member-auth-message {
@@ -1111,8 +1112,8 @@ img {
     }
 
     .member-auth-logo {
-        width: 72px;
-        min-height: 72px;
+        width: 96px;
+        min-height: 96px;
     }
 
     .member-auth-message {
@@ -1191,8 +1192,8 @@ img {
     }
 
     .member-auth-logo {
-        width: 64px;
-        min-height: 64px;
+        width: 84px;
+        min-height: 84px;
     }
 
     .member-auth-message {

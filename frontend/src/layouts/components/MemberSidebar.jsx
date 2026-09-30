@@ -193,6 +193,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <UserX size={18} />
             <span>Disconnections</span>
           </NavLink>
+          {/*
           <NavLink
             to="/member/watch"
             className={getSideNavClass('/member/watch')}
@@ -201,6 +202,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <MonitorPlay size={18} />
             <span>Watch</span>
           </NavLink>
+          */}
           <NavLink
             to="/member/community"
             className={getSideNavClass('/member/community')}
@@ -258,6 +260,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <span>Messages</span>
           </NavLink>
           */}
+          {/*
           <NavLink
             to="/member/deposit"
             className={getSideNavClass('/member/deposit')}
@@ -266,6 +269,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <Wallet size={18} />
             <span>Fund Wallet</span>
           </NavLink>
+          */}
           <NavLink
             to="/member/account/settings"
             className={getSideNavClass('/member/account/settings')}
@@ -282,6 +286,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <MessageSquareText size={18} />
             <span>Feedback & Suggestions</span>
           </NavLink>
+          {/*
           <NavLink
             to="/member/withdrawal"
             className={getSideNavClass('/member/withdrawal')}
@@ -290,6 +295,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             <ArrowDownToLine size={18} />
             <span>Withdrawal</span>
           </NavLink>
+          */}
         </nav>
 
         <div className="sidebar-divider" />
