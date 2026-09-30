@@ -20,8 +20,9 @@ import {
   FacebookIcon,
   LinkedinIcon,
   YoutubeIcon,
-  InstagramIcon
+  InstagramIcon,
 } from '../../components/common/SocialIcons';
+import { OFFICIAL_SOCIAL_LINKS } from '../../constants/socialLinks';
 
 export function ContactPage() {
   const { siteName } = useContext(BrandingContext) || {};
@@ -35,12 +36,12 @@ export function ContactPage() {
     website: 'https://mlmbook.com',
     address: '123 Enterprise Way, Suite 500, Tech City',
     business_hours: 'Monday - Friday: 9:00 AM - 6:00 PM (UTC)',
-    social_telegram: 'https://t.me/mlmbook',
-    social_twitter: 'https://twitter.com/mlmbook',
-    social_facebook: 'https://facebook.com/mlmbook',
-    social_linkedin: 'https://linkedin.com/company/mlmbook',
-    social_youtube: 'https://youtube.com/mlmbook',
-    social_instagram: 'https://instagram.com/mlmbook',
+    social_telegram: OFFICIAL_SOCIAL_LINKS.telegram,
+    social_twitter: OFFICIAL_SOCIAL_LINKS.twitter,
+    social_facebook: OFFICIAL_SOCIAL_LINKS.facebook,
+    social_linkedin: OFFICIAL_SOCIAL_LINKS.linkedin,
+    social_youtube: OFFICIAL_SOCIAL_LINKS.youtube,
+    social_instagram: OFFICIAL_SOCIAL_LINKS.instagram,
   });
 
   const [loadingContact, setLoadingContact] = useState(true);
@@ -129,6 +130,13 @@ export function ContactPage() {
       setSubmitting(false);
     }
   };
+
+  const telegramUrl = contactData.social_telegram || OFFICIAL_SOCIAL_LINKS.telegram;
+  const twitterUrl = contactData.social_twitter || OFFICIAL_SOCIAL_LINKS.twitter;
+  const facebookUrl = OFFICIAL_SOCIAL_LINKS.facebook;
+  const linkedinUrl = contactData.social_linkedin || OFFICIAL_SOCIAL_LINKS.linkedin;
+  const youtubeUrl = contactData.social_youtube || OFFICIAL_SOCIAL_LINKS.youtube;
+  const instagramUrl = OFFICIAL_SOCIAL_LINKS.instagram;
 
   const faqs = [
     {
@@ -405,36 +413,32 @@ export function ContactPage() {
                 Official Social Channels
               </div>
               <div className="pub-social-row">
-                {contactData.social_telegram && (
-                  <a href={contactData.social_telegram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram">
+                {telegramUrl && (
+                  <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram">
                     <TelegramIcon className="w-4 h-4" />
                   </a>
                 )}
-                {contactData.social_twitter && (
-                  <a href={contactData.social_twitter} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Twitter / X">
+                {twitterUrl && (
+                  <a href={twitterUrl} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Twitter / X">
                     <TwitterXIcon className="w-4 h-4" />
                   </a>
                 )}
-                {contactData.social_facebook && (
-                  <a href={contactData.social_facebook} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Facebook">
-                    <FacebookIcon className="w-4 h-4" />
-                  </a>
-                )}
-                {contactData.social_linkedin && (
-                  <a href={contactData.social_linkedin} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="LinkedIn">
+                <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Facebook">
+                  <FacebookIcon className="w-4 h-4" />
+                </a>
+                {linkedinUrl && (
+                  <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="LinkedIn">
                     <LinkedinIcon className="w-4 h-4" />
                   </a>
                 )}
-                {contactData.social_youtube && (
-                  <a href={contactData.social_youtube} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="YouTube">
+                {youtubeUrl && (
+                  <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="YouTube">
                     <YoutubeIcon className="w-4 h-4" />
                   </a>
                 )}
-                {contactData.social_instagram && (
-                  <a href={contactData.social_instagram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Instagram">
-                    <InstagramIcon className="w-4 h-4" />
-                  </a>
-                )}
+                <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Instagram">
+                  <InstagramIcon className="w-4 h-4" />
+                </a>
               </div>
             </div>
           </div>
