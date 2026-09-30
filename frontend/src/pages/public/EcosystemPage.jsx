@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+﻿import { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BrandingContext } from '../../context/brandingContextDef';
 import {
@@ -34,7 +34,7 @@ export function EcosystemPage() {
   const platformName = siteName || 'MLM Book';
 
   useEffect(() => {
-    document.title = `${platformName} Ecosystem — The Dedicated Direct Selling, Social & Shared-Value Platform`;
+    document.title = `${platformName} Ecosystem ΓÇö The Dedicated Direct Selling, Social & Shared-Value Platform`;
   }, [platformName]);
 
   // Persona Switcher Tab
@@ -892,3 +892,4 @@ export function EcosystemPage() {
 }
 
 export default EcosystemPage;
+

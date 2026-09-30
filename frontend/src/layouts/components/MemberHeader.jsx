@@ -233,10 +233,12 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
             <Sparkles size={18} />
             <span>Socials</span>
           </NavLink>
+          {/*
           <NavLink to="/member/watch" className={getNavClass('/member/watch')}>
             <MonitorPlay size={18} />
             <span>Watch</span>
           </NavLink>
+          */}
           <NavLink to="/member/community" className={getNavClass('/member/community')}>
             <Users size={18} />
             <span>Community</span>
