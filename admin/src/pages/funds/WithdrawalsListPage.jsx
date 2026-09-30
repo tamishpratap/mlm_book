@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Wallet,
   Clock,
@@ -19,6 +20,7 @@ import {
   Info,
   ExternalLink,
   Percent,
+  Settings,
 } from 'lucide-react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
@@ -72,6 +74,7 @@ function WithdrawalStatusBadge({ status }) {
 }
 
 export function WithdrawalsListPage() {
+  const navigate = useNavigate();
   const toast = useRef(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -301,6 +304,13 @@ export function WithdrawalsListPage() {
         ]}
         actions={
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              icon={<Settings className="w-4 h-4 mr-1.5" />}
+              label="Withdrawal Settings"
+              className="p-button-outlined p-button-sm border-indigo-300 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100"
+              onClick={() => navigate('/admin/funds/withdrawal-settings')}
+            />
             <Button
               type="button"
               icon={<RefreshCw className={`w-4 h-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />}
