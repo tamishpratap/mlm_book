@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'core/constants.dart';
+import 'core/deep_link_handler.dart';
 import 'core/session_manager.dart';
 import 'providers/admin_provider.dart';
 import 'providers/auth_provider.dart';
@@ -32,8 +33,27 @@ void main() async {
   runApp(const MlmBookApp());
 }
 
-class MlmBookApp extends StatelessWidget {
+class MlmBookApp extends StatefulWidget {
   const MlmBookApp({super.key});
+
+  @override
+  State<MlmBookApp> createState() => _MlmBookAppState();
+}
+
+class _MlmBookAppState extends State<MlmBookApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      DeepLinkHandler.init(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    DeepLinkHandler.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +71,7 @@ class MlmBookApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SearchProvider()),
       ],
       child: MaterialApp(
+        navigatorKey: DeepLinkHandler.navigatorKey,
         title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
