@@ -201,6 +201,132 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Login directly with an issued Mobile Bearer Token (e.g. from Google OAuth callback)
+  Future<bool> loginWithMobileToken(String token, {Map<String, dynamic>? initialMemberData}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await SessionManager.saveSession(
+        token: token,
+        role: 'member',
+        userData: initialMemberData ?? {},
+      );
+
+      final res = await ApiClient.get('/auth/me');
+      _isLoading = false;
+
+      if (res.success && res.data is Map && res.data['member'] != null) {
+        final memberJson = res.data['member'] as Map<String, dynamic>;
+        _currentMember = MemberModel.fromJson(memberJson);
+        _activeRole = 'member';
+
+        await SessionManager.saveSession(
+          token: token,
+          role: 'member',
+          userData: memberJson,
+        );
+
+        notifyListeners();
+        return true;
+      } else if (initialMemberData != null && initialMemberData.isNotEmpty) {
+        _currentMember = MemberModel.fromJson(initialMemberData);
+        _activeRole = 'member';
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = res.message ?? 'Failed to authenticate session.';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Session authorization error: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Fetch pending Google Signup metadata
+  Future<Map<String, dynamic>?> getPendingGoogleSignup(String token) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final res = await ApiClient.get('/auth/google/pending?token=$token');
+    _isLoading = false;
+
+    if (res.success && res.data is Map) {
+      notifyListeners();
+      return res.data as Map<String, dynamic>;
+    } else {
+      _errorMessage = res.message ?? 'Your Google signup session has expired. Please sign in with Google again.';
+      notifyListeners();
+      return null;
+    }
+  }
+
+  // Complete Google Signup with Phone & optional Introducer
+  Future<ApiResponse> completeGoogleSignup({
+    required String token,
+    required String phone,
+    required String countryCode,
+    String? introducerId,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final res = await ApiClient.post('/auth/google/complete', {
+      'token': token,
+      'phone': phone.trim(),
+      'country_code': countryCode.trim(),
+      if (introducerId != null && introducerId.trim().isNotEmpty) 'introducer_id': introducerId.trim(),
+    });
+
+    _isLoading = false;
+
+    if (!res.success) {
+      _errorMessage = res.message ?? 'Failed to complete registration.';
+    }
+
+    notifyListeners();
+    return res;
+  }
+
+  // Check Phone number availability in real-time
+  Future<Map<String, dynamic>> checkPhoneAvailability(String phone, String countryCode) async {
+    final cleanDigits = phone.replaceAll(RegExp(r'\D'), '');
+    final cleanCode = countryCode.trim();
+    final res = await ApiClient.get('/auth/check-phone?phone=$cleanDigits&country_code=${Uri.encodeComponent(cleanCode)}');
+    if (res.data is Map) {
+      return res.data as Map<String, dynamic>;
+    }
+    return {
+      'available': res.success,
+      'message': res.message,
+    };
+  }
+
+  // Check Introducer ID validity in real-time
+  Future<Map<String, dynamic>> checkIntroducer(String introducerId) async {
+    final res = await ApiClient.get('/auth/check-introducer?introducer=${Uri.encodeComponent(introducerId.trim())}');
+    if (res.data is Map) {
+      return res.data as Map<String, dynamic>;
+    }
+    return {
+      'exists': false,
+      'valid': false,
+      'message': res.message ?? 'Invalid Introducer ID',
+    };
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   // Switch role between Member and Admin (if user has both credentials)
   void switchRole(String newRole) {
     if (_activeRole != newRole) {

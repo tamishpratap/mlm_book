@@ -3,13 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/constants.dart';
+import '../../core/google_auth_service.dart';
 import '../../core/session_manager.dart';
 import '../../providers/auth_provider.dart';
 import '../member/member_shell.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? initialError;
+  final String? initialErrorMessage;
+  final String? initialSuccessMessage;
+  final String? email;
+  final String? ref;
+
+  const LoginScreen({
+    super.key,
+    this.initialError,
+    this.initialErrorMessage,
+    this.initialSuccessMessage,
+    this.email,
+    this.ref,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -20,6 +34,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isGoogleLoading = false;
+  late bool _showSignupRequired;
+  String? _customErrorMessage;
+  String? _customSuccessMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _showSignupRequired = widget.initialError == 'signup_required';
+    _customErrorMessage = widget.initialErrorMessage;
+    _customSuccessMessage = widget.initialSuccessMessage;
+    if (widget.email != null && widget.email!.isNotEmpty) {
+      _emailController.text = widget.email!;
+    }
+  }
 
   @override
   void dispose() {
@@ -275,7 +303,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleGoogleLogin() async {
     setState(() => _isGoogleLoading = true);
     try {
-      // Prompt quick information / Google authorization message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Row(
@@ -296,8 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-      // In real deployment, triggers Google OAuth redirect endpoint
-      await Future.delayed(const Duration(seconds: 1));
+      GoogleAuthService.launchGoogleAuth(mode: 'login');
     } finally {
       if (mounted) {
         setState(() => _isGoogleLoading = false);
@@ -308,6 +334,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+
+    final displayErrorMessage = _customErrorMessage ?? auth.errorMessage;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFD),
@@ -432,10 +460,139 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
+
+                      // Signup Required Google Banner (matches web UX exactly)
+                      if (_showSignupRequired)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 24),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF2563EB).withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFDBEAFE),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.info_outline_rounded,
+                                      color: Color(0xFF2563EB),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Create Your MLM Book Account First',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF1E3A8A),
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          'We couldn’t find an MLM Book account linked to this Google account. Please create your account first, then log in with Google.',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            height: 1.45,
+                                            color: Color(0xFF1E40AF),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => RegisterScreen(
+                                          email: widget.email,
+                                          ref: widget.ref,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2563EB),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    elevation: 0,
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Create Account',
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Icon(Icons.arrow_forward_rounded, size: 16),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // Success message banner if any
+                      if (_customSuccessMessage != null && !_showSignupRequired)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 20),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            border: Border.all(color: const Color(0xFF86EFAC)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _customSuccessMessage!,
+                                  style: const TextStyle(
+                                    color: Color(0xFF166534),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
 
                       // Error message if any
-                      if (auth.errorMessage != null)
+                      if (displayErrorMessage != null && !_showSignupRequired)
                         Container(
                           margin: const EdgeInsets.only(bottom: 20),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -450,7 +607,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  auth.errorMessage!,
+                                  displayErrorMessage,
                                   style: const TextStyle(
                                     color: Color(0xFFB91C1C),
                                     fontSize: 13,
