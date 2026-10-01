@@ -70,6 +70,7 @@ export function AdCampaignPeopleEngagedPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filters & State
+  const [actionFilter, setActionFilter] = useState(searchParams.get('action') || 'interested');
   const [verificationFilter, setVerificationFilter] = useState(searchParams.get('verification') || 'all');
   const [datePreset, setDatePreset] = useState(searchParams.get('date_preset') || 'all');
   const [startDate, setStartDate] = useState(searchParams.get('start_date') || '');
@@ -110,6 +111,7 @@ export function AdCampaignPeopleEngagedPage() {
   // Sync URL search params
   useEffect(() => {
     const params = new URLSearchParams();
+    if (actionFilter !== 'interested') params.set('action', actionFilter);
     if (verificationFilter !== 'all') params.set('verification', verificationFilter);
     if (datePreset !== 'all') params.set('date_preset', datePreset);
     if (startDate) params.set('start_date', startDate);
@@ -120,6 +122,7 @@ export function AdCampaignPeopleEngagedPage() {
 
     setSearchParams(params, { replace: true });
   }, [
+    actionFilter,
     verificationFilter,
     datePreset,
     startDate,
@@ -140,6 +143,7 @@ export function AdCampaignPeopleEngagedPage() {
 
       try {
         const params = {
+          action: actionFilter !== 'all' ? actionFilter : undefined,
           verification: verificationFilter !== 'all' ? verificationFilter : undefined,
           date_preset: datePreset !== 'all' ? datePreset : undefined,
           start_date: startDate || undefined,
@@ -169,7 +173,7 @@ export function AdCampaignPeopleEngagedPage() {
         setIsRefreshing(false);
       }
     },
-    [slug, campaignId, verificationFilter, datePreset, startDate, endDate, sortOrder, debouncedSearch, currentPage]
+    [slug, campaignId, actionFilter, verificationFilter, datePreset, startDate, endDate, sortOrder, debouncedSearch, currentPage]
   );
 
   useEffect(() => {
@@ -262,6 +266,7 @@ export function AdCampaignPeopleEngagedPage() {
   const handleExportCSV = async (mode = 'audience', onlySelected = false) => {
     try {
       const params = {
+        action: actionFilter !== 'all' ? actionFilter : undefined,
         verification: verificationFilter !== 'all' ? verificationFilter : undefined,
         date_preset: datePreset !== 'all' ? datePreset : undefined,
         start_date: startDate || undefined,
@@ -352,17 +357,69 @@ export function AdCampaignPeopleEngagedPage() {
     return phoneStr.replace(/[^0-9]/g, '');
   };
 
+  // Helper for rendering action event pill with appropriate colors and icons
+  const getActionPill = (actionStr, actionLabel) => {
+    const act = (actionStr || '').toLowerCase();
+    const lbl = actionLabel || '';
+
+    if (act.includes('interested') || lbl.toLowerCase().includes('interested')) {
+      return {
+        bg: '#fffbeb',
+        color: '#b45309',
+        border: '#fde68a',
+        icon: <Star size={13} color="#d97706" />,
+        label: lbl || 'Interested',
+      };
+    }
+    if (act.includes('reward') || lbl.toLowerCase().includes('reward')) {
+      return {
+        bg: '#ecfdf5',
+        color: '#065f46',
+        border: '#a7f3d0',
+        icon: <CheckCircle2 size={13} color="#059669" />,
+        label: lbl || 'Rewarded Visit',
+      };
+    }
+    if (act.includes('visit') || act.includes('landing') || lbl.toLowerCase().includes('landing')) {
+      return {
+        bg: '#faf5ff',
+        color: '#7e22ce',
+        border: '#e9d5ff',
+        icon: <ExternalLink size={13} color="#9333ea" />,
+        label: lbl || 'Landing Visit',
+      };
+    }
+    if (act.includes('click') || lbl.toLowerCase().includes('click')) {
+      return {
+        bg: '#eef2ff',
+        color: '#4338ca',
+        border: '#c7d2fe',
+        icon: <MousePointerClick size={13} color="#4f46e5" />,
+        label: lbl || 'Ad Click',
+      };
+    }
+    return {
+      bg: '#f8fafc',
+      color: '#334155',
+      border: '#e2e8f0',
+      icon: <CheckCircle2 size={13} color="#64748b" />,
+      label: lbl || act || 'Activity',
+    };
+  };
+
   const hasActiveFilters = useMemo(() => {
     return (
+      actionFilter !== 'interested' ||
       verificationFilter !== 'all' ||
       datePreset !== 'all' ||
       startDate !== '' ||
       endDate !== '' ||
       debouncedSearch !== ''
     );
-  }, [verificationFilter, datePreset, startDate, endDate, debouncedSearch]);
+  }, [actionFilter, verificationFilter, datePreset, startDate, endDate, debouncedSearch]);
 
   const handleResetFilters = () => {
+    setActionFilter('interested');
     setVerificationFilter('all');
     setDatePreset('all');
     setStartDate('');
@@ -1024,12 +1081,12 @@ export function AdCampaignPeopleEngagedPage() {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '16px',
-            marginBottom: '20px',
+            marginBottom: '16px',
             paddingBottom: '16px',
             borderBottom: '1px solid #f1f5f9',
           }}
         >
-          {/* Section Header with Qualified Count */}
+          {/* Section Header with Active Filter Count Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Users size={18} color="#2563eb" />
@@ -1041,11 +1098,37 @@ export function AdCampaignPeopleEngagedPage() {
                 borderRadius: '12px',
                 fontSize: '12px',
                 fontWeight: 700,
-                backgroundColor: '#ecfdf5',
-                color: '#059669',
+                backgroundColor:
+                  actionFilter === 'interested'
+                    ? '#fffbeb'
+                    : actionFilter === 'rewarded'
+                    ? '#ecfdf5'
+                    : actionFilter === 'clicked'
+                    ? '#eef2ff'
+                    : actionFilter === 'visited_landing_page'
+                    ? '#faf5ff'
+                    : '#f1f5f9',
+                color:
+                  actionFilter === 'interested'
+                    ? '#b45309'
+                    : actionFilter === 'rewarded'
+                    ? '#059669'
+                    : actionFilter === 'clicked'
+                    ? '#4338ca'
+                    : actionFilter === 'visited_landing_page'
+                    ? '#7e22ce'
+                    : '#475569',
               }}
             >
-              Qualified &amp; Rewarded ({engagementsPaginated.total})
+              {actionFilter === 'interested'
+                ? `Interested (${engagementsPaginated.total})`
+                : actionFilter === 'rewarded'
+                ? `Rewarded Visit (${engagementsPaginated.total})`
+                : actionFilter === 'clicked'
+                ? `Ad Click (${engagementsPaginated.total})`
+                : actionFilter === 'visited_landing_page'
+                ? `Landing Visits (${engagementsPaginated.total})`
+                : `All Activity (${engagementsPaginated.total})`}
             </span>
           </div>
 
@@ -1111,6 +1194,69 @@ export function AdCampaignPeopleEngagedPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Activity Type Filter Segment Tabs */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            overflowX: 'auto',
+            paddingBottom: '12px',
+            marginBottom: '16px',
+            borderBottom: '1px solid #f1f5f9',
+          }}
+        >
+          {[
+            { id: 'interested', label: 'Interested', count: summary.interested_count || 0 },
+            { id: 'rewarded', label: 'Rewarded Visit', count: summary.rewarded_count ?? summary.total_rewards_count ?? 0 },
+            { id: 'clicked', label: 'Ad Click', count: summary.click_count || 0 },
+            { id: 'visited_landing_page', label: 'Landing Visits', count: summary.landing_count || 0 },
+            { id: 'all', label: 'All Activity', count: summary.total_engagements || 0 },
+          ].map((tab) => {
+            const isSelected = actionFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setActionFilter(tab.id);
+                  setCurrentPage(1);
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '10px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  border: '1px solid',
+                  borderColor: isSelected ? '#2563eb' : '#e2e8f0',
+                  backgroundColor: isSelected ? '#2563eb' : '#ffffff',
+                  color: isSelected ? '#ffffff' : '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span>{tab.label}</span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    padding: '1px 6px',
+                    borderRadius: '8px',
+                    backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.25)' : '#f1f5f9',
+                    color: isSelected ? '#ffffff' : '#64748b',
+                    fontWeight: 800,
+                  }}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Secondary Filter Controls Bar (Verification, Date Preset, Sorting) */}
@@ -1195,6 +1341,33 @@ export function AdCampaignPeopleEngagedPage() {
               <option value="name_asc">Name A-Z</option>
             </select>
 
+            {actionFilter !== 'interested' && (
+              <span
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  color: '#1e293b',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                Action: {actionFilter.replace(/_/g, ' ')}
+                <X
+                  size={12}
+                  style={{ cursor: 'pointer', color: '#94a3b8' }}
+                  onClick={() => {
+                    setActionFilter('interested');
+                    setCurrentPage(1);
+                  }}
+                />
+              </span>
+            )}
+
             {hasActiveFilters && (
               <button
                 type="button"
@@ -1209,7 +1382,7 @@ export function AdCampaignPeopleEngagedPage() {
           </div>
 
           <div style={{ fontSize: '13px', color: '#64748b' }}>
-            Showing <strong>{engagementItems.length}</strong> of <strong>{engagementsPaginated.total}</strong> results
+            Campaign Audience: <strong>{summary.total_engaged_members} members</strong> &bull; Showing <strong>{engagementsPaginated.filtered_unique_members || (engagementItems.length > 0 ? Array.from(new Set(engagementItems.map((e) => e.user?.id).filter(Boolean))).length : 0)} members</strong> ({engagementsPaginated.total} activity records)
           </div>
         </div>
 
@@ -1336,6 +1509,7 @@ export function AdCampaignPeopleEngagedPage() {
                   const cleanPhone = getCleanWhatsAppNumber(m.phone);
                   const avatarUrl = getAvatarUrl(m.profile_photo);
                   const initials = getInitials(m.name || 'Member');
+                  const pill = getActionPill(item.action, item.action_label);
                   const waText = encodeURIComponent(`Hi ${m.name || 'there'}, regarding our ad campaign "${campaign.campaign_name || 'Campaign'}":`);
                   const emailSubject = encodeURIComponent(`Regarding Campaign: ${campaign.campaign_name || 'Sponsored Campaign'}`);
                   const emailBody = encodeURIComponent(`Hi ${m.name || 'there'},\n\nThank you for engaging with "${campaign.campaign_name || 'our campaign'}".\n\n`);
@@ -1401,16 +1575,16 @@ export function AdCampaignPeopleEngagedPage() {
                               borderRadius: '8px',
                               fontSize: '12px',
                               fontWeight: 700,
-                              backgroundColor: '#ecfdf5',
-                              color: '#065f46',
-                              border: '1px solid #a7f3d0',
+                              backgroundColor: pill.bg,
+                              color: pill.color,
+                              border: `1px solid ${pill.border}`,
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '5px',
                             }}
                           >
-                            <CheckCircle2 size={13} color="#059669" />
-                            <span>{item.action_label || 'Rewarded Visit'}</span>
+                            {pill.icon}
+                            <span>{pill.label}</span>
                           </span>
                           {(item.reward_formatted || item.reward_amount_usd > 0 || item.action === 'rewarded') && (
                             <span style={{ fontSize: '11px', color: '#059669', fontWeight: 700, paddingLeft: '4px' }}>
@@ -1547,6 +1721,7 @@ export function AdCampaignPeopleEngagedPage() {
               const cleanPhone = getCleanWhatsAppNumber(m.phone);
               const avatarUrl = getAvatarUrl(m.profile_photo);
               const initials = getInitials(m.name || 'Member');
+              const pill = getActionPill(item.action, item.action_label);
               const waText = encodeURIComponent(`Hi ${m.name || 'there'}, regarding our ad campaign "${campaign.campaign_name || 'Campaign'}":`);
               const emailSubject = encodeURIComponent(`Regarding Campaign: ${campaign.campaign_name || 'Sponsored Campaign'}`);
               const emailBody = encodeURIComponent(`Hi ${m.name || 'there'},\n\nThank you for engaging with "${campaign.campaign_name || 'our campaign'}".\n\n`);
@@ -1665,7 +1840,7 @@ export function AdCampaignPeopleEngagedPage() {
                       </div>
                     </div>
 
-                    {/* Right: Rewarded Visit Badge */}
+                    {/* Right: Action Type Badge */}
                     <div style={{ flexShrink: 0, marginLeft: 'auto', textAlign: 'right' }}>
                       <span
                         style={{
@@ -1673,17 +1848,17 @@ export function AdCampaignPeopleEngagedPage() {
                           borderRadius: '6px',
                           fontSize: '11px',
                           fontWeight: 700,
-                          backgroundColor: '#ecfdf5',
-                          color: '#065f46',
-                          border: '1px solid #a7f3d0',
+                          backgroundColor: pill.bg,
+                          color: pill.color,
+                          border: `1px solid ${pill.border}`,
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        <CheckCircle2 size={12} color="#059669" />
-                        <span>{item.action_label || 'Rewarded Visit'}</span>
+                        {pill.icon}
+                        <span>{pill.label}</span>
                       </span>
                       {(item.reward_formatted || item.reward_amount_usd > 0 || item.action === 'rewarded') && (
                         <div style={{ fontSize: '11px', color: '#059669', fontWeight: 700, marginTop: '2px' }}>

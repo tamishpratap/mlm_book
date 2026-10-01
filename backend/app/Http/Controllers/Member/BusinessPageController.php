@@ -892,7 +892,7 @@ class BusinessPageController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $businessPage->delete();
+        $businessPage->purge();
 
         if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
             return response()->json([

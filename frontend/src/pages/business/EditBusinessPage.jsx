@@ -157,7 +157,7 @@ export function EditBusinessPage() {
 
     const payload = new FormData();
     Object.keys(formData).forEach((key) => {
-      if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
+      if (formData[key] !== null && formData[key] !== undefined) {
         payload.append(key, formData[key]);
       }
     });
@@ -424,7 +424,7 @@ export function EditBusinessPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
           <div className="form-group">
             <label htmlFor="address" style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>
-              Street Address <span style={{ color: 'red' }}>*</span>
+              Street Address <span style={{ fontWeight: 400, color: '#98a2b3' }}>(Optional)</span>
             </label>
             <input
               type="text"
@@ -433,14 +433,13 @@ export function EditBusinessPage() {
               value={formData.address}
               onChange={handleChange}
               className="biz-search-input"
-              required
-              minLength={3}
+              placeholder="123 Business Way"
             />
           </div>
 
           <div className="form-group">
             <label htmlFor="city" style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>
-              City <span style={{ color: 'red' }}>*</span>
+              City <span style={{ fontWeight: 400, color: '#98a2b3' }}>(Optional)</span>
             </label>
             <input
               type="text"
@@ -449,14 +448,13 @@ export function EditBusinessPage() {
               value={formData.city}
               onChange={handleChange}
               className="biz-search-input"
-              required
-              minLength={2}
+              placeholder="New York"
             />
           </div>
 
           <div className="form-group">
             <label htmlFor="state" style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>
-              State / Region <span style={{ color: 'red' }}>*</span>
+              State / Region <span style={{ fontWeight: 400, color: '#98a2b3' }}>(Optional)</span>
             </label>
             <input
               type="text"
@@ -465,8 +463,7 @@ export function EditBusinessPage() {
               value={formData.state}
               onChange={handleChange}
               className="biz-search-input"
-              required
-              minLength={2}
+              placeholder="NY"
             />
           </div>
 

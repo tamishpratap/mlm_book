@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, PlusCircle, Crop, Trash2, ShieldCheck, Phone } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Crop, Trash2, ShieldCheck, Phone, UploadCloud } from 'lucide-react';
 import businessApi from '../../api/businessApi';
 import useAuth from '../../hooks/useAuth';
 import { ImageAdjustmentModal } from '../../components/posts/modals/ImageAdjustmentModal';
@@ -651,16 +651,63 @@ export function CreateBusinessPage() {
             <label htmlFor="logo" style={{ fontSize: '13.5px', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
               Business Logo <span style={{ fontWeight: 400, color: '#64748b' }}>(JPG, PNG, WEBP - Max 2MB)</span>
             </label>
-            <input
-              ref={logoInputRef}
-              type="file"
-              id="logo"
-              name="logo"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleLogoChange}
-              className="biz-search-input"
-              style={{ padding: '8px 12px', fontSize: '12px' }}
-            />
+            <label
+              htmlFor="logo"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '20px 16px',
+                borderRadius: '10px',
+                border: '1.5px dashed #cbd5e1',
+                background: '#f8fafc',
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'border-color 0.2s, background-color 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#2563eb';
+                e.currentTarget.style.backgroundColor = '#eff6ff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#cbd5e1';
+                e.currentTarget.style.backgroundColor = '#f8fafc';
+              }}
+            >
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: '#e0e7ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#3b82f6',
+                }}
+              >
+                <UploadCloud size={20} aria-hidden="true" />
+              </div>
+              <div>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b', display: 'block' }}>
+                  {logoFile ? logoFile.name : 'Click to upload logo'}
+                </span>
+                <span style={{ fontSize: '11.5px', color: '#64748b', display: 'block', marginTop: '2px' }}>
+                  JPG, PNG or WEBP (Max 2MB)
+                </span>
+              </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                id="logo"
+                name="logo"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleLogoChange}
+                style={{ display: 'none' }}
+              />
+            </label>
             {logoPreview && (
               <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <img
@@ -701,16 +748,63 @@ export function CreateBusinessPage() {
             <label htmlFor="cover_photo" style={{ fontSize: '13.5px', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
               Cover Banner <span style={{ fontWeight: 400, color: '#64748b' }}>(JPG, PNG, WEBP - Max 5MB)</span>
             </label>
-            <input
-              ref={coverInputRef}
-              type="file"
-              id="cover_photo"
-              name="cover_photo"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleCoverChange}
-              className="biz-search-input"
-              style={{ padding: '8px 12px', fontSize: '12px' }}
-            />
+            <label
+              htmlFor="cover_photo"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '20px 16px',
+                borderRadius: '10px',
+                border: '1.5px dashed #cbd5e1',
+                background: '#f8fafc',
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'border-color 0.2s, background-color 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#2563eb';
+                e.currentTarget.style.backgroundColor = '#eff6ff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#cbd5e1';
+                e.currentTarget.style.backgroundColor = '#f8fafc';
+              }}
+            >
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: '#e0e7ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#3b82f6',
+                }}
+              >
+                <UploadCloud size={20} aria-hidden="true" />
+              </div>
+              <div>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b', display: 'block' }}>
+                  {coverFile ? coverFile.name : 'Click to upload cover banner'}
+                </span>
+                <span style={{ fontSize: '11.5px', color: '#64748b', display: 'block', marginTop: '2px' }}>
+                  JPG, PNG or WEBP (Max 5MB)
+                </span>
+              </div>
+              <input
+                ref={coverInputRef}
+                type="file"
+                id="cover_photo"
+                name="cover_photo"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleCoverChange}
+                style={{ display: 'none' }}
+              />
+            </label>
             {coverPreview && (
               <div style={{ marginTop: '10px' }}>
                 <div style={{ position: 'relative', width: '100%', maxHeight: '140px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', background: '#0f172a' }}>
