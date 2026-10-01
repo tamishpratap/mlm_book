@@ -90,10 +90,12 @@ export function HomeHero() {
             <ArrowRight size={15} aria-hidden="true" />
           </Link>
 
+          {/*
           <Link className="member-button member-button--secondary hero-btn" to="/member/watch">
             <TvMinimalPlay size={17} aria-hidden="true" />
             <span>Watch Hub</span>
           </Link>
+          */}
 
           <Link className="member-button member-button--secondary hero-btn" to="/member/community">
             <Users size={17} aria-hidden="true" />

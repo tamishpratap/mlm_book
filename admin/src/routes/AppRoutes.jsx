@@ -45,6 +45,7 @@ import { RewardRulesPage, RewardHistoryPage } from '../pages/rewards';
 import { DepositSettingsPage } from '../pages/funds/DepositSettingsPage';
 import { DepositsListPage } from '../pages/funds/DepositsListPage';
 import { WithdrawalsListPage } from '../pages/funds/WithdrawalsListPage';
+import { WithdrawalSettingsPage } from '../pages/funds/WithdrawalSettingsPage';
 
 // Communities Module Pages
 import { CommunitiesListPage } from '../pages/communities/CommunitiesListPage';
@@ -156,7 +157,9 @@ export function AppRoutes() {
         <Route path="funds/deposit-settings" element={<DepositSettingsPage />} />
         <Route path="funds/deposits" element={<DepositsListPage />} />
         <Route path="funds/withdrawals" element={<WithdrawalsListPage />} />
+        <Route path="funds/withdrawal-settings" element={<WithdrawalSettingsPage />} />
         <Route path="withdrawals" element={<Navigate to="/admin/funds/withdrawals" replace />} />
+        <Route path="withdrawal-settings" element={<Navigate to="/admin/funds/withdrawal-settings" replace />} />
         <Route path="funds" element={<Navigate to="/admin/funds/deposits" replace />} />
 
         {/* Communities Module */}

@@ -41,6 +41,17 @@ export const withdrawalsApi = {
    * @param {Object} [data] - { rejection_reason, admin_notes }
    */
   rejectWithdrawal: (id, data = {}) => http.post(`/funds/withdrawals/${id}/reject`, data),
+
+  /**
+   * Get dynamic withdrawal configuration settings (service charge %, limits, status, instructions)
+   */
+  getSettings: () => http.get('/funds/withdrawals/settings'),
+
+  /**
+   * Update dynamic withdrawal configuration settings
+   * @param {Object} data - { withdrawal_service_charge_percent, minimum_withdrawal_amount, maximum_withdrawal_amount, withdrawal_status, withdrawal_instructions }
+   */
+  updateSettings: (data) => http.post('/funds/withdrawals/settings', data),
 };
 
 export default withdrawalsApi;

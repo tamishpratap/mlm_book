@@ -73,8 +73,24 @@ class WithdrawalController extends Controller
                 'is_verified' => $member->is_verified,
             ],
             'config' => [
+                'service_charge_percent' => (float) (Setting::get('withdrawal_service_charge_percent') ?? Setting::get('withdrawal_fee_percent') ?? self::SERVICE_CHARGE_PERCENT),
+                'service_charge_percent' => (float) Setting::get('withdrawal_service_charge_percent', self::SERVICE_CHARGE_PERCENT),
+                'minimum_amount' => (float) Setting::get('minimum_withdrawal_amount', self::MINIMUM_WITHDRAWAL_AMOUNT),
+                'maximum_amount' => (float) Setting::get('maximum_withdrawal_amount', 10000.00),
+                'withdrawal_status' => Setting::get('withdrawal_status', 'enabled'),
+                'withdrawal_instructions' => Setting::get(
+                    'withdrawal_instructions',
+                    'Withdrawals are processed in USDT (BEP-20) to your verified payout wallet address. Processing takes 15-60 minutes after admin approval.'
+                ),
+
                 'service_charge_percent' => (float) Setting::get('withdrawal_fee_percent', self::SERVICE_CHARGE_PERCENT),
                 'minimum_amount' => (float) Setting::get('minimum_withdrawal_amount', self::MINIMUM_WITHDRAWAL_AMOUNT),
+                'maximum_amount' => (float) Setting::get('maximum_withdrawal_amount', 10000.00),
+                'withdrawal_status' => Setting::get('withdrawal_status', 'enabled'),
+                'withdrawal_instructions' => Setting::get(
+                    'withdrawal_instructions',
+                    'Withdrawals are processed in USDT (BEP-20) to your verified payout wallet address. Processing takes 15-60 minutes after admin approval.'
+                ),
                 'currency' => 'USD',
                 'currency_symbol' => '$',
             ],
@@ -92,7 +108,7 @@ class WithdrawalController extends Controller
     }
 
     /**
-     * Submit a new withdrawal request with 10% service charge deduction.
+     * Submit a new withdrawal request with dynamic service charge deduction.
      */
     public function store(Request $request): JsonResponse
     {
@@ -106,25 +122,57 @@ class WithdrawalController extends Controller
             ], 401);
         }
 
+        $withdrawalStatus = Setting::get('withdrawal_status', 'enabled');
+        if ($withdrawalStatus === 'disabled') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Withdrawals are temporarily disabled for platform maintenance. Please check back later.',
+            ], 422);
+        }
+
+        $minWithdrawal = (float) Setting::get('minimum_withdrawal_amount', self::MINIMUM_WITHDRAWAL_AMOUNT);
+        $maxWithdrawal = (float) Setting::get('maximum_withdrawal_amount', 10000.00);
+
         $request->validate([
             'gross_amount' => [
                 'required',
                 'numeric',
-                'min:' . self::MINIMUM_WITHDRAWAL_AMOUNT,
+                'min:' . $minWithdrawal,
                 'max:1000000',
             ],
             'remarks' => ['nullable', 'string', 'max:500'],
         ], [
             'gross_amount.required' => 'Please enter the withdrawal amount.',
             'gross_amount.numeric' => 'The withdrawal amount must be a valid number.',
-            'gross_amount.min' => 'Minimum withdrawal amount is $' . number_format(self::MINIMUM_WITHDRAWAL_AMOUNT, 2) . '.',
+            'gross_amount.min' => 'Minimum withdrawal amount is $' . number_format($minWithdrawal, 2) . '.',
         ]);
 
         $grossAmount = round((float) $request->input('gross_amount'), 2);
+      
+        if ($maxWithdrawal > 0 && $grossAmount > $maxWithdrawal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maximum withdrawal amount allowed per request is $' . number_format($maxWithdrawal, 2) . '.',
+            ], 422);
+        }
+        if ($maxWithdrawal > 0 && $grossAmount > $maxWithdrawal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maximum withdrawal amount allowed per request is $' . number_format($maxWithdrawal, 2) . '.',
+            ], 422);
+        }
 
+        // Dynamic Service Charge Deduction
+        $feePercent = round((float) (Setting::get('withdrawal_service_charge_percent') ?? Setting::get('withdrawal_fee_percent') ?? self::SERVICE_CHARGE_PERCENT), 2);
+        $serviceCharge = round($grossAmount * ($feePercent / 100), 2);
+        // Dynamic Service Charge Deduction
+        $feePercent = round((float) Setting::get('withdrawal_service_charge_percent', self::SERVICE_CHARGE_PERCENT), 2);
+        $serviceCharge = round($grossAmount * ($feePercent / 100), 2);
+      
         // Service Charge Deduction (0.00% by default; service charges apply only on fund deposits via admin setting)
         $serviceChargePercent = (float) Setting::get('withdrawal_fee_percent', self::SERVICE_CHARGE_PERCENT);
         $serviceCharge = round($grossAmount * ($serviceChargePercent / 100), 2);
+
         $netAmount = round($grossAmount - $serviceCharge, 2);
 
         // Generate unique human-readable Request ID: e.g. WD20260918-XXXXXX
@@ -202,7 +250,7 @@ class WithdrawalController extends Controller
                 'request_id' => $withdrawal->request_id,
                 'gross_amount' => $withdrawal->gross_amount,
                 'service_charge' => $withdrawal->service_charge,
-                'service_charge_percent' => self::SERVICE_CHARGE_PERCENT . '%',
+                'service_charge_percent' => $feePercent . '%',
                 'net_amount' => $withdrawal->net_amount,
                 'status' => $withdrawal->status,
                 'request_date' => $withdrawal->request_date->toIso8601String(),
