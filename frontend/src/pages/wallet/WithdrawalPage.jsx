@@ -23,15 +23,38 @@ import accountApi from '../../api/accountApi';
 import useAuth from '../../hooks/useAuth';
 import { getMediaUrl } from '../../utils/assetHelper';
 import { Web3WalletPage } from './Web3WalletPage';
+import { WalletIntelligenceCard } from '../dashboard/components/WalletIntelligenceCard';
+import { AdCampaignsOverview } from '../dashboard/components/AdCampaignsOverview';
+import { ReferralNetworkCard } from '../dashboard/components/ReferralNetworkCard';
+import dashboardApi from '../../api/dashboardApi';
 import '../../styles/member-withdrawal.css';
+import '../../styles/member-dashboard-hub.css';
 
-function AnalyticsRewardsSection() {
+function WalletAnalyticsSection() {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isDashLoading, setIsDashLoading] = useState(true);
+  const [dashError, setDashError] = useState(null);
+
   const [analyticsData, setAnalyticsData] = useState([]);
   const [summaryStats, setSummaryStats] = useState({ today_earned: 0, total_earned: 0 });
   const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(true);
   const [previewCampaign, setPreviewCampaign] = useState(null);
 
-  const fetchAnalytics = useCallback(async () => {
+  const fetchDashboardAnalytics = useCallback(async () => {
+    try {
+      setIsDashLoading(true);
+      setDashError(null);
+      const data = await dashboardApi.getDashboard();
+      setDashboardData(data);
+    } catch (err) {
+      console.error('Failed to load dashboard analytics:', err);
+      setDashError(err.response?.data?.message || 'Unable to load analytics data.');
+    } finally {
+      setIsDashLoading(false);
+    }
+  }, []);
+
+  const fetchRewardsHistory = useCallback(async () => {
     try {
       setIsAnalyticsLoading(true);
       const res = await accountApi.getRewardHistory({ per_page: 50 });
@@ -42,19 +65,56 @@ function AnalyticsRewardsSection() {
         }
       }
     } catch (err) {
-      console.error('Failed to load analytics data:', err);
+      console.error('Failed to load rewards history:', err);
     } finally {
       setIsAnalyticsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [fetchAnalytics]);
+    fetchDashboardAnalytics();
+    fetchRewardsHistory();
+  }, [fetchDashboardAnalytics, fetchRewardsHistory]);
+
+  const handleRefreshAll = () => {
+    fetchDashboardAnalytics();
+    fetchRewardsHistory();
+  };
 
   return (
-    <>
-      <section className="withdrawal-stats-grid" aria-label="Analytics Statistics" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+      {isDashLoading && !dashboardData ? (
+        <div className="withdrawal-card" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+          <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px' }} />
+          <p style={{ margin: 0, fontSize: '0.95rem' }}>Loading analytics intelligence...</p>
+        </div>
+      ) : dashError && !dashboardData ? (
+        <div className="withdrawal-alert withdrawal-alert--error" role="alert">
+          <AlertCircle size={20} />
+          <div>
+            <strong>Analytics Error</strong>
+            <p style={{ margin: '0.2rem 0 0' }}>{dashError}</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* 1. Wallet & Financial Intelligence Center */}
+          <WalletIntelligenceCard wallets={dashboardData?.wallets} />
+
+          {/* 2. Advertising Campaigns Performance */}
+          <AdCampaignsOverview adCampaigns={dashboardData?.ad_campaigns} />
+
+          {/* 3. Referral Network & Rank Status */}
+          <ReferralNetworkCard referralNetwork={dashboardData?.referral_network} />
+        </>
+      )}
+
+      {/* 4. Today / Total Earned Rewards Stats */}
+      <section
+        className="withdrawal-stats-grid"
+        aria-label="Analytics Statistics"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}
+      >
         <div className="withdrawal-stat-card">
           <div className="withdrawal-stat-icon withdrawal-stat-icon--success">
             <DollarSign size={22} />
@@ -80,189 +140,190 @@ function AnalyticsRewardsSection() {
         </div>
       </section>
 
+      {/* 5. Interested Posts (Analytics Data) Table */}
       <section className="withdrawal-card" aria-label="Analytics Rewards">
-      <div className="withdrawal-card__header">
-        <div className="withdrawal-history-header" style={{ marginBottom: 0 }}>
-          <h2 className="withdrawal-history-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <BarChart3 size={20} color="#2563eb" />
-            <span>Interested Posts (Analytics Data)</span>
-          </h2>
+        <div className="withdrawal-card__header">
+          <div className="withdrawal-history-header" style={{ marginBottom: 0 }}>
+            <h2 className="withdrawal-history-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <BarChart3 size={20} color="#2563eb" />
+              <span>Interested Posts (Analytics Data)</span>
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="withdrawal-quick-btn"
+            onClick={handleRefreshAll}
+            disabled={isAnalyticsLoading || isDashLoading}
+            title="Refresh analytics"
+            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            <RefreshCw size={14} className={isAnalyticsLoading || isDashLoading ? 'animate-spin' : ''} />
+            <span>Refresh</span>
+          </button>
         </div>
-        <button
-          type="button"
-          className="withdrawal-quick-btn"
-          onClick={fetchAnalytics}
-          disabled={isAnalyticsLoading}
-          title="Refresh analytics"
-          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-        >
-          <RefreshCw size={14} className={isAnalyticsLoading ? 'animate-spin' : ''} />
-          <span>Refresh</span>
-        </button>
-      </div>
 
-      <div className="withdrawal-card__body" style={{ padding: 0 }}>
-        {isAnalyticsLoading && analyticsData.length === 0 ? (
-          <div className="withdrawal-empty-state">
-            <RefreshCw size={32} className="animate-spin" style={{ margin: '0 auto 1rem' }} />
-            <p>Loading analytics data...</p>
-          </div>
-        ) : analyticsData.length === 0 ? (
-          <div className="withdrawal-empty-state">
-            <div className="withdrawal-empty-icon">
-              <BarChart3 size={28} />
+        <div className="withdrawal-card__body" style={{ padding: 0 }}>
+          {isAnalyticsLoading && analyticsData.length === 0 ? (
+            <div className="withdrawal-empty-state">
+              <RefreshCw size={32} className="animate-spin" style={{ margin: '0 auto 1rem' }} />
+              <p>Loading rewards history...</p>
             </div>
-            <h3 style={{ fontSize: '1.1rem', color: '#1e293b', margin: '0 0 0.35rem' }}>
-              No Analytics Data Yet
-            </h3>
-            <p style={{ margin: 0, fontSize: '0.9rem' }}>
-              When you show interest in posts and earn rewards, they will appear here.
-            </p>
-          </div>
-        ) : (
-          <div className="withdrawal-table-responsive">
-            <table className="withdrawal-table">
-              <thead>
-                <tr>
-                  <th>S NO.</th>
-                  <th>Date</th>
-                  <th>Ad Campaign</th>
-                  <th>Business Page</th>
-                  <th>Reward Earned</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analyticsData.map((item, index) => (
-                  <tr key={item.id}>
-                    <td style={{ color: '#475569', fontWeight: 500, fontSize: '0.85rem' }}>
-                      {index + 1}
-                    </td>
-                    <td style={{ color: '#64748b', fontSize: '0.85rem' }}>
-                      {item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        }) : '-'}
-                    </td>
-                    <td style={{ fontWeight: 600, color: '#1e293b' }}>
-                      {item.campaign?.campaign_name || 'N/A'}
-                    </td>
-                    <td style={{ color: '#475569', fontSize: '0.9rem' }}>
-                      {item.campaign?.business_page?.name || 'N/A'}
-                    </td>
-                    <td style={{ color: '#059669', fontWeight: 700 }}>
-                      ${parseFloat(item.reward_amount_usd || 0).toFixed(4)}
-                    </td>
-                    <td>
-                      <span className={`status-badge status-badge--${item.status === 'credited' ? 'approved' : 'pending'}`}>
-                        {item.status || 'Credited'}
-                      </span>
-                    </td>
-                    <td>
-                      {item.campaign ? (
-                        <button
-                          onClick={() => setPreviewCampaign(item.campaign)}
-                          className="withdrawal-quick-btn"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', border: 'none', background: 'none', color: '#2563eb', cursor: 'pointer', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
-                        >
-                          <Eye size={14} />
-                          <span>View</span>
-                        </button>
-                      ) : item.landing_page_url ? (
-                        <a 
-                          href={item.landing_page_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="withdrawal-quick-btn"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
-                        >
-                          <Eye size={14} />
-                          <span>Link</span>
-                        </a>
-                      ) : (
-                        <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>N/A</span>
-                      )}
-                    </td>
+          ) : analyticsData.length === 0 ? (
+            <div className="withdrawal-empty-state">
+              <div className="withdrawal-empty-icon">
+                <BarChart3 size={28} />
+              </div>
+              <h3 style={{ fontSize: '1.1rem', color: '#1e293b', margin: '0 0 0.35rem' }}>
+                No Analytics Data Yet
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                When you show interest in posts and earn rewards, they will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="withdrawal-table-responsive">
+              <table className="withdrawal-table">
+                <thead>
+                  <tr>
+                    <th>S NO.</th>
+                    <th>Date</th>
+                    <th>Ad Campaign</th>
+                    <th>Business Page</th>
+                    <th>Reward Earned</th>
+                    <th>Status</th>
+                    <th>Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-      
-      {/* Preview Modal */}
-      {previewCampaign && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-          }}
-          onClick={() => setPreviewCampaign(null)}
-        >
+                </thead>
+                <tbody>
+                  {analyticsData.map((item, index) => (
+                    <tr key={item.id}>
+                      <td style={{ color: '#475569', fontWeight: 500, fontSize: '0.85rem' }}>
+                        {index + 1}
+                      </td>
+                      <td style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                        {item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          }) : '-'}
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#1e293b' }}>
+                        {item.campaign?.campaign_name || 'N/A'}
+                      </td>
+                      <td style={{ color: '#475569', fontSize: '0.9rem' }}>
+                        {item.campaign?.business_page?.name || 'N/A'}
+                      </td>
+                      <td style={{ color: '#059669', fontWeight: 700 }}>
+                        ${parseFloat(item.reward_amount_usd || 0).toFixed(4)}
+                      </td>
+                      <td>
+                        <span className={`status-badge status-badge--${item.status === 'credited' ? 'approved' : 'pending'}`}>
+                          {item.status || 'Credited'}
+                        </span>
+                      </td>
+                      <td>
+                        {item.campaign ? (
+                          <button
+                            onClick={() => setPreviewCampaign(item.campaign)}
+                            className="withdrawal-quick-btn"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', border: 'none', background: 'none', color: '#2563eb', cursor: 'pointer', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                          >
+                            <Eye size={14} />
+                            <span>View</span>
+                          </button>
+                        ) : item.landing_page_url ? (
+                          <a 
+                            href={item.landing_page_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="withdrawal-quick-btn"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                          >
+                            <Eye size={14} />
+                            <span>Link</span>
+                          </a>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>N/A</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Preview Modal */}
+        {previewCampaign && (
           <div 
             style={{
-              background: '#fff',
-              borderRadius: '12px',
-              width: '90%',
-              maxWidth: '500px',
-              maxHeight: '90vh',
-              overflow: 'auto',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              position: 'fixed',
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={() => setPreviewCampaign(null)}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid #e2e8f0' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>Post Preview</h3>
-              <button 
-                onClick={() => setPreviewCampaign(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div style={{ padding: '1rem' }}>
-              {previewCampaign.post ? (
-                <>
-                  <p style={{ margin: '0 0 1rem', fontSize: '0.95rem', color: '#334155', whiteSpace: 'pre-wrap' }}>
-                    {previewCampaign.post.body}
-                  </p>
-                  {previewCampaign.post.media_url && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {previewCampaign.post.media_type === 'video' ? (
-                        <video 
-                          src={previewCampaign.post.media_url} 
-                          controls
-                          style={{ width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0' }} 
-                        />
-                      ) : (
-                        <img 
-                          src={previewCampaign.post.media_url} 
-                          alt="Post Media" 
-                          style={{ width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0' }} 
-                        />
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p style={{ margin: 0, color: '#64748b', textAlign: 'center', padding: '2rem 0' }}>Post content not available.</p>
-              )}
+            <div 
+              style={{
+                background: '#fff',
+                borderRadius: '12px',
+                width: '90%',
+                maxWidth: '500px',
+                maxHeight: '90vh',
+                overflow: 'auto',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid #e2e8f0' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>Post Preview</h3>
+                <button 
+                  onClick={() => setPreviewCampaign(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div style={{ padding: '1rem' }}>
+                {previewCampaign.post ? (
+                  <>
+                    <p style={{ margin: '0 0 1rem', fontSize: '0.95rem', color: '#334155', whiteSpace: 'pre-wrap' }}>
+                      {previewCampaign.post.body}
+                    </p>
+                    {previewCampaign.post.media_url && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {previewCampaign.post.media_type === 'video' ? (
+                          <video 
+                            src={previewCampaign.post.media_url} 
+                            controls
+                            style={{ width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0' }} 
+                          />
+                        ) : (
+                          <img 
+                            src={previewCampaign.post.media_url} 
+                            alt="Post Media" 
+                            style={{ width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0' }} 
+                          />
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p style={{ margin: 0, color: '#64748b', textAlign: 'center', padding: '2rem 0' }}>Post content not available.</p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </section>
-    </>
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -413,7 +474,7 @@ export function WithdrawalPage() {
             style={{ padding: '0.65rem 1.25rem', border: 'none', background: activeTab === 'analytics' ? '#176bff' : '#f1f5f9', color: activeTab === 'analytics' ? '#ffffff' : '#176bff', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
           >
             <BarChart3 size={18} />
-            Analytics Rewards
+            Analytics
           </button>
           <button
             className={`wallet-tab ${activeTab === 'wallet_address' ? 'is-active' : ''}`}
@@ -427,7 +488,7 @@ export function WithdrawalPage() {
       </div>
 
       {activeTab === 'analytics' ? (
-        <AnalyticsRewardsSection />
+        <WalletAnalyticsSection />
       ) : activeTab === 'wallet_address' ? (
         <Web3WalletPage embedded={true} />
       ) : (

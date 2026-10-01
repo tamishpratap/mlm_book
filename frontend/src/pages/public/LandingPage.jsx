@@ -107,6 +107,7 @@ export function LandingPage() {
       </main>
 
 import { useContext, useState, useRef, useEffect } from 'react';
+import { useContext, useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BrandingContext } from '../../context/brandingContextDef';
 import { AuthContext } from '../../context/AuthContext';
@@ -300,13 +301,172 @@ export function LandingPage() {
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    const heroSection = canvas.closest('.pub-hero-section') || canvas.parentElement;
+
+    let width = 0;
+    let height = 0;
+
+    const resize = () => {
+      const rect = heroSection.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Mouse interaction
+    let mouse = { x: null, y: null, radius: 160 };
+    const handleMouseMove = (e) => {
+      const rect = heroSection.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    };
+    const handleMouseLeave = () => {
+      mouse.x = null;
+      mouse.y = null;
+    };
+
+    heroSection.addEventListener('mousemove', handleMouseMove);
+    heroSection.addEventListener('mouseleave', handleMouseLeave);
+
+    // Network Node Configuration
+    const count = Math.min(Math.max(Math.floor(width / 26), 32), 65);
+    const nodes = [];
+    const colors = ['#3b82f6', '#10b981', '#6366f1', '#0ea5e9'];
+
+    for (let i = 0; i < count; i++) {
+      nodes.push({
+        x: Math.random() * (width || 1200),
+        y: Math.random() * (height || 600),
+        vx: (Math.random() - 0.5) * 1.1,
+        vy: (Math.random() - 0.5) * 1.1,
+        radius: Math.random() * 2.5 + 2.5,
+        color: colors[i % colors.length],
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: 0.03 + Math.random() * 0.02,
+      });
+    }
+
+    const maxDist = 140;
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Draw connecting web lines between nearby nodes
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < maxDist) {
+            const alpha = (1 - dist / maxDist) * 0.35;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.strokeStyle = `rgba(79, 125, 243, ${alpha})`;
+            ctx.lineWidth = 1.3;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 2. Draw dynamic interactive connections to mouse cursor
+      if (mouse.x !== null && mouse.y !== null) {
+        for (let i = 0; i < nodes.length; i++) {
+          const dx = nodes[i].x - mouse.x;
+          const dy = nodes[i].y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < mouse.radius) {
+            const alpha = (1 - dist / mouse.radius) * 0.6;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 3. Move, pulse, and render glowing nodes
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        n.x += n.vx;
+        n.y += n.vy;
+
+        if (n.x < 0 || n.x > width) n.vx *= -1;
+        if (n.y < 0 || n.y > height) n.vy *= -1;
+
+        n.pulse += n.pulseSpeed;
+        const currentRadius = n.radius + Math.sin(n.pulse) * 0.9;
+
+        // Outer glow halo
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, currentRadius + 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = n.color;
+        ctx.globalAlpha = 0.25;
+        ctx.fill();
+
+        // Inner solid core
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, currentRadius, 0, Math.PI * 2);
+        ctx.fillStyle = n.color;
+        ctx.globalAlpha = 0.9;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      heroSection.removeEventListener('mousemove', handleMouseMove);
+      heroSection.removeEventListener('mouseleave', handleMouseLeave);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
 
   return (
     <div>
       {/* ====================================================================
           1. HERO SECTION (Living Network Constellation & Ecosystem Showcase)
+          1. HERO SECTION (Living Network Constellation & Ecosystem Showcase)
           ==================================================================== */}
       <section className="pub-hero-section">
+        {/* Modern Fluid Aurora & Interactive Network Layer */}
+        <div className="pub-hero-aurora-bg" aria-hidden="true">
+          {/* Live Interactive Constellation Canvas */}
+          <canvas ref={canvasRef} className="pub-network-canvas" />
+
+          {/* Subtle Clean Tech Dot Grid */}
+          <div className="pub-hero-dots"></div>
+
+          {/* Morphing Liquid Aurora Mesh Gradient Blobs */}
+          <div className="pub-aurora-blob blob-1"></div>
+          <div className="pub-aurora-blob blob-2"></div>
+          <div className="pub-aurora-blob blob-3"></div>
+          <div className="pub-aurora-blob blob-4"></div>
         {/* Modern Fluid Aurora & Interactive Network Layer */}
         <div className="pub-hero-aurora-bg" aria-hidden="true">
           {/* Live Interactive Constellation Canvas */}
@@ -396,7 +556,42 @@ export function LandingPage() {
                   <div className="pub-card-url-pill">
                     <Lock className="w-3 h-3 text-emerald-600" />
                     <span>mlmbook.com/community</span>
+            {/* Right Visual: Living Ecosystem Architecture Card */}
+            <div className="pub-hero-visual">
+              <div className="pub-visual-glow-ring"></div>
+
+              <div className="pub-hero-mockup-card">
+                {/* 1. Window Header Bar */}
+                <div className="pub-hero-card-header">
+                  <div className="pub-card-mac-dots">
+                    <span className="dot red"></span>
+                    <span className="dot yellow"></span>
+                    <span className="dot green"></span>
                   </div>
+                  <div className="pub-card-url-pill">
+                    <Lock className="w-3 h-3 text-emerald-600" />
+                    <span>mlmbook.com/community</span>
+                  </div>
+                  <div className="pub-card-status-badge">
+                    <span className="pub-radar-dot"></span>
+                    <span>100% Free Access</span>
+                  </div>
+                </div>
+
+                {/* 2. Interactive Social Community Feed Spotlight */}
+                <div className="pub-hero-social-post">
+                  <div className="pub-post-author-row">
+                    <div className="pub-author-info">
+                      <div className="pub-author-avatar">MB</div>
+                      <div>
+                        <div className="pub-author-name">
+                          <span>Direct Selling Community</span>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                        </div>
+                        <div className="pub-author-sub">Global Networkers Feed • Live</div>
+                      </div>
+                    </div>
+                    <span className="pub-post-badge">0% Shadowbans</span>
                   <div className="pub-card-status-badge">
                     <span className="pub-radar-dot"></span>
                     <span>100% Free Access</span>
@@ -435,7 +630,37 @@ export function LandingPage() {
                     </span>
                   </div>
                 </div>
+                  <p className="pub-post-content">
+                    "Connect with top direct selling leaders worldwide. Share business presentations, recruit motivated partners, and earn verified rewards — completely free without censorship."
+                  </p>
 
+                  <div className="pub-post-actions-row">
+                    <div className="pub-post-stats">
+                      <span>❤️ 342 Likes</span>
+                      <span>💬 58 Comments</span>
+                      <span>🔗 24 Shares</span>
+                    </div>
+                    <span className="pub-reward-chip">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Reward Active</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3. Three Spacious, High-Impact Value Pillars (NO ghic-pich!) */}
+                <div className="pub-hero-triad">
+                  <div className="pub-triad-card">
+                    <div className="pub-triad-icon pub-icon-purple">
+                      <TvMinimalPlay className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="pub-triad-title">Watch & Earn</div>
+                    <div className="pub-triad-value" style={{ color: '#7e22ce' }}>$0.025 – $1.00</div>
+                    <div className="pub-triad-sub">Per Video View</div>
+                  </div>
+
+                  <div className="pub-triad-card">
+                    <div className="pub-triad-icon pub-icon-cyan">
+                      <Users className="w-5 h-5 text-sky-600" />
                 {/* 3. Three Spacious, High-Impact Value Pillars (NO ghic-pich!) */}
                 <div className="pub-hero-triad">
                   <div className="pub-triad-card">
@@ -454,8 +679,18 @@ export function LandingPage() {
                     <div className="pub-triad-title">Team Network</div>
                     <div className="pub-triad-value" style={{ color: '#0284c7' }}>5 Free Tiers</div>
                     <div className="pub-triad-sub">0 Joining Fee</div>
+                    <div className="pub-triad-title">Team Network</div>
+                    <div className="pub-triad-value" style={{ color: '#0284c7' }}>5 Free Tiers</div>
+                    <div className="pub-triad-sub">0 Joining Fee</div>
                   </div>
 
+                  <div className="pub-triad-card">
+                    <div className="pub-triad-icon pub-icon-emerald">
+                      <Wallet className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="pub-triad-title">Web3 Payouts</div>
+                    <div className="pub-triad-value" style={{ color: '#059669' }}>100% Payout</div>
+                    <div className="pub-triad-sub">Instant USDT</div>
                   <div className="pub-triad-card">
                     <div className="pub-triad-icon pub-icon-emerald">
                       <Wallet className="w-5 h-5 text-emerald-600" />
@@ -475,11 +710,21 @@ export function LandingPage() {
                   <Link to="/rewards" className="pub-free-banner-link">
                     <span>View Reward Rules</span>
                     <ChevronRight className="w-3.5 h-3.5" />
+                {/* 4. Welcoming Trust & Benefits Ribbon */}
+                <div className="pub-hero-free-banner">
+                  <div className="pub-free-banner-text">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>Free Registration • No Investment Required</span>
+                  </div>
+                  <Link to="/rewards" className="pub-free-banner-link">
+                    <span>View Reward Rules</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
             </div>
           </div>
+
 
 
         </div>
@@ -630,6 +875,7 @@ export function LandingPage() {
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
                   <span>Multi-Tier Community Team Connections</span>
+                  <span>Multi-Tier Community Team Connections</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
@@ -658,9 +904,11 @@ export function LandingPage() {
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
                   <span>Dual Wallet: Fund Wallet vs Reward</span>
+                  <span>Dual Wallet: Fund Wallet vs Reward</span>
                 </li>
                 <li className="pub-checklist-item">
                   <CheckCircle2 className="w-4 h-4 pub-check-icon" />
+                  <span>100% Payout on Fund Wallet Withdrawals</span>
                   <span>100% Payout on Fund Wallet Withdrawals</span>
                 </li>
                 <li className="pub-checklist-item">
@@ -672,6 +920,7 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
 
 
 
@@ -841,6 +1090,7 @@ export function LandingPage() {
             <h2 className="pub-section-title">How MLM Book Works</h2>
             <p className="pub-section-desc">
               Joining and succeeding on MLM Book is straightforward. Here is how active members and entrepreneurs turn their daily networking into predictable rewards.
+              Joining and succeeding on MLM Book is straightforward. Here is how active members and entrepreneurs turn their daily networking into predictable rewards.
             </p>
           </div>
 
@@ -864,6 +1114,7 @@ export function LandingPage() {
               </h3>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
                 Verify your WhatsApp or Mobile number with instant OTP to secure your account, prevent multi-accounting, and unlock your Reward for instant withdrawals.
+                Verify your WhatsApp or Mobile number with instant OTP to secure your account, prevent multi-accounting, and unlock your Reward for instant withdrawals.
               </p>
             </div>
 
@@ -885,6 +1136,7 @@ export function LandingPage() {
                 Scale & Collect USDT
               </h3>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
+                All commissions from ad views, direct introducers, and downline volume credit instantly to your Reward account. Withdraw straight to your personal Web3 USDT wallet 24/7.
                 All commissions from ad views, direct introducers, and downline volume credit instantly to your Reward account. Withdraw straight to your personal Web3 USDT wallet 24/7.
               </p>
             </div>
@@ -971,6 +1223,7 @@ export function LandingPage() {
             <div className="pub-badge pub-badge-cyan">
               <Coins className="w-3.5 h-3.5" />
               <span>Automated Reward Architecture</span>
+              <span>Automated Reward Architecture</span>
             </div>
             <h2 className="pub-section-title">How Member Rewards Work</h2>
             <p className="pub-section-desc">
@@ -1023,6 +1276,7 @@ export function LandingPage() {
                 Tier 1 to 5 Team Overrides
               </h3>
               <p style={{ color: '#475569', fontSize: '0.93rem', lineHeight: '1.6' }}>
+                Your earnings don't stop at direct referrals. As your downline leaders introduce others across 5 complete tiers, automated override commissions flow continuously up into your Reward account.
                 Your earnings don't stop at direct referrals. As your downline leaders introduce others across 5 complete tiers, automated override commissions flow continuously up into your Reward account.
               </p>
             </div>
@@ -1298,8 +1552,11 @@ export function LandingPage() {
               <div>
                 <strong style={{ color: '#0f172a' }}>Multi-Tier Community Referral Growth</strong>
                 <div style={{ fontSize: '0.8rem', color: '#64748b' }}>100% Free registration with 5-tier referral rewards</div>
+                <strong style={{ color: '#0f172a' }}>Multi-Tier Community Referral Growth</strong>
+                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>100% Free registration with 5-tier referral rewards</div>
               </div>
               <div style={{ textAlign: 'center', color: '#dc2626' }}>❌ Not Available</div>
+              <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ 5-Tier Referral Network</div>
               <div style={{ textAlign: 'center', color: '#16a34a', fontWeight: '700' }}>✅ 5-Tier Referral Network</div>
             </div>
 

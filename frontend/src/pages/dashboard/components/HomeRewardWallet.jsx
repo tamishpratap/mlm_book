@@ -31,7 +31,7 @@ export function HomeRewardWallet() {
             Monitor credited campaign rewards in one centralized ledger. Check your current balances and maintain transparent oversight over all qualifying campaign earnings.
           </p>
           <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
-            <Link to="/member/web3-wallet" className="workflow-card__link">
+            <Link to="/member/withdrawal" className="workflow-card__link">
               <span>View Wallet</span>
               <ArrowRight size={13} aria-hidden="true" />
             </Link>
