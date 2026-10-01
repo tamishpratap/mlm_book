@@ -32,7 +32,7 @@ export function ContactPage() {
     support_email: 'support@mlmbook.com',
     phone: '+1 (800) 123-4567',
     website: 'https://mlmbook.com',
-    address: '123 Enterprise Way, Suite 500, Tech City',
+    address: '',
     business_hours: 'Monday - Friday: 9:00 AM - 6:00 PM (UTC)',
     social_telegram: 'https://t.me/mlmbook',
     social_facebook: 'https://facebook.com/mlmbook',
@@ -359,25 +359,7 @@ export function ContactPage() {
               </a>
             )}
 
-            {/* Dynamic Physical Address */}
-            {contactData.address && (
-              <div className="pub-contact-card">
-                <div className="pub-icon-wrapper pub-icon-cyan" style={{ width: '48px', height: '48px', marginBottom: 0, flexShrink: 0 }}>
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#0891b2', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Corporate Address
-                  </div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: '800', color: '#0f172a', marginTop: '2px', lineHeight: '1.4' }}>
-                    {contactData.address}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
-                    {contactData.company_name}
-                  </div>
-                </div>
-              </div>
-            )}
+
 
             {/* Dynamic Business Hours */}
             <div className="pub-contact-card">

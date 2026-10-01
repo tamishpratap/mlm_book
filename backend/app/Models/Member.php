@@ -573,7 +573,7 @@ class Member extends Authenticatable
 
         $photo = ltrim(str_replace('\\', '/', $this->profile_photo), '/');
 
-        if (str_contains($photo, '..')) {
+        if (str_contains($photo, '..') || $photo === 'default.png' || str_contains($photo, 'dashboard/image/profile.png')) {
             return null;
         }
 

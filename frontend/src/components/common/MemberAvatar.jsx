@@ -34,7 +34,7 @@ export function MemberAvatar({
   size = 48,
   className = '',
   style = {},
-  fallbackType = 'initials', // 'initials' | 'default'
+  fallbackType = 'default', // 'default' | 'initials'
   ...restProps
 }) {
   const [imgError, setImgError] = useState(false);
@@ -51,7 +51,8 @@ export function MemberAvatar({
 
   const isDefaultPlaceholder = candidate && (
     candidate.includes('default.png') ||
-    candidate.includes('member_assets/images/dashboard/image/profile.png')
+    candidate.includes('member_assets/images/dashboard/image/profile.png') ||
+    candidate.includes('dashboard/image/profile.png')
   );
 
   const resolvedUrl = candidate && !isDefaultPlaceholder ? getAvatarUrl(candidate) : null;
@@ -90,47 +91,46 @@ export function MemberAvatar({
     );
   }
 
-  // 2. Fallback: Default system avatar image if requested
-  if (fallbackType === 'default') {
+  // 2. Explicit initials fallback if specifically requested
+  if (fallbackType === 'initials') {
+    const fontSize = Math.max(10, Math.round(size * 0.38));
     return (
-      <img
-        src={DEFAULT_AVATAR}
-        alt={imgAlt}
-        className={`member-avatar-img member-avatar-img--default ${className}`}
+      <span
+        className={`avatar post-avatar-initials member-avatar-initials ${className}`}
         style={{
+          background: style.background || 'linear-gradient(135deg, #176bff, #7146ed)',
+          color: style.color || '#fff',
           ...avatarStyle,
-          objectFit: 'cover',
-          display: 'block',
+          fontSize: `${fontSize}px`,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 700,
+          userSelect: 'none',
         }}
-        loading="lazy"
+        role="img"
+        aria-label={`${displayName} initials`}
         {...restProps}
-      />
+      >
+        {getInitials(displayName)}
+      </span>
     );
   }
 
-  // 3. Fallback: Clean initials badge (default standard for social lists)
-  const fontSize = Math.max(10, Math.round(size * 0.38));
-
+  // 3. Authoritative Fallback: Default project avatar image
   return (
-    <span
-      className={`avatar post-avatar-initials member-avatar-initials ${className}`}
+    <img
+      src={DEFAULT_AVATAR}
+      alt={imgAlt}
+      className={`member-avatar-img member-avatar-img--default ${className}`}
       style={{
-        background: style.background || 'linear-gradient(135deg, #176bff, #7146ed)',
-        color: style.color || '#fff',
         ...avatarStyle,
-        fontSize: `${fontSize}px`,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 700,
-        userSelect: 'none',
+        objectFit: 'cover',
+        display: 'block',
       }}
-      role="img"
-      aria-label={`${displayName} initials`}
+      loading="lazy"
       {...restProps}
-    >
-      {getInitials(displayName)}
-    </span>
+    />
   );
 }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\RewardRankRule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -192,7 +193,7 @@ class SettingManagementController extends Controller
             'support_email' => Setting::get('support_email', 'support@mlmbook.com'),
             'phone' => Setting::get('phone', '+1 (800) 123-4567'),
             'website' => Setting::get('website', 'https://mlmbook.com'),
-            'address' => Setting::get('address', '123 Enterprise Way, Suite 500, Tech City'),
+            'address' => '',
             'social_facebook' => Setting::get('social_facebook', 'https://facebook.com/mlmbook'),
             'social_twitter' => Setting::get('social_twitter', null),
             'social_instagram' => Setting::get('social_instagram', 'https://instagram.com/mlmbook'),
@@ -206,6 +207,22 @@ class SettingManagementController extends Controller
             'success' => true,
             'branding' => $branding,
             'contact' => $contact,
+        ]);
+    }
+
+    /**
+     * Public endpoint to fetch active reward rank rules from reward_rank_rules table.
+     */
+    public function getPublicRankRules(Request $request)
+    {
+        $rules = RewardRankRule::where('is_active', true)
+            ->orderBy('priority', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'rules' => $rules,
+            'data' => $rules,
         ]);
     }
 
@@ -242,6 +259,7 @@ class SettingManagementController extends Controller
             'phone' => trim($validated['phone'] ?? ''),
             'subject' => trim($validated['subject']),
             'message' => trim($validated['message']),
+            'status' => 'new',
             'created_at' => now()->toIso8601String(),
             'ip' => $request->ip(),
         ];
@@ -258,9 +276,12 @@ class SettingManagementController extends Controller
             // Non-blocking
         }
 
-        // If authenticated member, also record in FeedbackSuggestion table
+        // If authenticated member or existing member email, also record in FeedbackSuggestion table
         try {
             $member = auth('member')->user();
+            if (!$member && !empty($validated['email'])) {
+                $member = \App\Models\Member::where('email', trim($validated['email']))->first();
+            }
             if ($member) {
                 \App\Models\FeedbackSuggestion::create([
                     'member_id' => $member->id,
@@ -278,6 +299,107 @@ class SettingManagementController extends Controller
             'success' => true,
             'message' => 'Thank you for contacting us! We have received your message and will respond promptly.',
         ]);
+    }
+
+    /**
+     * Admin endpoint: Fetch all contact inquiries submitted via frontend Contact Us.
+     */
+    public function getContactMessages(Request $request)
+    {
+        $path = storage_path('app/contact_messages.json');
+        $messages = [];
+        try {
+            if (File::exists($path)) {
+                $decoded = json_decode(File::get($path), true);
+                if (is_array($decoded)) {
+                    $messages = $decoded;
+                }
+            }
+        } catch (\Throwable $e) {
+            $messages = [];
+        }
+
+        foreach ($messages as &$msg) {
+            if (empty($msg['status'])) {
+                $msg['status'] = 'new';
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'messages' => $messages,
+            'total' => count($messages),
+        ]);
+    }
+
+    /**
+     * Admin endpoint: Delete a contact inquiry by ID.
+     */
+    public function deleteContactMessage($id)
+    {
+        $path = storage_path('app/contact_messages.json');
+        if (!File::exists($path)) {
+            return response()->json(['success' => false, 'message' => 'Message not found'], 404);
+        }
+
+        try {
+            $decoded = json_decode(File::get($path), true);
+            if (!is_array($decoded)) {
+                return response()->json(['success' => false, 'message' => 'Message not found'], 404);
+            }
+
+            $filtered = array_values(array_filter($decoded, function ($item) use ($id) {
+                return ($item['id'] ?? '') !== $id;
+            }));
+
+            File::put($path, json_encode($filtered, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inquiry message deleted successfully.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to delete inquiry message.'], 500);
+        }
+    }
+
+    /**
+     * Admin endpoint: Update status (e.g. read, replied, archived) of a contact inquiry.
+     */
+    public function updateContactMessageStatus(Request $request, $id)
+    {
+        $status = $request->input('status', 'read');
+        $path = storage_path('app/contact_messages.json');
+        if (!File::exists($path)) {
+            return response()->json(['success' => false, 'message' => 'Message not found'], 404);
+        }
+
+        try {
+            $decoded = json_decode(File::get($path), true);
+            if (!is_array($decoded)) {
+                return response()->json(['success' => false, 'message' => 'Message not found'], 404);
+            }
+
+            $found = false;
+            foreach ($decoded as &$item) {
+                if (($item['id'] ?? '') === $id) {
+                    $item['status'] = $status;
+                    $found = true;
+                    break;
+                }
+            }
+
+            if ($found) {
+                File::put($path, json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to update status.'], 500);
+        }
     }
 
     /**

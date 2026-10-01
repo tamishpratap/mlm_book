@@ -1,6 +1,7 @@
-import { useState, useMemo, useContext } from 'react';
+import { useState, useMemo, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BrandingContext } from '../../context/brandingContextDef';
+import { publicApi } from '../../api/publicApi';
 import {
   Gift,
   TrendingUp,
@@ -25,6 +26,175 @@ import {
   HelpCircle
 } from 'lucide-react';
 
+const RANK_METADATA = {
+  advertiser: {
+    color: '#3b82f6',
+    badgeClass: 'pub-rank-advertiser',
+    tagline: 'Day-1 Instant Starter',
+    summary: (r) => 'Start earning immediately upon mobile verification — zero direct referrals and zero team required!',
+    perks: (r) => [
+      `$${r.reward.toFixed(4)} USD per verified ad engagement`,
+      'Available instantly on day one of joining',
+      'No sponsor downline requirement',
+      'Withdrawal unlocked once minimum threshold ($5.00) is reached'
+    ]
+  },
+  influencer: {
+    color: '#a855f7',
+    badgeClass: 'pub-rank-influencer',
+    tagline: '4x Earnings Multiplier',
+    summary: (r) => `Invite just ${r.referrals} direct verified network connections to quadruple your reward rate to $${r.reward.toFixed(4)} per ad!`,
+    perks: (r) => [
+      `$${r.reward.toFixed(4)} USD per verified ad view (400% higher rate!)`,
+      `Requires only ${r.referrals} direct mobile-verified referrals`,
+      `${r.team} team downline members needed`,
+      'Featured profile badge in community explore feeds'
+    ]
+  },
+  leaders: {
+    color: '#10b981',
+    badgeClass: 'pub-rank-leaders',
+    tagline: 'Quarter-Dollar Executive Tier',
+    summary: (r) => `Cultivate an active community of ${r.team.toLocaleString()} verified members to earn $${r.reward.toFixed(4)} per ad!`,
+    perks: (r) => [
+      `$${r.reward.toFixed(4)} USD per verified ad engagement (10x starter tier)`,
+      `Requires ${r.referrals} direct referrals & ${r.team.toLocaleString()} verified team connections`,
+      'Priority broadcast reach for your business page posts',
+      'Expedited VIP withdrawal processing queue'
+    ]
+  },
+  pro_leaders: {
+    color: '#f59e0b',
+    badgeClass: 'pub-rank-pro_leaders',
+    tagline: 'Half-Dollar Premier Tier',
+    summary: (r) => `Expand your organizational reach to ${r.team.toLocaleString()} verified connections for $${r.reward.toFixed(4)} USD on every single sponsored campaign!`,
+    perks: (r) => [
+      `$${r.reward.toFixed(4)} USD per verified ad view (20x starter tier)`,
+      `Requires ${r.referrals} direct referrals & ${r.team.toLocaleString()} verified team connections`,
+      'Early access to exclusive high-budget sponsor campaigns',
+      'Exclusive Pro Leader badge recognized network-wide'
+    ]
+  },
+  master_leaders: {
+    color: '#ef4444',
+    badgeClass: 'pub-rank-master_leaders',
+    tagline: 'Apex $1.00 Per Ad Tier',
+    summary: (r) => `The pinnacle of leadership: earn a full $${r.reward.toFixed(4)} USD cash reward for every verified ad interaction!`,
+    perks: (r) => [
+      `$${r.reward.toFixed(4)} USD per verified ad engagement (40x starter tier)`,
+      `Requires ${r.referrals} direct referrals & ${r.team.toLocaleString()} verified team connections`,
+      'Top-tier leadership revenue share & global pool eligibility',
+      'Dedicated account manager & instant automated payouts'
+    ]
+  }
+};
+
+const DEFAULT_META = {
+  color: '#6366f1',
+  badgeClass: 'pub-rank-advertiser',
+  tagline: 'Network Earning Tier',
+  summary: (r) => `Earn $${r.reward.toFixed(4)} USD per verified ad engagement with ${r.referrals} referrals and ${r.team} team members.`,
+  perks: (r) => [
+    `$${r.reward.toFixed(4)} USD per verified ad engagement`,
+    `Requires ${r.referrals} direct referrals`,
+    `${r.team} team connections required`,
+    'Instant earnings credited to your wallet'
+  ]
+};
+
+const DEFAULT_RANK_LIST = [
+  {
+    key: 'advertiser',
+    name: 'Advertiser',
+    priority: 1,
+    referrals: 0,
+    team: 0,
+    reward: 0.0250,
+    color: '#3b82f6',
+    badgeClass: 'pub-rank-advertiser',
+    tagline: 'Day-1 Instant Starter',
+    summary: 'Start earning immediately upon mobile verification — zero direct referrals and zero team required!',
+    perks: [
+      '$0.0250 USD per verified ad engagement',
+      'Available instantly on day one of joining',
+      'No sponsor downline requirement',
+      'Withdrawal unlocked once minimum threshold ($5.00) is reached'
+    ]
+  },
+  {
+    key: 'influencer',
+    name: 'Influencer',
+    priority: 2,
+    referrals: 10,
+    team: 0,
+    reward: 0.1000,
+    color: '#a855f7',
+    badgeClass: 'pub-rank-influencer',
+    tagline: '4x Earnings Multiplier',
+    summary: 'Invite just 10 direct verified network connections to quadruple your reward rate to 10¢ per ad!',
+    perks: [
+      '$0.1000 USD per verified ad view (400% higher rate!)',
+      'Requires only 10 direct mobile-verified referrals',
+      '0 team downline members needed',
+      'Featured profile badge in community explore feeds'
+    ]
+  },
+  {
+    key: 'leaders',
+    name: 'Leaders',
+    priority: 3,
+    referrals: 15,
+    team: 100,
+    reward: 0.2500,
+    color: '#10b981',
+    badgeClass: 'pub-rank-leaders',
+    tagline: 'Quarter-Dollar Executive Tier',
+    summary: 'Cultivate an active community of 100 verified members to earn a full quarter dollar ($0.25) per ad!',
+    perks: [
+      '$0.2500 USD per verified ad engagement (10x starter tier)',
+      'Requires 15 direct referrals & 100 verified team connections',
+      'Priority broadcast reach for your business page posts',
+      'Expedited VIP withdrawal processing queue'
+    ]
+  },
+  {
+    key: 'pro_leaders',
+    name: 'Pro Leaders',
+    priority: 4,
+    referrals: 25,
+    team: 500,
+    reward: 0.5000,
+    color: '#f59e0b',
+    badgeClass: 'pub-rank-pro_leaders',
+    tagline: 'Half-Dollar Premier Tier',
+    summary: 'Expand your organizational reach to 500 verified connections for $0.50 USD on every single sponsored campaign!',
+    perks: [
+      '$0.5000 USD per verified ad view (20x starter tier)',
+      'Requires 25 direct referrals & 500 verified team connections',
+      'Early access to exclusive high-budget sponsor campaigns',
+      'Exclusive Pro Leader badge recognized network-wide'
+    ]
+  },
+  {
+    key: 'master_leaders',
+    name: 'Master Leaders',
+    priority: 5,
+    referrals: 50,
+    team: 1000,
+    reward: 1.0000,
+    color: '#ef4444',
+    badgeClass: 'pub-rank-master_leaders',
+    tagline: 'Apex $1.00 Per Ad Tier',
+    summary: 'The pinnacle of leadership: earn a full $1.00 USD cash reward for every verified ad interaction!',
+    perks: [
+      '$1.0000 USD per verified ad engagement (40x starter tier)',
+      'Requires 50 direct referrals & 1,000 verified team connections',
+      'Top-tier leadership revenue share & global pool eligibility',
+      'Dedicated account manager & instant automated payouts'
+    ]
+  }
+];
+
 export function RewardPage() {
   const { siteName } = useContext(BrandingContext) || {};
   const platformName = siteName || 'MLM Book';
@@ -32,107 +202,70 @@ export function RewardPage() {
   // Active selected rank for the deep-dive showcase
   const [activeRankKey, setActiveRankKey] = useState('advertiser');
 
+  // Dynamic rank rules fetched from reward_rank_rules database table
+  const [dbRules, setDbRules] = useState([]);
+  const [isLoadingRules, setIsLoadingRules] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    publicApi.getRewardRankRules()
+      .then((res) => {
+        const rawList = res?.data || res?.rules;
+        if (isMounted && res && res.success && Array.isArray(rawList) && rawList.length > 0) {
+          setDbRules(rawList);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch reward rank rules from database:', err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingRules(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Compute dynamic rankList combining database values with visual styling
+  const rankList = useMemo(() => {
+    if (!dbRules || dbRules.length === 0) {
+      return DEFAULT_RANK_LIST;
+    }
+
+    return dbRules.map((rule) => {
+      const key = rule.rank_key || '';
+      const meta = RANK_METADATA[key] || DEFAULT_META;
+      const reward = parseFloat(rule.reward_amount) || 0;
+      const referrals = parseInt(rule.referral_requirement, 10) || 0;
+      const team = parseInt(rule.team_requirement, 10) || 0;
+      const priority = parseInt(rule.priority, 10) || 1;
+      const name = rule.rank_name || (key ? key.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : 'Rank');
+
+      const rankObj = {
+        key,
+        name,
+        priority,
+        referrals,
+        team,
+        reward,
+        color: meta.color,
+        badgeClass: meta.badgeClass,
+        tagline: meta.tagline,
+      };
+
+      rankObj.summary = typeof meta.summary === 'function' ? meta.summary(rankObj) : meta.summary;
+      rankObj.perks = typeof meta.perks === 'function' ? meta.perks(rankObj) : meta.perks;
+
+      return rankObj;
+    });
+  }, [dbRules]);
+
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState(null);
   const toggleFaq = (idx) => {
     setOpenFaq(openFaq === idx ? null : idx);
   };
-
-  // --------------------------------------------------------------------------
-  // 1. Authoritative Rank Configuration (Synced with Admin Panel)
-  // --------------------------------------------------------------------------
-  const rankList = [
-    {
-      key: 'advertiser',
-      name: 'Advertiser',
-      priority: 1,
-      referrals: 0,
-      team: 0,
-      reward: 0.0250,
-      color: '#3b82f6',
-      badgeClass: 'pub-rank-advertiser',
-      tagline: 'Day-1 Instant Starter',
-      summary: 'Start earning immediately upon mobile verification — zero direct referrals and zero team required!',
-      perks: [
-        '$0.0250 USD per verified ad engagement',
-        'Available instantly on day one of joining',
-        'No sponsor downline requirement',
-        'Withdrawal unlocked once minimum threshold ($5.00) is reached'
-      ]
-    },
-    {
-      key: 'influencer',
-      name: 'Influencer',
-      priority: 2,
-      referrals: 10,
-      team: 0,
-      reward: 0.1000,
-      color: '#a855f7',
-      badgeClass: 'pub-rank-influencer',
-      tagline: '4x Earnings Multiplier',
-      summary: 'Invite just 10 direct verified network connections to quadruple your reward rate to 10¢ per ad!',
-      perks: [
-        '$0.1000 USD per verified ad view (400% higher rate!)',
-        'Requires only 10 direct mobile-verified referrals',
-        '0 team downline members needed',
-        'Featured profile badge in community explore feeds'
-      ]
-    },
-    {
-      key: 'leaders',
-      name: 'Leaders',
-      priority: 3,
-      referrals: 15,
-      team: 100,
-      reward: 0.2500,
-      color: '#10b981',
-      badgeClass: 'pub-rank-leaders',
-      tagline: 'Quarter-Dollar Executive Tier',
-      summary: 'Cultivate an active community of 100 verified members to earn a full quarter dollar ($0.25) per ad!',
-      perks: [
-        '$0.2500 USD per verified ad engagement (10x starter tier)',
-        'Requires 15 direct referrals & 100 verified team connections',
-        'Priority broadcast reach for your business page posts',
-        'Expedited VIP withdrawal processing queue'
-      ]
-    },
-    {
-      key: 'pro_leaders',
-      name: 'Pro Leaders',
-      priority: 4,
-      referrals: 25,
-      team: 500,
-      reward: 0.5000,
-      color: '#f59e0b',
-      badgeClass: 'pub-rank-pro_leaders',
-      tagline: 'Half-Dollar Premier Tier',
-      summary: 'Expand your organizational reach to 500 verified connections for $0.50 USD on every single sponsored campaign!',
-      perks: [
-        '$0.5000 USD per verified ad view (20x starter tier)',
-        'Requires 25 direct referrals & 500 verified team connections',
-        'Early access to exclusive high-budget sponsor campaigns',
-        'Exclusive Pro Leader badge recognized network-wide'
-      ]
-    },
-    {
-      key: 'master_leaders',
-      name: 'Master Leaders',
-      priority: 5,
-      referrals: 50,
-      team: 1000,
-      reward: 1.0000,
-      color: '#ef4444',
-      badgeClass: 'pub-rank-master_leaders',
-      tagline: 'Apex $1.00 Per Ad Tier',
-      summary: 'The pinnacle of leadership: earn a full $1.00 USD cash reward for every verified ad interaction!',
-      perks: [
-        '$1.0000 USD per verified ad engagement (40x starter tier)',
-        'Requires 50 direct referrals & 1,000 verified team connections',
-        'Top-tier leadership revenue share & global pool eligibility',
-        'Dedicated account manager & instant automated payouts'
-      ]
-    }
-  ];
 
   const currentSelectedRank = rankList.find((r) => r.key === activeRankKey) || rankList[0];
 
@@ -228,7 +361,7 @@ export function RewardPage() {
               <Award className="w-5 h-5 text-blue-600" />
               <div style={{ textAlign: 'left' }}>
                 <div className="pub-quick-metric-label">Starter Reward</div>
-                <div className="pub-quick-metric-value">$0.0250 / Ad (0 Referrals)</div>
+                <div className="pub-quick-metric-value">${(rankList[0]?.reward ?? 0.025).toFixed(4)} / Ad ({rankList[0]?.referrals ?? 0} Referrals)</div>
               </div>
             </div>
 
@@ -236,7 +369,7 @@ export function RewardPage() {
               <TrendingUp className="w-5 h-5 text-emerald-600" />
               <div style={{ textAlign: 'left' }}>
                 <div className="pub-quick-metric-label">Apex Rank Reward</div>
-                <div className="pub-quick-metric-value">$1.0000 / Ad (Master Leader)</div>
+                <div className="pub-quick-metric-value">${(rankList[rankList.length - 1]?.reward ?? 1.0).toFixed(4)} / Ad ({rankList[rankList.length - 1]?.name || 'Master Leader'})</div>
               </div>
             </div>
 
@@ -275,12 +408,23 @@ export function RewardPage() {
                   className={`pub-rank-card ${rank.badgeClass} ${isSelected ? 'active' : ''}`}
                   onClick={() => setActiveRankKey(rank.key)}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span className="pub-rank-badge" style={{ backgroundColor: rank.color }}>
-                      <Award className="w-3.5 h-3.5" />
-                      <span>{rank.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '12px' }}>
+                    <span className="pub-rank-badge" style={{ backgroundColor: rank.color, whiteSpace: 'nowrap' }}>
+                      <Award className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span style={{ whiteSpace: 'nowrap' }}>{rank.name}</span>
                     </span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8' }}>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '700',
+                        color: '#64748b',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        background: '#f1f5f9',
+                        padding: '2px 7px',
+                        borderRadius: '6px'
+                      }}
+                    >
                       Tier #{rank.priority}
                     </span>
                   </div>
@@ -663,7 +807,7 @@ export function RewardPage() {
               <div className="pub-wallet-specs">
                 <div className="pub-spec-row">
                   <span className="pub-spec-label">Earning Sources:</span>
-                  <span className="pub-spec-val">Ad views ($0.025 - $1.00) + Referrals</span>
+                  <span className="pub-spec-val">Ad views (${(rankList[0]?.reward ?? 0.025).toFixed(3)} - ${(rankList[rankList.length - 1]?.reward ?? 1.0).toFixed(2)}) + Referrals</span>
                 </div>
                 <div className="pub-spec-row">
                   <span className="pub-spec-label">Minimum Withdrawal:</span>

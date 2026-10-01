@@ -26,6 +26,7 @@ export function prefixUrl(path) {
 }
 
 export const BRAND_LOGO = prefixUrl('/logo/logo.png');
+export const DEFAULT_AVATAR = prefixUrl('/default-avatar.png');
 
 /**
  * Resolves a reliable, usable URL for a story media item.
@@ -451,5 +452,7 @@ export default {
   getPostMediaCandidates,
   getPostMediaUrl,
   isVideoPost,
+  DEFAULT_AVATAR,
+  BRAND_LOGO,
 };
 

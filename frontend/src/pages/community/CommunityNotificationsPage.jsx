@@ -13,6 +13,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import communityApi from '../../api/communityApi';
+import { DEFAULT_AVATAR } from '../../utils/assetHelper';
 
 function formatRelativeTime(dateString) {
   if (!dateString) return '';
@@ -288,25 +289,14 @@ export function CommunityNotificationsPage() {
                           src={nData.actor_photo.startsWith('http') ? nData.actor_photo : `/${nData.actor_photo}`}
                           alt={nData.actor_name || 'Member'}
                           style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+                          onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
                         />
                       ) : (
-                        <span
-                          className="avatar post-avatar-initials"
-                          style={{
-                            width: '42px',
-                            height: '42px',
-                            fontSize: '14px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '50%',
-                            background: '#e0e7ff',
-                            color: '#3730a3',
-                            fontWeight: 700,
-                          }}
-                        >
-                          {getInitials(nData.actor_name)}
-                        </span>
+                        <img
+                          src={DEFAULT_AVATAR}
+                          alt={nData.actor_name || 'Member'}
+                          style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+                        />
                       )}
 
                       <div

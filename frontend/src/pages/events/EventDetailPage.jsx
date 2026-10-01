@@ -1276,13 +1276,7 @@ export function EventDetailPage() {
                     to={`/member/people/${m.id}`}
                     className="event-attendees-grid-item"
                   >
-                    {av ? (
-                      <img src={av} alt={m.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
-                    ) : (
-                      <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e0e7ff', color: '#4f46e5', fontWeight: 700, fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {init}
-                      </span>
-                    )}
+                    <MemberAvatar member={m} size={32} />
                     <div style={{ minWidth: 0, overflow: 'hidden' }}>
                       <span style={{ fontSize: '13px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         <span>{m.name}</span>

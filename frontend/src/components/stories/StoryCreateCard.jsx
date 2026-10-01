@@ -3,7 +3,12 @@ import { getAvatarUrl, prefixUrl } from '../../utils/assetHelper';
 
 export function StoryCreateCard({ currentUser, onOpenCreate }) {
   const defaultFallback = prefixUrl('/member_assets/images/dashboard/image/story_1.png');
-  const photoUrl = currentUser?.profile_photo
+  const isCustomPhoto = currentUser?.profile_photo &&
+    currentUser.profile_photo !== 'default.png' &&
+    !currentUser.profile_photo.includes('dashboard/image/profile.png') &&
+    !currentUser.profile_photo.includes('member_assets/images');
+
+  const photoUrl = isCustomPhoto
     ? getAvatarUrl(currentUser.profile_photo)
     : defaultFallback;
 

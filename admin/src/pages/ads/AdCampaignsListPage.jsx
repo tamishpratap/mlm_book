@@ -886,7 +886,7 @@ export function AdCampaignsListPage() {
                   </span>
                 </div>
                 <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-400 block font-medium">Rewards Paid ($0.05)</span>
+                  <span className="text-slate-400 block font-medium">Rewards Paid</span>
                   <span className="text-sm font-bold text-emerald-600">
                     ${Number(detailCampaign.rewards_paid || detailCampaign.spent_amount || 0).toFixed(2)}
                   </span>

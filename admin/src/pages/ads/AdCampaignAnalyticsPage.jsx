@@ -201,7 +201,7 @@ export function AdCampaignAnalyticsPage() {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Verified Visits ($0.05)</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Verified Visits</span>
             <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
               <CheckCircle className="w-5 h-5" />
             </div>

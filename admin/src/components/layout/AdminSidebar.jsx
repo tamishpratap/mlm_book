@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Gift,
   ArrowUpRight,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useBranding } from '../../hooks/useBranding';
@@ -216,6 +217,21 @@ const NAV_GROUPS = [
         icon: BarChart2,
         permission: 'view-analytics',
         ownerKey: '/admin/analytics',
+      },
+      {
+        label: 'Platform Settings',
+        icon: Settings,
+        permission: 'view-settings',
+        basePath: '/admin/settings',
+        ownerKey: '/admin/settings',
+        children: [
+          { label: 'All Settings', to: '/admin/settings' },
+          { label: 'Contact Information', to: '/admin/settings?tab=contact' },
+          { label: 'Contact Inquiries', to: '/admin/settings?tab=inquiries' },
+          { label: 'Branding & Assets', to: '/admin/settings?tab=branding' },
+          { label: 'SEO & Social', to: '/admin/settings?tab=seo' },
+          { label: 'System & Cache', to: '/admin/settings?tab=cache' },
+        ],
       },
     ],
   },

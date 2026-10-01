@@ -21,7 +21,7 @@ import ReportModal from '../posts/modals/ReportModal';
 import AccountVerificationModal from '../verification/AccountVerificationModal';
 import postApi from '../../api/postApi';
 import { useAuth } from '../../hooks/useAuth';
-import { getAvatarUrl, getMediaUrl } from '../../utils/assetHelper';
+import { getAvatarUrl, getMediaUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import { renderContentWithLinks } from '../../utils/linkHelper';
 import { isMemberMobileVerified } from '../../utils/whatsappVerification';
 
@@ -429,9 +429,12 @@ export function WatchVideoCard({ post, currentUser: propCurrentUser, onPostHidde
                 onError={() => setAuthorAvatarError(true)}
               />
             ) : (
-              <span className="avatar post-avatar-initials" role="img" aria-label={authorName}>
-                {getInitials(authorName)}
-              </span>
+              <img
+                className="avatar"
+                src={DEFAULT_AVATAR}
+                alt={authorName}
+                loading="lazy"
+              />
             )}
           </Link>
         )}
@@ -708,9 +711,11 @@ export function WatchVideoCard({ post, currentUser: propCurrentUser, onPostHidde
                 onError={() => setUserAvatarError(true)}
               />
             ) : (
-              <span className="post-comment-form__avatar post-comment-form__avatar--initials">
-                {getInitials(currentUser?.name)}
-              </span>
+              <img
+                className="post-comment-form__avatar"
+                src={DEFAULT_AVATAR}
+                alt={currentUser?.name}
+              />
             )}
           </div>
 

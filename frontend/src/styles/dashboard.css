@@ -156,14 +156,22 @@ svg {
     display: flex;
     align-items: center;
     flex: 0 0 auto;
-    width: 60px;
+    width: auto;
+    max-width: 120px;
 }
 
 .brand img,
 .mlm-book-header-logo {
-    width: 60px;
-    height: 60px;
+    width: auto;
+    height: 56px;
+    max-height: 56px;
+    max-width: 110px;
     object-fit: contain;
+    transition: transform 0.2s ease;
+}
+
+.brand:hover .mlm-book-header-logo {
+    transform: scale(1.04);
 }
 
 .search-box {
@@ -920,18 +928,18 @@ body.menu-open {
 }
 
 .story--create {
-    background: linear-gradient(145deg, #eaf7ff, #f3efff);
+    background: linear-gradient(145deg, #1e1b4b, #0f172a);
 }
 
 .story--create > img {
-    filter: blur(.2px) saturate(.65);
-    opacity: .42;
+    opacity: .85;
+    transition: transform var(--transition-slow);
 }
 
 .story--create__shade {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgba(255,255,255,.14), rgba(255,255,255,.7));
+    background: linear-gradient(to bottom, rgba(15, 23, 42, .05) 0%, rgba(15, 23, 42, .25) 55%, rgba(15, 23, 42, .8) 100%);
 }
 
 .story--create .story-add {
@@ -959,9 +967,10 @@ body.menu-open {
 }
 
 .story--create > strong {
-    color: #202a3b;
+    color: #ffffff;
     text-align: center;
-    text-shadow: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+    font-weight: 700;
 }
 
 .stories__next {
@@ -1530,8 +1539,10 @@ body.menu-open {
     .brand,
     .brand img,
     .mlm-book-header-logo {
-        width: 54px;
-        height: 54px;
+        width: auto;
+        height: 50px;
+        max-height: 50px;
+        max-width: 95px;
     }
 
     .search-box {
@@ -1795,8 +1806,10 @@ body.menu-open {
     .brand,
     .brand img,
     .mlm-book-header-logo {
-        width: 48px;
-        height: 48px;
+        width: auto;
+        height: 46px;
+        max-height: 46px;
+        max-width: 80px;
     }
 
     .topbar .search-box {

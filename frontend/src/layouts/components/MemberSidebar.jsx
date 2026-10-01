@@ -21,7 +21,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
-import { getAvatarUrl } from '../../utils/assetHelper';
+import { getAvatarUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
 
 export function MemberSidebar({ isOpen, onCloseMobile }) {
   const { user } = useAuth();
@@ -103,23 +103,12 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
               onError={() => setAvatarImgError(true)}
             />
           ) : (
-            <span
-              className="avatar avatar--lg post-avatar-initials"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #176bff, #7146ed)',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: '1.1rem',
-                borderRadius: '50%',
-                width: '48px',
-                height: '48px',
-              }}
-            >
-              {initials}
-            </span>
+            <img
+              className="avatar avatar--lg"
+              src={DEFAULT_AVATAR}
+              alt={user.name}
+              style={{ objectFit: 'cover' }}
+            />
           )}
           <div className="sidebar-profile__copy">
             <strong>{user.name}</strong>

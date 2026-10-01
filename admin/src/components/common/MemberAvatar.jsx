@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getMemberAvatarUrl } from '../../utils/mediaHelper';
+import { getMemberAvatarUrl, DEFAULT_AVATAR } from '../../utils/mediaHelper';
 
 /**
  * Extracts 1-2 uppercase initials from a display name
@@ -16,7 +16,7 @@ export function getInitials(name) {
  * Matches User Panel behavior:
  * - Renders member profile photo if valid and reachable
  * - Discards default template placeholder paths (e.g. profile.png)
- * - Automatically falls back to user initials badge with gradient on load error or missing photo
+ * - Automatically falls back to default avatar image on load error or missing photo
  * - Never displays browser broken-image icons or leaking alt text
  */
 export function MemberAvatar({
@@ -32,7 +32,6 @@ export function MemberAvatar({
   const [imgError, setImgError] = useState(false);
 
   const displayName = name || member?.name || member?.user_id || 'Member';
-  const initials = getInitials(displayName);
 
   // Determine photo candidate
   const candidate = src || getMemberAvatarUrl(member);
@@ -41,7 +40,8 @@ export function MemberAvatar({
   const isDefaultPlaceholder = candidate && (
     candidate.includes('default.png') ||
     candidate.includes('member_assets/images/dashboard/image/profile.png') ||
-    candidate.includes('dashboard/image/profile.png')
+    candidate.includes('dashboard/image/profile.png') ||
+    candidate.includes('default-avatar.png')
   );
 
   const resolvedUrl = candidate && !isDefaultPlaceholder ? candidate : null;
@@ -54,30 +54,27 @@ export function MemberAvatar({
     return (
       <img
         src={resolvedUrl}
-        alt=""
+        alt={displayName}
         className={`${size} rounded-full object-cover border border-slate-200 shadow-2xs shrink-0 ring-1 ring-slate-200/60 ${className}`}
         loading="lazy"
         onError={() => setImgError(true)}
+        style={style}
         {...restProps}
       />
     );
   }
 
+  const fallbackSrc = DEFAULT_AVATAR || '/default-avatar.png';
+
   return (
-    <div
-      className={`${size} rounded-full text-white flex items-center justify-center font-bold ${textSize} shrink-0 shadow-xs ring-2 ring-white/80 select-none ${className}`}
-      style={{
-        background: 'linear-gradient(135deg, #176bff, #7146ed)',
-        color: '#ffffff',
-        ...style,
-      }}
-      title={displayName}
-      role="img"
-      aria-label={`${displayName} initials`}
+    <img
+      src={fallbackSrc}
+      alt={displayName}
+      className={`${size} rounded-full object-cover border border-slate-200 shadow-2xs shrink-0 ring-1 ring-slate-200/60 ${className}`}
+      loading="lazy"
+      style={style}
       {...restProps}
-    >
-      {initials}
-    </div>
+    />
   );
 }
 

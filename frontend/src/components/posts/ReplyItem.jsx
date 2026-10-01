@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, ThumbsUp, Loader2 } from 'lucide-react';
 import postApi from '../../api/postApi';
-import { getAvatarUrl } from '../../utils/assetHelper';
+import { getAvatarUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import { renderContentWithLinks } from '../../utils/linkHelper';
 
 const REACTION_CONFIG = {
@@ -247,9 +247,11 @@ export function ReplyItem({
             onError={() => setImgError(true)}
           />
         ) : (
-          <span className="post-reply-item__avatar post-reply-item__avatar--initials">
-            {getInitials(author?.name)}
-          </span>
+          <img
+            className="post-reply-item__avatar"
+            src={DEFAULT_AVATAR}
+            alt={author?.name || 'User'}
+          />
         )}
       </div>
 

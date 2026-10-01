@@ -13,7 +13,7 @@ import {
   Activity,
   ArrowLeft,
 } from 'lucide-react';
-import { getAvatarUrl, getCoverUrl, getMediaUrl, getInitials } from '../../utils/assetHelper';
+import { getAvatarUrl, getCoverUrl, getMediaUrl, getInitials, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import useAuth from '../../hooks/useAuth';
 import friendApi from '../../api/friendApi';
 import FriendActions from '../../components/friends/FriendActions';
@@ -337,13 +337,11 @@ export function MemberProfilePage() {
                       onError={() => setAvatarLoadError(true)}
                     />
                   ) : (
-                    <div
-                      className="profile-avatar profile-avatar--initials"
-                      role="img"
-                      aria-label={member.name}
-                    >
-                      <span>{getInitials(member.name)}</span>
-                    </div>
+                    <img
+                      className="profile-avatar"
+                      src={DEFAULT_AVATAR}
+                      alt={member.name}
+                    />
                   )}
                 </div>
               </div>

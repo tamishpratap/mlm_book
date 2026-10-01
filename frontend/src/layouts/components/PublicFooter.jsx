@@ -1,20 +1,17 @@
 import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { BrandingContext } from '../../context/brandingContextDef';
+import { BRAND_LOGO } from '../../utils/assetHelper';
 import publicApi from '../../api/publicApi';
 import { 
   Mail, 
   Phone, 
-  MapPin, 
-  Send, 
   ShieldCheck,
-  Zap,
-  Globe
+  MessageSquare
 } from 'lucide-react';
 import {
   TelegramIcon,
   FacebookIcon,
-  LinkedinIcon,
   YoutubeIcon,
   InstagramIcon
 } from '../../components/common/SocialIcons';
@@ -22,13 +19,11 @@ import {
 export function PublicFooter() {
   const { logoUrl, siteName, siteDescription } = useContext(BrandingContext) || {};
   const [contactData, setContactData] = useState({
-    company_name: 'MLM Book Enterprise',
+    company_name: 'MLM Book AI',
     support_email: 'support@mlmbook.com',
     phone: '+1 (800) 123-4567',
-    address: '123 Enterprise Way, Suite 500, Tech City',
     social_telegram: 'https://t.me/mlmbook',
     social_facebook: 'https://facebook.com/mlmbook',
-    social_linkedin: 'https://linkedin.com/company/mlmbook',
     social_youtube: 'https://youtube.com/mlmbook',
     social_instagram: 'https://instagram.com/mlmbook',
   });
@@ -54,46 +49,42 @@ export function PublicFooter() {
       <div className="pub-container">
         <div className="pub-footer-grid">
           {/* Column 1: Brand Info */}
-          <div>
-            <Link to="/" className="pub-logo-link" style={{ marginBottom: '16px' }}>
-              {logoUrl ? (
-                <img 
-                  src={logoUrl} 
-                  alt={siteName || 'MLM Book'} 
-                  className="pub-logo-img"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                />
-              ) : null}
-              <span className="pub-logo-text">{siteName || 'MLM Book'}</span>
+          <div className="pub-footer-brand-col">
+            <Link to="/" className="pub-footer-brand" aria-label={siteName || 'MLM Book AI'}>
+              <img 
+                src={logoUrl || BRAND_LOGO} 
+                alt={siteName || 'MLM Book AI'} 
+                className="pub-footer-logo-img"
+                onError={(e) => {
+                  if (e.currentTarget.src !== BRAND_LOGO) {
+                    e.currentTarget.src = BRAND_LOGO;
+                  }
+                }}
+              />
             </Link>
             
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6', maxWidth: '340px', margin: '14px 0 20px' }}>
-              {siteDescription || 'Next-generation decentralized social network, business directories, and multi-tier reward ecosystem built for creators, businesses, and network builders.'}
+            <p className="pub-footer-desc">
+              {siteDescription || 'Next-generation digital ecosystem connecting creators, advertisers, and community builders through transparent reward mechanics.'}
             </p>
 
             <div className="pub-social-row">
               {contactData.social_telegram && (
-                <a href={contactData.social_telegram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram">
+                <a href={contactData.social_telegram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram" title="Telegram">
                   <TelegramIcon className="w-4 h-4" />
                 </a>
               )}
               {contactData.social_facebook && (
-                <a href={contactData.social_facebook} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Facebook">
+                <a href={contactData.social_facebook} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Facebook" title="Facebook">
                   <FacebookIcon className="w-4 h-4" />
                 </a>
               )}
-              {contactData.social_linkedin && (
-                <a href={contactData.social_linkedin} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="LinkedIn">
-                  <LinkedinIcon className="w-4 h-4" />
-                </a>
-              )}
               {contactData.social_youtube && (
-                <a href={contactData.social_youtube} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="YouTube">
+                <a href={contactData.social_youtube} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="YouTube" title="YouTube">
                   <YoutubeIcon className="w-4 h-4" />
                 </a>
               )}
               {contactData.social_instagram && (
-                <a href={contactData.social_instagram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Instagram">
+                <a href={contactData.social_instagram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Instagram" title="Instagram">
                   <InstagramIcon className="w-4 h-4" />
                 </a>
               )}
@@ -104,10 +95,18 @@ export function PublicFooter() {
           <div>
             <h4 className="pub-footer-title">Platform</h4>
             <ul className="pub-footer-links">
-              <li><Link to="/" className="pub-footer-link">Home Overview</Link></li>
-              <li><Link to="/ecosystem" className="pub-footer-link">Ecosystem Architecture</Link></li>
-              <li><Link to="/rewards" className="pub-footer-link">Reward Mechanics</Link></li>
-              <li><Link to="/contact" className="pub-footer-link">Contact Support</Link></li>
+              <li>
+                <Link to="/" className="pub-footer-link">Home Overview</Link>
+              </li>
+              <li>
+                <Link to="/ecosystem" className="pub-footer-link">Ecosystem Architecture</Link>
+              </li>
+              <li>
+                <Link to="/rewards" className="pub-footer-link">Reward Mechanics</Link>
+              </li>
+              <li>
+                <Link to="/contact" className="pub-footer-link">Contact Support</Link>
+              </li>
             </ul>
           </div>
 
@@ -115,54 +114,78 @@ export function PublicFooter() {
           <div>
             <h4 className="pub-footer-title">Members</h4>
             <ul className="pub-footer-links">
-              <li><Link to="/member/login" className="pub-footer-link">Member Sign In</Link></li>
-              <li><Link to="/member/register" className="pub-footer-link">Create Account</Link></li>
-              <li><Link to="/member/forgot-password" className="pub-footer-link">Forgot Password</Link></li>
-              <li><Link to="/rewards" className="pub-footer-link">Earning Calculator</Link></li>
+              <li>
+                <Link to="/member/login" className="pub-footer-link">Member Sign In</Link>
+              </li>
+              <li>
+                <Link to="/member/register" className="pub-footer-link">Create Account</Link>
+              </li>
+              <li>
+                <Link to="/member/forgot-password" className="pub-footer-link">Forgot Password</Link>
+              </li>
+              <li>
+                <Link to="/rewards" className="pub-footer-link">Reward Calculator</Link>
+              </li>
             </ul>
           </div>
 
-          {/* Column 4: Dynamic Contact Snippet */}
+          {/* Column 4: Support & Community */}
           <div>
-            <h4 className="pub-footer-title">Get in Touch</h4>
-            <ul className="pub-footer-links">
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#94a3b8', fontSize: '0.88rem' }}>
-                <Mail className="w-4 h-4 text-indigo-400 mt-1 flex-shrink-0" />
-                <a href={`mailto:${contactData.support_email}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                  {contactData.support_email}
+            <h4 className="pub-footer-title">Support & Connect</h4>
+            <div className="pub-footer-contact-list">
+              {contactData.support_email && (
+                <a href={`mailto:${contactData.support_email}`} className="pub-footer-contact-card">
+                  <div className="pub-footer-contact-icon pub-footer-contact-icon--mail">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div className="pub-footer-contact-text">
+                    <span className="pub-footer-contact-label">Email Support</span>
+                    <span className="pub-footer-contact-val">{contactData.support_email}</span>
+                  </div>
                 </a>
-              </li>
+              )}
               {contactData.phone && (
-                <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#94a3b8', fontSize: '0.88rem' }}>
-                  <Phone className="w-4 h-4 text-emerald-400 mt-1 flex-shrink-0" />
-                  <a href={`tel:${contactData.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                    {contactData.phone}
-                  </a>
-                </li>
+                <a href={`tel:${contactData.phone}`} className="pub-footer-contact-card">
+                  <div className="pub-footer-contact-icon pub-footer-contact-icon--phone">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <div className="pub-footer-contact-text">
+                    <span className="pub-footer-contact-label">Help Desk</span>
+                    <span className="pub-footer-contact-val">{contactData.phone}</span>
+                  </div>
+                </a>
               )}
-              {contactData.address && (
-                <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#94a3b8', fontSize: '0.88rem' }}>
-                  <MapPin className="w-4 h-4 text-cyan-400 mt-1 flex-shrink-0" />
-                  <span>{contactData.address}</span>
-                </li>
+              {contactData.social_telegram && (
+                <a href={contactData.social_telegram} target="_blank" rel="noopener noreferrer" className="pub-footer-contact-card">
+                  <div className="pub-footer-contact-icon pub-footer-contact-icon--tg">
+                    <MessageSquare className="w-4 h-4" />
+                  </div>
+                  <div className="pub-footer-contact-text">
+                    <span className="pub-footer-contact-label">Community Channel</span>
+                    <span className="pub-footer-contact-val">Join Official Group</span>
+                  </div>
+                </a>
               )}
-            </ul>
+            </div>
           </div>
         </div>
 
         {/* Footer Bottom Strip */}
         <div className="pub-footer-bottom">
-          <div>
-            © {new Date().getFullYear()} {contactData.company_name || siteName || 'MLM Book'}. All rights reserved.
+          <div className="pub-footer-bottom-copy">
+            © {new Date().getFullYear()} {contactData.company_name || siteName || 'MLM Book AI'}. All rights reserved.
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          
+          <div className="pub-footer-bottom-legal">
+            <Link to="/privacy-policy" className="pub-footer-legal-link">Privacy Policy</Link>
+            <span className="pub-footer-legal-dot">•</span>
+            <Link to="/terms-and-conditions" className="pub-footer-legal-link">Terms & Conditions</Link>
+          </div>
+
+          <div className="pub-footer-bottom-security">
+            <span className="pub-footer-ssl-badge">
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
               <span>SSL 256-Bit Encrypted</span>
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span>Web3 Payout Ready</span>
             </span>
           </div>
         </div>

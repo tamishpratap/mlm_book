@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Mail, Loader2 } from 'lucide-react';
 import profileApi from '../../api/profileApi';
 import useAuth from '../../hooks/useAuth';
-import { getAvatarUrl, getCoverUrl } from '../../utils/assetHelper';
+import { getAvatarUrl, getCoverUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
 
 function getInitials(name) {
   if (!name) return 'U';
@@ -185,7 +185,11 @@ export function EditProfilePage() {
                   onError={() => setAvatarImgError(true)}
                 />
               ) : (
-                <span>{initials}</span>
+                <img
+                  src={DEFAULT_AVATAR}
+                  alt={member.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               )}
             </div>
 

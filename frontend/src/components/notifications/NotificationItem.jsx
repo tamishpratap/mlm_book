@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import notificationApi from '../../api/notificationApi';
-import { getAvatarUrl, getInitials } from '../../utils/assetHelper';
+import { getAvatarUrl, getInitials, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import { handleNotificationNavigation } from '../../utils/notificationNavigation';
 
 function formatRelativeTime(dateString) {
@@ -203,7 +203,11 @@ export function NotificationItem({
                 onError={() => setImgError(true)}
               />
             ) : (
-              <span aria-hidden="true">{getInitials(actorName)}</span>
+              <img
+                src={DEFAULT_AVATAR}
+                alt={actorName}
+                loading="lazy"
+              />
             )}
             {renderIcon(rawIcon)}
           </span>

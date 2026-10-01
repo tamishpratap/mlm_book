@@ -23,6 +23,10 @@ export const settingsApi = {
   clearCache: (type = 'all') => http.post('/settings/clear-cache', { type }),
   toggleMaintenance: (action, secret = '') =>
     http.post('/settings/maintenance', { action, secret }),
+  getContactMessages: () => http.get('/settings/contact-messages'),
+  deleteContactMessage: (id) => http.delete(`/settings/contact-messages/${id}`),
+  updateContactMessageStatus: (id, status) =>
+    http.post(`/settings/contact-messages/${id}/status`, { status }),
 };
 
 export default settingsApi;

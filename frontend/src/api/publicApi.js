@@ -29,7 +29,7 @@ export const publicApi = {
             support_email: 'support@mlmbook.com',
             phone: '+1 (800) 123-4567',
             website: 'https://mlmbook.com',
-            address: '123 Enterprise Way, Suite 500, Tech City',
+            address: '',
             social_facebook: 'https://facebook.com/mlmbook',
             social_instagram: 'https://instagram.com/mlmbook',
             social_linkedin: 'https://linkedin.com/company/mlmbook',
@@ -55,6 +55,23 @@ export const publicApi = {
         return fallbackRes.data;
       } catch (err) {
         throw err;
+      }
+    }
+  },
+
+  /**
+   * Fetch active reward rank rules from database table reward_rank_rules.
+   */
+  getRewardRankRules: async () => {
+    try {
+      const response = await apiClient.get('/reward-rank-rules');
+      return response.data;
+    } catch (error) {
+      try {
+        const fallbackRes = await apiClient.get('/reward-rank-rules', { baseURL: '/api' });
+        return fallbackRes.data;
+      } catch (err) {
+        return null;
       }
     }
   },

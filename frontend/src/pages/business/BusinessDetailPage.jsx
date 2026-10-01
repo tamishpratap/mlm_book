@@ -125,26 +125,51 @@ export function BusinessDetailPage() {
               already_rewarded: true,
               eligible_to_earn: false,
               reward_amount_usd: res.reward_amount_usd,
+              reward_amount_exact: amtExact,
             });
             setRewardSuccessMessage(`✓ Qualifying campaign visit verified! $${amtExact} USD credited to your Reward Wallet.`);
           } else if (res && (res.already_rewarded || res.duplicate)) {
-            setCampaignRewardStatus({
+            const amtExact = res.reward_amount_exact || (res.reward_amount_usd ? Number(res.reward_amount_usd).toFixed(4) : null);
+            setCampaignRewardStatus((prev) => ({
+              ...prev,
               already_rewarded: true,
               eligible_to_earn: false,
-            });
+              reward_amount_usd: res.reward_amount_usd ?? prev?.reward_amount_usd,
+              reward_amount_exact: amtExact || prev?.reward_amount_exact,
+            }));
           }
         })
         .catch((err) => {
-          if (err.response?.data?.already_rewarded || err.response?.data?.duplicate) {
-            setCampaignRewardStatus({
+          const errData = err.response?.data;
+          if (errData?.already_rewarded || errData?.duplicate) {
+            const amtExact = errData?.reward_amount_exact || (errData?.reward_amount_usd ? Number(errData.reward_amount_usd).toFixed(4) : null);
+            setCampaignRewardStatus((prev) => ({
+              ...prev,
               already_rewarded: true,
               eligible_to_earn: false,
-            });
+              reward_amount_usd: errData?.reward_amount_usd ?? prev?.reward_amount_usd,
+              reward_amount_exact: amtExact || prev?.reward_amount_exact,
+            }));
           }
         })
         .finally(() => {
           setIsProcessingLandingReward(false);
         });
+
+      // Also fetch landing reward status to guarantee exact reward amounts are available
+      postApi.getLandingRewardStatus(campaignParam)
+        .then((previewRes) => {
+          if (previewRes && previewRes.success) {
+            const previewAmt = previewRes.reward_amount_exact || (previewRes.reward_amount_usd ? Number(previewRes.reward_amount_usd).toFixed(4) : null);
+            setCampaignRewardStatus((prev) => ({
+              ...prev,
+              ...previewRes,
+              reward_amount_exact: previewAmt || prev?.reward_amount_exact,
+              reward_amount_usd: previewRes.reward_amount_usd ?? prev?.reward_amount_usd,
+            }));
+          }
+        })
+        .catch(() => {});
     }
   }, [campaignParam, currentUser, data]);
 
@@ -1051,74 +1076,86 @@ export function BusinessDetailPage() {
       </div>
 
       {/* Sponsored Campaign Landing Reward Context Banner */}
-      {campaignParam && !isOwner && (
-        <div
-          style={{
-            margin: '16px auto',
-            maxWidth: '1200px',
-            padding: '14px 20px',
-            backgroundColor: '#ecfdf5',
-            border: '1px solid #a7f3d0',
-            borderRadius: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 'min(260px, 100%)' }}>
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                backgroundColor: '#d1fae5',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <Gift size={20} color="#059669" />
-            </div>
-            <div>
-              <strong style={{ fontSize: '14px', color: '#065f46', display: 'block' }}>
-                {rewardSuccessMessage || (campaignRewardStatus?.already_rewarded
-                  ? 'Campaign Reward Credited'
-                  : isProcessingLandingReward
-                  ? 'Verifying Qualifying Campaign Visit...'
-                  : 'Campaign Visit Recorded')}
-              </strong>
-              <div style={{ fontSize: '12.5px', color: '#047857', marginTop: '2px' }}>
-                {campaignRewardStatus?.already_rewarded || rewardSuccessMessage
-                  ? 'You have received the one-time $0.05 USD reward for this campaign in your verified Member Reward Wallet.'
-                  : isProcessingLandingReward
-                  ? 'Please wait while your qualifying campaign landing visit is verified...'
-                  : 'Qualifying campaign visit has been tracked.'}
+      {campaignParam && !isOwner && (() => {
+        const rewardAmtDisplay = campaignRewardStatus?.reward_amount_exact
+          ? `$${campaignRewardStatus.reward_amount_exact}`
+          : (campaignRewardStatus?.reward_amount_usd
+          ? `$${Number(campaignRewardStatus.reward_amount_usd).toFixed(4)}`
+          : (campaignRewardStatus?.campaign?.reward_amount_exact
+          ? `$${campaignRewardStatus.campaign.reward_amount_exact}`
+          : '$0.0250'));
+
+        return (
+          <div
+            style={{
+              margin: '16px auto',
+              maxWidth: '1200px',
+              padding: '14px 20px',
+              backgroundColor: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 'min(260px, 100%)' }}>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  backgroundColor: '#d1fae5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Gift size={20} color="#059669" />
+              </div>
+              <div>
+                <strong style={{ fontSize: '14px', color: '#065f46', display: 'block' }}>
+                  {rewardSuccessMessage || (campaignRewardStatus?.already_rewarded
+                    ? `Campaign Reward Credited (${rewardAmtDisplay} USD)`
+                    : isProcessingLandingReward
+                    ? 'Verifying Qualifying Campaign Visit...'
+                    : 'Campaign Visit Recorded')}
+                </strong>
+                <div style={{ fontSize: '12.5px', color: '#047857', marginTop: '2px' }}>
+                  {campaignRewardStatus?.already_rewarded || rewardSuccessMessage
+                    ? `You have received the one-time ${rewardAmtDisplay} USD reward for this campaign in your verified Member Reward Wallet.`
+                    : isProcessingLandingReward
+                    ? 'Please wait while your qualifying campaign landing visit is verified...'
+                    : 'Qualifying campaign visit has been tracked.'}
+                </div>
               </div>
             </div>
+            {(campaignRewardStatus?.already_rewarded || rewardSuccessMessage) && (
+              <span
+                style={{
+                  backgroundColor: '#059669',
+                  color: '#ffffff',
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                <Check size={14} color="#ffffff" />
+                <span>Rewarded {rewardAmtDisplay}</span>
+              </span>
+            )}
           </div>
-          {(campaignRewardStatus?.already_rewarded || rewardSuccessMessage) && (
-            <span
-              style={{
-                backgroundColor: '#059669',
-                color: '#ffffff',
-                padding: '7px 14px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <Check size={14} color="#ffffff" />
-              <span>Rewarded $0.05</span>
-            </span>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* Profile Navigation Tabs */}
       <nav className="biz-nav-tabs" aria-label="Business Profile Tabs">

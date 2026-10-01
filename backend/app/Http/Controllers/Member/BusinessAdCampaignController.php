@@ -1042,18 +1042,21 @@ class BusinessAdCampaignController extends Controller
         $landingPageUrl = !empty($validated['landing_page_url']) ? trim((string) $validated['landing_page_url']) : null;
 
         // 1. Pre-check if member already received the 1-time reward for this campaign
-        $alreadyRewarded = AdReward::where('ad_campaign_id', $campaign->id)
+        $existingReward = AdReward::where('ad_campaign_id', $campaign->id)
             ->where('member_id', $member->id)
             ->where('status', AdReward::STATUS_CREDITED)
-            ->exists();
+            ->first();
 
-        if ($alreadyRewarded) {
+        if ($existingReward) {
+            $existingAmt = (float) $existingReward->reward_amount_usd;
+            $existingAmtExact = number_format($existingAmt, 4, '.', '');
             return response()->json([
                 'success' => false,
                 'message' => 'You have already claimed your reward for this campaign.',
                 'rewarded' => false,
                 'already_rewarded' => true,
-                'reward_amount_usd' => 0.00,
+                'reward_amount_usd' => $existingAmt,
+                'reward_amount_exact' => $existingAmtExact,
                 'member_wallet' => (float) ($member->wallet ?? 0.00),
                 'member_reward_balance' => (float) ($member->wallet ?? 0.00),
             ], 422);
@@ -1167,15 +1170,18 @@ class BusinessAdCampaignController extends Controller
                 ->where('member_id', $lockedMember->id)
                 ->where('status', AdReward::STATUS_CREDITED)
                 ->lockForUpdate()
-                ->exists();
+                ->first();
 
             if ($alreadyRewardedInTx) {
+                $amtInTx = (float) $alreadyRewardedInTx->reward_amount_usd;
+                $amtExactInTx = number_format($amtInTx, 4, '.', '');
                 return [
                     'success' => false,
                     'status_code' => 422,
                     'message' => 'Member has already received the one-time qualifying reward for this campaign.',
                     'rewarded' => false,
-                    'reward_amount_usd' => 0.00,
+                    'reward_amount_usd' => $amtInTx,
+                    'reward_amount_exact' => $amtExactInTx,
                     'already_rewarded' => true,
                     'duplicate' => true,
                 ];
@@ -1353,7 +1359,12 @@ class BusinessAdCampaignController extends Controller
         );
 
         $bizPage = $campaign->businessPage;
-        $targetUrl = $bizPage ? "/member/business-pages/{$bizPage->slug}?campaign={$campaign->campaign_id}&action=follow_reward" : "/member/socials";
+        $targetUrl = $bizPage ? "/member/business-pages/{$bizPage->slug}?campaign={$campaign->campaign_id}&action=landing_reward" : "/member/socials";
+
+        // Dynamic reward resolution for response
+        $resolution = app(RewardRuleResolver::class)->resolveForMember($member);
+        $resAmt = $resolution['success'] ? (float) $resolution['reward_amount_usd'] : 0.0250;
+        $resExact = $resolution['success'] ? (string) $resolution['reward_amount_exact'] : '0.0250';
 
         return response()->json([
             'success' => true,
@@ -1361,7 +1372,8 @@ class BusinessAdCampaignController extends Controller
             'campaign_id' => $campaign->campaign_id,
             'business_page_slug' => $bizPage?->slug,
             'target_url' => $targetUrl,
-            'reward_amount_usd' => AdCampaign::REWARD_AMOUNT,
+            'reward_amount_usd' => $resAmt,
+            'reward_amount_exact' => $resExact,
         ]);
     }
 
@@ -1406,14 +1418,22 @@ class BusinessAdCampaignController extends Controller
 
         $isOwner = $campaign->isOwner($member->id);
 
-        $alreadyRewarded = AdReward::where('ad_campaign_id', $campaign->id)
+        $existingReward = AdReward::where('ad_campaign_id', $campaign->id)
             ->where('member_id', $member->id)
             ->where('status', AdReward::STATUS_CREDITED)
-            ->exists();
+            ->first();
+
+        $alreadyRewarded = (bool) $existingReward;
 
         // Authoritative resolution of member's reward eligibility based on direct verified referrals
         $resolution = app(RewardRuleResolver::class)->resolveForMember($member);
-        $rewardAmount = $resolution['success'] ? (float) $resolution['reward_amount_usd'] : AdCampaign::REWARD_AMOUNT;
+        $rewardAmount = $resolution['success'] ? (float) $resolution['reward_amount_usd'] : 0.0250;
+        $rewardAmountExact = $resolution['success'] ? (string) $resolution['reward_amount_exact'] : '0.0250';
+
+        if ($existingReward) {
+            $rewardAmount = (float) $existingReward->reward_amount_usd;
+            $rewardAmountExact = number_format($rewardAmount, 4, '.', '');
+        }
 
         // Fetch all active admin rules for dynamic display in popup
         $hasRankRules = RewardRankRule::active()->exists();
@@ -1537,17 +1557,27 @@ class BusinessAdCampaignController extends Controller
 
         $isOwner = $campaign->isOwner($member->id);
 
-        $alreadyRewarded = AdReward::where('ad_campaign_id', $campaign->id)
+        $existingReward = AdReward::where('ad_campaign_id', $campaign->id)
             ->where('member_id', $member->id)
             ->where('status', AdReward::STATUS_CREDITED)
-            ->exists();
+            ->first();
+        $alreadyRewarded = (bool) $existingReward;
+
+        $resolution = app(RewardRuleResolver::class)->resolveForMember($member);
+        $rewardAmount = $resolution['success'] ? (float) $resolution['reward_amount_usd'] : 0.0250;
+        $rewardAmountExact = $resolution['success'] ? (string) $resolution['reward_amount_exact'] : '0.0250';
+
+        if ($existingReward) {
+            $rewardAmount = (float) $existingReward->reward_amount_usd;
+            $rewardAmountExact = number_format($rewardAmount, 4, '.', '');
+        }
 
         $isFollowing = BusinessFollower::where('business_page_id', $campaign->business_page_id)
             ->where('member_id', $member->id)
             ->where('status', 'accepted')
             ->exists();
 
-        $hasBudget = (float) ($campaign->remaining_amount ?? 0.00) >= AdCampaign::REWARD_AMOUNT;
+        $hasBudget = (float) ($campaign->remaining_amount ?? 0.00) >= $rewardAmount;
         $isActive = $campaign->approval_status === AdCampaign::APPROVAL_APPROVED &&
             in_array($campaign->status, [AdCampaign::STATUS_ACTIVE, AdCampaign::STATUS_APPROVED], true);
 
@@ -1557,7 +1587,8 @@ class BusinessAdCampaignController extends Controller
                 'id' => $campaign->id,
                 'campaign_id' => $campaign->campaign_id,
                 'campaign_name' => $campaign->campaign_name,
-                'reward_amount_usd' => $isOwner ? 0.00 : AdCampaign::REWARD_AMOUNT,
+                'reward_amount_usd' => $isOwner ? 0.00 : $rewardAmount,
+                'reward_amount_exact' => $isOwner ? '0.0000' : $rewardAmountExact,
                 'business_page_id' => $campaign->business_page_id,
                 'business_page_name' => $campaign->businessPage?->page_name,
                 'business_page_slug' => $campaign->businessPage?->slug,
@@ -1571,7 +1602,8 @@ class BusinessAdCampaignController extends Controller
             'already_rewarded' => $alreadyRewarded,
             'is_following' => $isFollowing,
             'eligible_to_earn' => !$isOwner && $isVerified && !$alreadyRewarded && $hasBudget && $isActive,
-            'reward_amount_usd' => $isOwner ? 0.00 : AdCampaign::REWARD_AMOUNT,
+            'reward_amount_usd' => $isOwner ? 0.00 : $rewardAmount,
+            'reward_amount_exact' => $isOwner ? '0.0000' : $rewardAmountExact,
         ]);
     }
 
@@ -1628,24 +1660,28 @@ class BusinessAdCampaignController extends Controller
         }
 
         // Check if member already received the 1-time reward for this campaign
-        $alreadyRewarded = AdReward::where('ad_campaign_id', $campaign->id)
+        $existingReward = AdReward::where('ad_campaign_id', $campaign->id)
             ->where('member_id', $member->id)
             ->where('status', AdReward::STATUS_CREDITED)
-            ->exists();
+            ->first();
 
-        if ($alreadyRewarded) {
+        if ($existingReward) {
             // Ensure follow relation is active
             BusinessFollower::firstOrCreate(
                 ['business_page_id' => $campaign->business_page_id, 'member_id' => $member->id],
                 ['status' => 'accepted', 'followed_at' => now()]
             );
 
+            $existAmt = (float) $existingReward->reward_amount_usd;
+            $existAmtExact = number_format($existAmt, 4, '.', '');
+
             return response()->json([
                 'success' => true,
                 'message' => 'You are following this page. You have already received the one-time qualifying reward for this campaign.',
                 'rewarded' => false,
                 'already_rewarded' => true,
-                'reward_amount_usd' => 0.00,
+                'reward_amount_usd' => $existAmt,
+                'reward_amount_exact' => $existAmtExact,
                 'is_following' => true,
                 'member_wallet' => (float) ($member->wallet ?? 0.00),
                 'member_reward_balance' => (float) ($member->wallet ?? 0.00),
@@ -1759,16 +1795,19 @@ class BusinessAdCampaignController extends Controller
                 ->where('member_id', $lockedMember->id)
                 ->where('status', AdReward::STATUS_CREDITED)
                 ->lockForUpdate()
-                ->exists();
+                ->first();
 
             if ($alreadyRewardedInTx) {
+                $amtInTx = (float) $alreadyRewardedInTx->reward_amount_usd;
+                $amtExactInTx = number_format($amtInTx, 4, '.', '');
                 return [
                     'success' => true,
                     'status_code' => 200,
                     'message' => 'You have already received the one-time qualifying reward for this campaign.',
                     'rewarded' => false,
                     'already_rewarded' => true,
-                    'reward_amount_usd' => 0.00,
+                    'reward_amount_usd' => $amtInTx,
+                    'reward_amount_exact' => $amtExactInTx,
                     'is_following' => true,
                     'member_wallet' => (float) ($lockedMember->wallet ?? 0.00),
                     'member_reward_balance' => (float) ($lockedMember->wallet ?? 0.00),
@@ -1907,12 +1946,16 @@ class BusinessAdCampaignController extends Controller
             ->get()
             ->map(function (AdCampaign $c) use ($member, $maxReward, $maxRewardFormatted) {
                 $isOwner = ($member && !empty($member->id)) ? $c->isOwner($member->id) : false;
-                $alreadyRewarded = ($member && !empty($member->id))
+                $userRewardRecord = ($member && !empty($member->id))
                     ? AdReward::where('ad_campaign_id', $c->id)
                         ->where('member_id', $member->id)
                         ->where('status', AdReward::STATUS_CREDITED)
-                        ->exists()
-                    : false;
+                        ->first()
+                    : null;
+                $alreadyRewarded = (bool) $userRewardRecord;
+
+                $rewardAmountUsd = $isOwner ? null : ($alreadyRewarded ? (float) $userRewardRecord->reward_amount_usd : $maxReward);
+                $rewardAmountExact = $isOwner ? null : ($alreadyRewarded ? number_format((float) $userRewardRecord->reward_amount_usd, 4, '.', '') : null);
 
                 return [
                     'id' => $c->id,
@@ -1920,7 +1963,8 @@ class BusinessAdCampaignController extends Controller
                     'campaign_name' => $c->campaign_name,
                     'member_id' => $c->member_id,
                     'is_owner' => $isOwner,
-                    'reward_amount_usd' => $isOwner ? null : $maxReward,
+                    'reward_amount_usd' => $rewardAmountUsd,
+                    'reward_amount_exact' => $rewardAmountExact,
                     'earn_up_to_usd' => $isOwner ? null : $maxReward,
                     'earn_up_to_formatted' => $isOwner ? null : $maxRewardFormatted,
                     'business_page' => $c->businessPage,

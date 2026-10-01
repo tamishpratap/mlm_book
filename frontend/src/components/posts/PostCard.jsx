@@ -39,7 +39,7 @@ import AccountVerificationModal from '../verification/AccountVerificationModal';
 import postApi from '../../api/postApi';
 import communityApi from '../../api/communityApi';
 import { useAuth } from '../../hooks/useAuth';
-import { getAvatarUrl, getMediaUrl } from '../../utils/assetHelper';
+import { getAvatarUrl, getMediaUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import VerifiedBadge from '../common/VerifiedBadge';
 import { renderContentWithLinks } from '../../utils/linkHelper';
 import { isMemberMobileVerified } from '../../utils/whatsappVerification';
@@ -252,7 +252,7 @@ export function PostCard({
   const adEarnUpToAmount = adCampaignData?.earn_up_to_formatted ||
     post?.earn_up_to_formatted ||
     (adCampaignData?.earn_up_to_usd ? `$${Number(adCampaignData.earn_up_to_usd).toFixed(4)}` :
-      (adCampaignData?.reward_amount_usd ? `$${Number(adCampaignData.reward_amount_usd).toFixed(4)}` : '$0.0250'));
+      (adCampaignData?.reward_amount_usd ? `$${Number(adCampaignData.reward_amount_usd).toFixed(4)}` : ''));
 
   const isCampaignOwner = Boolean(
     isOwner ||
@@ -876,13 +876,12 @@ export function PostCard({
             onError={() => setAuthorAvatarError(true)}
           />
         ) : (
-          <span
-            className="avatar post-avatar-initials"
-            role="img"
-            aria-label={`${authorName} initials`}
-          >
-            {getInitials(authorName)}
-          </span>
+          <img
+            className="avatar"
+            src={DEFAULT_AVATAR}
+            alt={authorName}
+            loading="lazy"
+          />
         )}
 
         <div className="post-header__meta">
@@ -1346,13 +1345,12 @@ export function PostCard({
                   onError={() => setOrigAvatarError(true)}
                 />
               ) : (
-                <span
-                  className="shared-post-box__avatar shared-post-box__avatar--initials"
-                  role="img"
-                  aria-label={`${origName} initials`}
-                >
-                  {getInitials(origName)}
-                </span>
+                <img
+                  className="shared-post-box__avatar"
+                  src={DEFAULT_AVATAR}
+                  alt={origName}
+                  loading="lazy"
+                />
               )}
             </Link>
 
@@ -1495,7 +1493,7 @@ export function PostCard({
               <span>{bizPage?.page_name || adCampaignData?.campaign_name || authorName || 'Promoted Business'}</span>
               {isCampaignOwner ? null : adCampaignData?.already_rewarded ? (
                 <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#047857', backgroundColor: '#d1fae5', padding: '1px 6px', borderRadius: '4px' }}>
-                  Rewarded
+                  Rewarded{adCampaignData?.reward_amount_exact ? ` $${adCampaignData.reward_amount_exact}` : (adCampaignData?.reward_amount_usd ? ` $${Number(adCampaignData.reward_amount_usd).toFixed(4)}` : '')}
                 </span>
               ) : (
                 <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#047857', backgroundColor: '#d1fae5', padding: '1px 6px', borderRadius: '4px' }}>
@@ -1550,7 +1548,7 @@ export function PostCard({
                 }}
               >
                 <Check size={13} color="#059669" />
-                <span>Rewarded</span>
+                <span>Rewarded{adCampaignData?.reward_amount_exact ? ` $${adCampaignData.reward_amount_exact}` : (adCampaignData?.reward_amount_usd ? ` $${Number(adCampaignData.reward_amount_usd).toFixed(4)}` : '')}</span>
               </span>
               {bizPage && (
                 <Link
@@ -1803,9 +1801,11 @@ export function PostCard({
                   onError={() => setUserAvatarError(true)}
                 />
               ) : (
-                <span className="post-comment-form__avatar post-comment-form__avatar--initials">
-                  {getInitials(currentUser?.name)}
-                </span>
+                <img
+                  className="post-comment-form__avatar"
+                  src={DEFAULT_AVATAR}
+                  alt={currentUser?.name || 'User'}
+                />
               )}
             </div>
 

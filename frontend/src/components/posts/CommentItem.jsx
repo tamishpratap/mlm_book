@@ -5,7 +5,7 @@ import ReplyItem from './ReplyItem';
 import CommentReactorsModal from './modals/CommentReactorsModal';
 import postApi from '../../api/postApi';
 import VerifiedBadge from '../common/VerifiedBadge';
-import { getAvatarUrl } from '../../utils/assetHelper';
+import { getAvatarUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import { renderContentWithLinks } from '../../utils/linkHelper';
 
 const REACTION_CONFIG = {
@@ -373,9 +373,11 @@ export function CommentItem({
             onError={() => setImgError(true)}
           />
         ) : (
-          <span className="post-comment-item__avatar post-comment-item__avatar--initials">
-            {getInitials(author?.name)}
-          </span>
+          <img
+            className="post-comment-item__avatar"
+            src={DEFAULT_AVATAR}
+            alt={author?.name || 'User'}
+          />
         )}
       </div>
 
@@ -596,9 +598,11 @@ export function CommentItem({
                     onError={() => setUserImgError(true)}
                   />
                 ) : (
-                  <span className="post-reply-form__avatar post-reply-form__avatar--initials">
-                    {getInitials(currentUser?.name)}
-                  </span>
+                  <img
+                    className="post-reply-form__avatar"
+                    src={DEFAULT_AVATAR}
+                    alt={currentUser?.name || 'User'}
+                  />
                 )}
               </div>
               <div className="post-reply-form__input-wrap">

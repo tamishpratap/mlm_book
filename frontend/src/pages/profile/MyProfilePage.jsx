@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import profileApi from '../../api/profileApi';
-import { getAvatarUrl, getCoverUrl, getMediaUrl, getInitials } from '../../utils/assetHelper';
+import { getAvatarUrl, getCoverUrl, getMediaUrl, getInitials, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import PostComposer from '../../components/posts/PostComposer';
 import PostCard from '../../components/posts/PostCard';
 import VerifiedBadge from '../../components/common/VerifiedBadge';
@@ -433,14 +433,12 @@ export function MyProfilePage() {
                   onError={() => setAvatarImgError(true)}
                 />
               ) : (
-                <div
-                  className="profile-avatar profile-avatar--initials"
+                <img
+                  className="profile-avatar"
                   id="profile-photo-preview"
-                  role="img"
-                  aria-label={member.name}
-                >
-                  <span>{initials}</span>
-                </div>
+                  src={DEFAULT_AVATAR}
+                  alt={member.name}
+                />
               )}
               <div
                 className="profile-avatar__camera"

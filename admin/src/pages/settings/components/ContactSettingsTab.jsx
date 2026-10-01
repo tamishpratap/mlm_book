@@ -10,7 +10,8 @@ export function ContactSettingsTab({ initialValues = {}, onSave, loading = false
     support_email: initialValues?.support_email ?? 'support@mlmbook.com',
     phone: initialValues?.phone ?? '+1 (800) 123-4567',
     website: initialValues?.website ?? 'https://mlmbook.com',
-    address: initialValues?.address ?? '123 Enterprise Way, Suite 500, Tech City',
+    address: initialValues?.address ?? '',
+    business_hours: initialValues?.business_hours ?? 'Monday - Friday: 9:00 AM - 6:00 PM (UTC)',
   }), [initialValues]);
 
   const [formData, setFormData] = useState(defaults);
@@ -96,10 +97,24 @@ export function ContactSettingsTab({ initialValues = {}, onSave, loading = false
           />
         </div>
 
+        {/* Business Hours */}
+        <div className="sm:col-span-2">
+          <label className="text-xs font-bold text-slate-700 block mb-1.5">
+            Support & Business Operating Hours
+          </label>
+          <InputText
+            value={formData.business_hours}
+            onChange={(e) => handleChange('business_hours', e.target.value)}
+            placeholder="Monday - Friday: 9:00 AM - 6:00 PM (UTC)"
+            className="w-full text-xs"
+            disabled={loading}
+          />
+        </div>
+
         {/* Address */}
         <div className="sm:col-span-2">
           <label className="text-xs font-bold text-slate-700 block mb-1.5">
-            Office Physical Address
+            Office Physical Address (Optional)
           </label>
           <InputTextarea
             value={formData.address}

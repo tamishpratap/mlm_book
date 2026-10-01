@@ -159,8 +159,8 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
               className="mlm-book-logo mlm-book-header-logo"
               src={logoUrl || BRAND_LOGO}
               alt={siteName || 'MLM Book'}
-              width="60"
-              height="60"
+              width="74"
+              height="56"
               onError={(e) => {
                 if (e.currentTarget.src !== BRAND_LOGO) {
                   e.currentTarget.src = BRAND_LOGO;

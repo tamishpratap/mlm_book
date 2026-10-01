@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import { getAvatarUrl } from '../../utils/assetHelper';
+import { getAvatarUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import VerifiedBadge from '../../components/common/VerifiedBadge';
 import {
   ChevronDown,
@@ -152,23 +152,11 @@ export function ProfileDropdown({ isOpen, onToggle, onClose, onOpenReferral, onO
           {user.profile_photo && !avatarImgError ? (
             <img src={avatarUrl} alt={user.name} onError={() => setAvatarImgError(true)} />
           ) : (
-            <span
-              className="avatar post-avatar-initials"
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #176bff, #7146ed)',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                borderRadius: '50%',
-              }}
-            >
-              {initials}
-            </span>
+            <img
+              src={DEFAULT_AVATAR}
+              alt={user.name}
+              style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+            />
           )}
           <span className="online-dot" aria-hidden="true" />
         </span>
@@ -199,23 +187,11 @@ export function ProfileDropdown({ isOpen, onToggle, onClose, onOpenReferral, onO
             {user.profile_photo && !avatarImgError ? (
               <img src={avatarUrl} alt={user.name} onError={() => setAvatarImgError(true)} />
             ) : (
-              <span
-                className="avatar post-avatar-initials"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #176bff, #7146ed)',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: '0.95rem',
-                  borderRadius: '50%',
-                }}
-              >
-                {initials}
-              </span>
+              <img
+                src={DEFAULT_AVATAR}
+                alt={user.name}
+                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+              />
             )}
             <span>
               <strong style={{ display: 'inline-flex', alignItems: 'center' }}>

@@ -90,6 +90,7 @@ use App\Http\Middleware\EnsureMemberMobileVerified;
 Route::get('/branding', [SettingManagementController::class, 'getBranding']);
 Route::get('/contact-info', [SettingManagementController::class, 'getPublicSettings']);
 Route::get('/public-settings', [SettingManagementController::class, 'getPublicSettings']);
+Route::get('/reward-rank-rules', [SettingManagementController::class, 'getPublicRankRules']);
 Route::post('/contact', [SettingManagementController::class, 'submitContact']);
 
 Route::prefix('admin')->group(function () {
@@ -330,6 +331,9 @@ Route::prefix('admin')->group(function () {
             Route::post('/', [SettingManagementController::class, 'update']);
             Route::post('/clear-cache', [SettingManagementController::class, 'clearCache']);
             Route::post('/maintenance', [SettingManagementController::class, 'toggleMaintenance']);
+            Route::get('/contact-messages', [SettingManagementController::class, 'getContactMessages']);
+            Route::delete('/contact-messages/{id}', [SettingManagementController::class, 'deleteContactMessage']);
+            Route::post('/contact-messages/{id}/status', [SettingManagementController::class, 'updateContactMessageStatus']);
         });
 
         // Roles & Permissions (RBAC)
@@ -431,6 +435,7 @@ Route::prefix('member')->name('api.member.')->group(function () {
     Route::get('/branding', [SettingManagementController::class, 'getBranding'])->name('branding');
     Route::get('/contact-info', [SettingManagementController::class, 'getPublicSettings'])->name('contact.info');
     Route::get('/public-settings', [SettingManagementController::class, 'getPublicSettings'])->name('public.settings');
+    Route::get('/reward-rank-rules', [SettingManagementController::class, 'getPublicRankRules'])->name('reward.rank.rules');
     Route::post('/contact', [SettingManagementController::class, 'submitContact'])->name('contact.submit');
 
     // ---------------------------------------------------------------------

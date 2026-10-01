@@ -3,7 +3,7 @@ import { Image, Send, X, Megaphone, Crop, Plus, Loader2 } from 'lucide-react';
 import postApi from '../../api/postApi';
 import communityApi from '../../api/communityApi';
 import businessApi from '../../api/businessApi';
-import { getAvatarUrl } from '../../utils/assetHelper';
+import { getAvatarUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import { ImageAdjustmentModal } from './modals/ImageAdjustmentModal';
 import { ModalPortal } from '../common/ModalPortal';
 
@@ -236,22 +236,12 @@ export function PostComposer({
               onError={() => setComposerAvatarError(true)}
             />
           ) : (
-            <span
-              className="avatar post-avatar-initials"
-              style={{
-                width: '42px',
-                height: '42px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #176bff, #7146ed)',
-                color: '#fff',
-                fontWeight: 700,
-                borderRadius: '50%',
-              }}
-            >
-              {getInitials(displayName)}
-            </span>
+            <img
+              className="avatar"
+              src={DEFAULT_AVATAR}
+              alt={displayName}
+              style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+            />
           )}
 
           <div
@@ -437,22 +427,12 @@ export function PostComposer({
                     onError={() => setComposerAvatarError(true)}
                   />
                 ) : (
-                  <span
-                    className="avatar post-avatar-initials"
-                    style={{
-                      width: '44px',
-                      height: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'linear-gradient(135deg, #176bff, #7146ed)',
-                      color: '#fff',
-                      fontWeight: 700,
-                      borderRadius: '50%',
-                    }}
-                  >
-                    {getInitials(displayName)}
-                  </span>
+                  <img
+                    className="avatar"
+                    src={DEFAULT_AVATAR}
+                    alt={displayName}
+                    style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
+                  />
                 )}
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>{displayName}</div>

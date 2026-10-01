@@ -15,7 +15,7 @@ import {
   Video,
   Users,
 } from 'lucide-react';
-import { getAvatarUrl, getInitials } from '../../../utils/assetHelper';
+import { getAvatarUrl, getInitials, DEFAULT_AVATAR } from '../../../utils/assetHelper';
 import { ModalPortal } from '../../common/ModalPortal';
 
 const ASPECT_RATIOS = [
@@ -1367,14 +1367,15 @@ export function ImageAdjustmentModal({
                       src={userAvatar}
                       alt={currentUser?.name || 'User'}
                       style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+                      onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
                     />
                   ) : (
-                    <span
-                      className="avatar post-avatar-initials"
-                      style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#4f7df3', color: '#ffffff', display: 'grid', placeItems: 'center', fontWeight: 700 }}
-                    >
-                      {userInitials}
-                    </span>
+                    <img
+                      className="avatar"
+                      src={DEFAULT_AVATAR}
+                      alt={currentUser?.name || 'User'}
+                      style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+                    />
                   )}
                   <div className="post-header__meta">
                     <div>

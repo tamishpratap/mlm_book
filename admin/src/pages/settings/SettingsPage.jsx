@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { PageHeader } from '../../components/common/PageHeader';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -10,22 +11,56 @@ import { settingsApi } from '../../api';
 import { GeneralSettingsTab } from './components/GeneralSettingsTab';
 import { BrandingSettingsTab } from './components/BrandingSettingsTab';
 import { ContactSettingsTab } from './components/ContactSettingsTab';
+import { ContactMessagesTab } from './components/ContactMessagesTab';
 import { MailStorageTab } from './components/MailStorageTab';
 import { CacheMaintenanceTab } from './components/CacheMaintenanceTab';
 import { SeoSocialTab } from './components/SeoSocialTab';
 import { SystemDiagnosticsTab } from './components/SystemDiagnosticsTab';
 import { SettingsSkeleton } from './components/SettingsSkeleton';
 
+const TAB_KEY_TO_INDEX = {
+  general: 0,
+  branding: 1,
+  contact: 2,
+  inquiries: 3,
+  messages: 3,
+  mail: 4,
+  cache: 5,
+  maintenance: 5,
+  seo: 6,
+  social: 6,
+  system: 7,
+  diagnostics: 7,
+};
+
+const TAB_INDEX_TO_KEY = ['general', 'branding', 'contact', 'inquiries', 'mail', 'cache', 'seo', 'system'];
+
 export function SettingsPage() {
   const { showSuccess, showError } = useToast();
   const { updateBranding } = useBranding();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const tabParam = (searchParams.get('tab') || '').toLowerCase();
+  const initialTab = tabParam && TAB_KEY_TO_INDEX[tabParam] !== undefined ? TAB_KEY_TO_INDEX[tabParam] : 0;
 
   const [settings, setSettings] = useState({});
   const [systemInfo, setSystemInfo] = useState({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    if (tabParam && TAB_KEY_TO_INDEX[tabParam] !== undefined) {
+      setActiveTab(TAB_KEY_TO_INDEX[tabParam]);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (index) => {
+    setActiveTab(index);
+    const key = TAB_INDEX_TO_KEY[index] || 'general';
+    setSearchParams({ tab: key }, { replace: true });
+  };
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
@@ -142,7 +177,7 @@ export function SettingsPage() {
 
       {/* Main Settings Tabbed Card */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 sm:p-6">
-        <TabView activeIndex={activeTab} onTabChange={(e) => setActiveTab(e.index)}>
+        <TabView activeIndex={activeTab} onTabChange={(e) => handleTabChange(e.index)}>
           {/* Tab 1: General Settings */}
           <TabPanel header="General Settings">
             <GeneralSettingsTab
@@ -170,7 +205,12 @@ export function SettingsPage() {
             />
           </TabPanel>
 
-          {/* Tab 4: Mail & Storage */}
+          {/* Tab 4: Contact Inquiries / Messages */}
+          <TabPanel header="Received Inquiries">
+            <ContactMessagesTab />
+          </TabPanel>
+
+          {/* Tab 5: Mail & Storage */}
           <TabPanel header="Mail & Storage">
             <MailStorageTab systemInfo={systemInfo} />
           </TabPanel>
