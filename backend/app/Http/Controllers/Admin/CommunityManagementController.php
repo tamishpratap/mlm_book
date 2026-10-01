@@ -392,7 +392,7 @@ class CommunityManagementController extends Controller
     {
         $name = $community->name;
 
-        $community->delete();
+        $community->purge();
 
         if (request()->expectsJson() || request()->is('api/*')) {
             return response()->json([
@@ -431,7 +431,10 @@ class CommunityManagementController extends Controller
             }
             return redirect()->back()->with('success', count($ids) . ' communities have been activated.');
         } elseif ($action === 'delete') {
-            Community::whereIn('id', $ids)->delete();
+            $communities = Community::whereIn('id', $ids)->get();
+            foreach ($communities as $community) {
+                $community->purge();
+            }
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json(['success' => true, 'message' => count($ids) . ' communities have been deleted.']);
             }

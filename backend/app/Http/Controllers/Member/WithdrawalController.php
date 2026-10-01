@@ -73,17 +73,8 @@ class WithdrawalController extends Controller
                 'is_verified' => $member->is_verified,
             ],
             'config' => [
-                'service_charge_percent' => (float) (Setting::get('withdrawal_service_charge_percent') ?? Setting::get('withdrawal_fee_percent') ?? self::SERVICE_CHARGE_PERCENT),
-                'service_charge_percent' => (float) Setting::get('withdrawal_service_charge_percent', self::SERVICE_CHARGE_PERCENT),
-                'minimum_amount' => (float) Setting::get('minimum_withdrawal_amount', self::MINIMUM_WITHDRAWAL_AMOUNT),
-                'maximum_amount' => (float) Setting::get('maximum_withdrawal_amount', 10000.00),
-                'withdrawal_status' => Setting::get('withdrawal_status', 'enabled'),
-                'withdrawal_instructions' => Setting::get(
-                    'withdrawal_instructions',
-                    'Withdrawals are processed in USDT (BEP-20) to your verified payout wallet address. Processing takes 15-60 minutes after admin approval.'
-                ),
-
-                'service_charge_percent' => (float) Setting::get('withdrawal_fee_percent', self::SERVICE_CHARGE_PERCENT),
+                'service_charge_percent' => (float) (Setting::get('withdrawal_service_charge_percent') ?? Setting::get('service_charge_percent') ?? Setting::get('withdrawal_fee_percent') ?? self::SERVICE_CHARGE_PERCENT),
+                'withdrawal_service_charge_percent' => (float) (Setting::get('withdrawal_service_charge_percent') ?? Setting::get('service_charge_percent') ?? Setting::get('withdrawal_fee_percent') ?? self::SERVICE_CHARGE_PERCENT),
                 'minimum_amount' => (float) Setting::get('minimum_withdrawal_amount', self::MINIMUM_WITHDRAWAL_AMOUNT),
                 'maximum_amount' => (float) Setting::get('maximum_withdrawal_amount', 10000.00),
                 'withdrawal_status' => Setting::get('withdrawal_status', 'enabled'),
@@ -155,24 +146,10 @@ class WithdrawalController extends Controller
                 'message' => 'Maximum withdrawal amount allowed per request is $' . number_format($maxWithdrawal, 2) . '.',
             ], 422);
         }
-        if ($maxWithdrawal > 0 && $grossAmount > $maxWithdrawal) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Maximum withdrawal amount allowed per request is $' . number_format($maxWithdrawal, 2) . '.',
-            ], 422);
-        }
 
-        // Dynamic Service Charge Deduction
-        $feePercent = round((float) (Setting::get('withdrawal_service_charge_percent') ?? Setting::get('withdrawal_fee_percent') ?? self::SERVICE_CHARGE_PERCENT), 2);
+        // Dynamic Service Charge Deduction configured by admin
+        $feePercent = round((float) (Setting::get('withdrawal_service_charge_percent') ?? Setting::get('service_charge_percent') ?? Setting::get('withdrawal_fee_percent') ?? self::SERVICE_CHARGE_PERCENT), 2);
         $serviceCharge = round($grossAmount * ($feePercent / 100), 2);
-        // Dynamic Service Charge Deduction
-        $feePercent = round((float) Setting::get('withdrawal_service_charge_percent', self::SERVICE_CHARGE_PERCENT), 2);
-        $serviceCharge = round($grossAmount * ($feePercent / 100), 2);
-      
-        // Service Charge Deduction (0.00% by default; service charges apply only on fund deposits via admin setting)
-        $serviceChargePercent = (float) Setting::get('withdrawal_fee_percent', self::SERVICE_CHARGE_PERCENT);
-        $serviceCharge = round($grossAmount * ($serviceChargePercent / 100), 2);
-
         $netAmount = round($grossAmount - $serviceCharge, 2);
 
         // Generate unique human-readable Request ID: e.g. WD20260918-XXXXXX

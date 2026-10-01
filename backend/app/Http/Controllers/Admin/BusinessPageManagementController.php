@@ -388,7 +388,7 @@ class BusinessPageManagementController extends Controller
     {
         $name = $businessPage->page_name;
 
-        $businessPage->delete();
+        $businessPage->purge();
 
         if (request()->expectsJson() || request()->is('api/*')) {
             return response()->json([
@@ -439,7 +439,10 @@ class BusinessPageManagementController extends Controller
             }
             return redirect()->back()->with('success', count($ids) . ' business pages activated.');
         } elseif ($action === 'delete') {
-            BusinessPage::whereIn('id', $ids)->delete();
+            $pages = BusinessPage::whereIn('id', $ids)->get();
+            foreach ($pages as $page) {
+                $page->purge();
+            }
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json(['success' => true, 'message' => count($ids) . ' business pages deleted.']);
             }

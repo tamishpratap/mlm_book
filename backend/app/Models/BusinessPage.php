@@ -6,11 +6,114 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class BusinessPage extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::forceDeleting(function (self $page) {
+            $page->cleanupAssociatedData();
+        });
+    }
+
+    /**
+     * Override delete to permanently purge business page data and release username/slug.
+     */
+    public function delete()
+    {
+        if ($this->forceDeleting) {
+            return parent::delete();
+        }
+
+        return $this->purge();
+    }
+
+    /**
+     * Permanently purge the business page, removing all page-exclusive posts,
+     * attachments, verification documents, and files, and permanently deleting
+     * the database record to release the username and slug.
+     */
+    public function purge(): bool
+    {
+        return (bool) DB::transaction(function () {
+            return $this->forceDelete();
+        });
+    }
+
+    /**
+     * Clean up all files and child entities exclusively belonging to this business page.
+     */
+    public function cleanupAssociatedData(): void
+    {
+        // 1. Delete all page posts and their media
+        $this->posts()->chunkById(100, function ($posts) {
+            foreach ($posts as $post) {
+                self::deleteUploadedFile($post->media_path);
+                $post->delete();
+            }
+        });
+
+        // 2. Delete verification documents
+        foreach ($this->verifications as $verification) {
+            self::deleteUploadedFile($verification->document_path);
+        }
+
+        // 3. Delete review photos
+        foreach ($this->reviews as $review) {
+            if (is_array($review->photos)) {
+                foreach ($review->photos as $photo) {
+                    self::deleteUploadedFile($photo);
+                }
+            }
+        }
+
+        // 4. Delete conversation message attachments
+        $conversations = $this->conversations()->with('messages')->get();
+        foreach ($conversations as $conversation) {
+            foreach ($conversation->messages as $msg) {
+                self::deleteUploadedFile($msg->attachment_path);
+            }
+        }
+
+        // 5. Delete logo and cover photo
+        self::deleteUploadedFile($this->logo);
+        self::deleteUploadedFile($this->cover_photo);
+    }
+
+    /**
+     * Safely deletes an uploaded file from disk if it exists locally.
+     */
+    public static function deleteUploadedFile(?string $path): void
+    {
+        if (empty($path) || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return;
+        }
+
+        $clean = ltrim($path, '/\\');
+
+        $fullPublic = public_path($clean);
+        if (File::exists($fullPublic) && ! File::isDirectory($fullPublic)) {
+            try {
+                File::delete($fullPublic);
+                return;
+            } catch (\Throwable $e) {
+            }
+        }
+
+        $fullStorage = storage_path('app/public/' . $clean);
+        if (File::exists($fullStorage) && ! File::isDirectory($fullStorage)) {
+            try {
+                File::delete($fullStorage);
+                return;
+            } catch (\Throwable $e) {
+            }
+        }
+    }
 
     /**
      * @deprecated Use BusinessPageCategory::getActiveCategoryNames() or BusinessPage::categories() instead.

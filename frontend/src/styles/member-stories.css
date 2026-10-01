@@ -699,7 +699,7 @@ body.story-overlay-open {
     width: 0%;
     border-radius: 999px;
     background: #ffffff;
-    transition: width 50ms linear;
+    transition: none !important;
 }
 
 .story-viewer__progress > span {
@@ -2176,7 +2176,7 @@ button.story-viewer__react-summary--owner:hover {
     background: #ffffff;
     border-radius: 999px;
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
-    transition: width 80ms linear;
+    transition: none !important;
 }
 
 /* Touch & Click Navigation Overlay Areas */

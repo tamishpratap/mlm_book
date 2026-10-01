@@ -4,6 +4,7 @@ import { ArrowLeft, Save, Mail, Loader2 } from 'lucide-react';
 import profileApi from '../../api/profileApi';
 import useAuth from '../../hooks/useAuth';
 import { getAvatarUrl, getCoverUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
+import { COUNTRIES } from '../../constants/countries';
 
 function getInitials(name) {
   if (!name) return 'U';
@@ -31,6 +32,7 @@ export function EditProfilePage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState(null);
   const [avatarImgError, setAvatarImgError] = useState(false);
+  const [countries, setCountries] = useState(COUNTRIES);
 
   useEffect(() => {
     setAvatarImgError(false);
@@ -53,6 +55,9 @@ export function EditProfilePage() {
             country: m.country || '',
             website: m.website || '',
           });
+          if (Array.isArray(res.countries) && res.countries.length > 0) {
+            setCountries(res.countries);
+          }
           setError(null);
         }
       })
@@ -305,16 +310,20 @@ export function EditProfilePage() {
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
                   Country
                 </label>
-                <input
-                  type="text"
+                <select
                   name="country"
                   value={formData.country}
                   onChange={handleChange}
-                  maxLength={100}
-                  placeholder="Your country"
                   className="form-control"
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '14px' }}
-                />
+                >
+                  <option value="">Select a country</option>
+                  {(formData.country && !countries.includes(formData.country) ? [formData.country, ...countries] : countries).map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
                 {fieldErrors.country && (
                   <p style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px', margin: '4px 0 0 0' }}>{fieldErrors.country[0]}</p>
                 )}

@@ -368,75 +368,32 @@ export function DepositPage() {
   };
 
   // --------------------------------------------------------------------------
-  // SECTION 2: Manual Deposit Verification & Submission
+  // SECTION 2: Manual Deposit Request Submission
   // --------------------------------------------------------------------------
-  const handleVerifyManual = async (e) => {
+  const handleSubmitManual = async (e) => {
     e?.preventDefault();
-    setManualVerificationError('');
-    setManualVerificationResult(null);
-    setManualSubmitSuccess(null);
     setManualSubmitError('');
+    setManualSubmitSuccess(null);
 
     const baseAmount = parseFloat(manualAmount);
     if (isNaN(baseAmount) || baseAmount < 10) {
-      setManualVerificationError('Minimum deposit amount is $10.00 USD equivalent.');
+      setManualSubmitError('Minimum deposit amount is $10.00 USD equivalent.');
       return;
     }
-
-    const cleanHash = manualTxHash.trim();
-    if (!cleanHash) {
-      setManualVerificationError('Please enter the 66-character Transaction Hash (0x...).');
-      return;
-    }
-
-    if (!/^0x[a-fA-F0-9]{64}$/.test(cleanHash)) {
-      setManualVerificationError('Invalid hash format. Must be a 66-character hex string starting with 0x.');
-      return;
-    }
-
-    const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
-    const totalToTransfer = scPercent > 0 ? Number((baseAmount * (1 + scPercent / 100)).toFixed(2)) : baseAmount;
-
-    setIsVerifyingManual(true);
-    try {
-      const res = await depositApi.verifyManualDeposit({
-        amount: totalToTransfer,
-        base_amount: baseAmount,
-        transaction_hash: cleanHash,
-        wallet_address: walletAddress || undefined,
-      });
-
-      if (res && res.success && res.verified) {
-        setManualVerificationResult(res.data);
-      } else {
-        setManualVerificationError(res.message || 'Transaction verification failed.');
-      }
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Verification failed. Please check the hash and amount.';
-      setManualVerificationError(msg);
-    } finally {
-      setIsVerifyingManual(false);
-    }
-  };
-
-  const handleSubmitManualRequest = async () => {
-    if (!manualVerificationResult) return;
 
     setIsSubmittingManual(true);
-    setManualSubmitError('');
-    setManualSubmitSuccess(null);
-
     try {
       const res = await depositApi.submitManualDepositRequest({
-        amount: manualVerificationResult.amount,
-        transaction_hash: manualVerificationResult.transaction_hash,
-        wallet_address: manualVerificationResult.wallet_address,
+        amount: baseAmount,
+        transaction_reference: manualTxHash.trim() || undefined,
+        transaction_hash: manualTxHash.trim() || undefined,
+        wallet_address: walletAddress || undefined,
       });
 
       if (res && res.success) {
         setManualSubmitSuccess(res.message || 'Deposit request submitted to Admin successfully.');
-        setManualVerificationResult(null);
         setManualTxHash('');
+        loadConfig();
         loadHistory(1);
       } else {
         setManualSubmitError(res.message || 'Failed to submit request to admin.');
@@ -713,42 +670,7 @@ export function DepositPage() {
         </div>
       </section>
 
-      {/* Local Server Testing Mode Banner (Only appears in local dev environment) */}
-      {config?.is_test_mode && (
-        <div style={{
-          background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-          border: '1px solid #fcd34d',
-          borderRadius: '16px',
-          padding: '1rem 1.25rem',
-          marginBottom: '1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          boxShadow: '0 2px 5px rgba(245, 158, 11, 0.08)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <div style={{ background: '#f59e0b', color: '#fff', padding: '0.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles size={22} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.96rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span>🧪 Local Server Testing Mode Active</span>
-                <span style={{ background: '#fef3c7', border: '1px solid #f59e0b', color: '#b45309', fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: '6px', fontWeight: 700 }}>
-                  APP_ENV=local
-                </span>
-              </div>
-              <div style={{ color: '#b45309', fontSize: '0.84rem', marginTop: '0.2rem' }}>
-                You can test DApp deposits and manual verification without spending real USDT or gas fees. When deployed to the online production server, real BSC blockchain transactions are automatically required.
-              </div>
-            </div>
-          </div>
-          <div style={{ background: '#fff', border: '1px solid #fbbf24', padding: '0.45rem 0.85rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700, color: '#b45309' }}>
-            Chain: BSC (Simulated &amp; Testnet Ready)
-          </div>
-        </div>
-      )}
+
 
       {/* Tabs Selector */}
       <div style={{ display: 'flex', gap: '0.5rem', background: '#f3f4f6', padding: '0.35rem', borderRadius: '14px', marginBottom: '1.5rem', width: 'fit-content' }}>
@@ -1242,49 +1164,6 @@ export function DepositPage() {
                 );
               })()}
 
-              {/* Local Dev Test Mode Simulation Action */}
-              {config?.is_test_mode && (() => {
-                const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
-                const base = parseFloat(dappAmount) || 10;
-                const total = scPercent > 0 ? (base * (1 + scPercent / 100)).toFixed(2) : base.toFixed(2);
-
-                return (
-                  <div style={{ marginTop: '1.25rem', padding: '1rem', background: '#f0fdf4', border: '1px dashed #86efac', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#166534' }}>
-                        🧪 Local Testing Action (Simulation):
-                      </span>
-                      <span style={{ fontSize: '0.74rem', color: '#15803d', fontWeight: 500 }}>
-                        No wallet connection or gas needed
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleSimulateDappDeposit}
-                      disabled={dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying'}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: '#059669',
-                        color: '#fff',
-                        fontWeight: 700,
-                        fontSize: '0.9rem',
-                        cursor: (dappStep === 'signing' || dappStep === 'confirming' || dappStep === 'verifying') ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        boxShadow: '0 2px 5px rgba(5, 150, 105, 0.25)',
-                      }}
-                    >
-                      <Sparkles size={16} />
-                      <span>⚡ One-Click Simulate DApp Transfer (${total} USDT → ${base.toFixed(2)} USD Net)</span>
-                    </button>
-                  </div>
-                );
-              })()}
             </form>
 
             {/* DApp Success Card */}
@@ -1448,7 +1327,7 @@ export function DepositPage() {
               </div>
             </div>
 
-            <form onSubmit={handleVerifyManual}>
+            <form onSubmit={handleSubmitManual}>
               {/* Deposit Amount Input */}
               <div style={{ marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
@@ -1471,7 +1350,7 @@ export function DepositPage() {
                     onChange={(e) => setManualAmount(e.target.value)}
                     placeholder="50"
                     required
-                    disabled={isVerifyingManual || isSubmittingManual}
+                    disabled={isSubmittingManual}
                     style={{
                       width: '100%',
                       padding: '0.75rem 4rem 0.75rem 1rem',
@@ -1495,7 +1374,7 @@ export function DepositPage() {
                     <button
                       key={preset}
                       type="button"
-                      disabled={isVerifyingManual || isSubmittingManual}
+                      disabled={isSubmittingManual}
                       onClick={() => setManualAmount(String(preset))}
                       style={{
                         padding: '0.35rem 0.75rem',
@@ -1505,7 +1384,7 @@ export function DepositPage() {
                         color: parseFloat(manualAmount) === preset ? '#176bff' : '#4b5563',
                         fontWeight: 600,
                         fontSize: '0.82rem',
-                        cursor: (isVerifyingManual || isSubmittingManual) ? 'not-allowed' : 'pointer',
+                        cursor: isSubmittingManual ? 'not-allowed' : 'pointer',
                       }}
                     >
                       ${preset}
@@ -1595,73 +1474,20 @@ export function DepositPage() {
                 })()}
               </div>
 
-              {/* Transaction Hash */}
+              {/* Optional Transaction ID / UTR / Reference */}
               <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                   <label htmlFor="manual-txhash" style={{ fontSize: '0.88rem', fontWeight: 600, color: '#374151' }}>
-                    Blockchain Transaction Hash <span style={{ color: '#dc2626' }}>*</span>
+                    Transaction ID / UTR / Reference <span style={{ color: '#6b7280', fontSize: '0.8rem', fontWeight: 400 }}>(Optional)</span>
                   </label>
-
-                  {/* Local Testing Mode Helper Buttons */}
-                  {config?.is_test_mode && (
-                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const sc = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
-                          const amt = sc > 0 ? (100 * (1 + sc / 100)).toFixed(2) : '100.00';
-                          setManualAmount(amt);
-                          setManualTxHash(generateTestTxHash());
-                          setManualVerificationResult(null);
-                          setManualVerificationError('');
-                        }}
-                        style={{
-                          background: '#eff6ff',
-                          color: '#1d4ed8',
-                          border: '1px solid #bfdbfe',
-                          padding: '0.2rem 0.55rem',
-                          borderRadius: '6px',
-                          fontSize: '0.74rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
-                        title="Auto-fill test hash with $100 + fee (Net $100 USD credit)"
-                      >
-                        ⚡ Fill Test Hash ($100 Net)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setManualAmount('5.00');
-                          setManualTxHash('0x7e5700000000000000000000000000000000000000000000000000000000100a');
-                          setManualVerificationResult(null);
-                          setManualVerificationError('');
-                        }}
-                        style={{
-                          background: '#fef2f2',
-                          color: '#b91c1c',
-                          border: '1px solid #fecaca',
-                          padding: '0.2rem 0.55rem',
-                          borderRadius: '6px',
-                          fontSize: '0.74rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                        title="Test failure when deposit is below $10 minimum"
-                      >
-                        Test &lt;$10 Rejection
-                      </button>
-                    </div>
-                  )}
                 </div>
                 <input
                   id="manual-txhash"
                   type="text"
                   value={manualTxHash}
                   onChange={(e) => setManualTxHash(e.target.value)}
-                  placeholder="0x123abc456def..."
-                  required
-                  disabled={isVerifyingManual || isSubmittingManual}
+                  placeholder="e.g. UTR number, transfer reference or txn hash (optional)"
+                  disabled={isSubmittingManual}
                   style={{
                     width: '100%',
                     padding: '0.75rem 1rem',
@@ -1673,12 +1499,12 @@ export function DepositPage() {
                   }}
                 />
                 <small style={{ color: '#6b7280', fontSize: '0.78rem' }}>
-                  Must be a 66-character hexadecimal hash starting with 0x.
+                  Enter payment reference, UTR or transaction ID if available. Not required.
                 </small>
               </div>
 
-              {/* Verification Error */}
-              {manualVerificationError && (
+              {/* Submission Error */}
+              {manualSubmitError && (
                 <div
                   style={{
                     background: '#fff1f2',
@@ -1712,13 +1538,13 @@ export function DepositPage() {
                   </div>
                   <div style={{ flex: 1, paddingRight: '1.5rem', lineHeight: 1.5 }}>
                     <div style={{ fontWeight: 700, marginBottom: '0.2rem', color: '#9f1239' }}>
-                      Verification Notice
+                      Submission Notice
                     </div>
-                    <div>{manualVerificationError}</div>
+                    <div>{manualSubmitError}</div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setManualVerificationError('')}
+                    onClick={() => setManualSubmitError('')}
                     title="Dismiss"
                     style={{
                       position: 'absolute',
@@ -1740,182 +1566,50 @@ export function DepositPage() {
                 </div>
               )}
 
-              {/* Verify Transaction Button */}
+              {/* Submit Deposit Request Button */}
               <button
                 type="submit"
-                disabled={isVerifyingManual}
+                disabled={isSubmittingManual}
                 style={{
                   width: '100%',
                   padding: '0.85rem',
                   borderRadius: '12px',
-                  border: '1px solid #176bff',
+                  border: 'none',
                   background: '#176bff',
                   color: '#fff',
                   fontWeight: 700,
-                  fontSize: '0.98rem',
-                  cursor: isVerifyingManual ? 'not-allowed' : 'pointer',
+                  fontSize: '1rem',
+                  cursor: isSubmittingManual ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.5rem',
-                  opacity: isVerifyingManual ? 0.75 : 1,
+                  boxShadow: '0 4px 12px rgba(23, 107, 255, 0.25)',
                 }}
               >
-                {isVerifyingManual ? (
+                {isSubmittingManual ? (
                   <>
                     <RefreshCw size={18} className="animate-spin" />
-                    <span>Verifying on Blockchain...</span>
+                    <span>Submitting Deposit Request to Admin...</span>
                   </>
                 ) : (
                   <>
                     <ShieldCheck size={18} />
-                    <span>Verify Transaction</span>
+                    <span>Submit Deposit Request</span>
                   </>
                 )}
               </button>
             </form>
 
-            {/* VERIFICATION SUCCESS CARD */}
-            {manualVerificationResult && (() => {
-              const scPercent = Number(config?.deposit_fee_percent ?? config?.service_charge_percent ?? 0);
-              const verifiedAmt = parseFloat(manualVerificationResult.amount) || 0;
-              const netCredit = scPercent > 0 ? Number((verifiedAmt / (1 + scPercent / 100)).toFixed(2)) : verifiedAmt;
-              const feeAmt = scPercent > 0 ? Number((verifiedAmt - netCredit).toFixed(2)) : 0;
-
-              return (
-                <div style={{ marginTop: '1.5rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '16px', padding: '1.25rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#15803d', fontWeight: 800, fontSize: '1rem', marginBottom: '0.75rem' }}>
-                    <CheckCircle2 size={22} />
-                    <span>Transaction Verified Successfully</span>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', background: '#fff', padding: '0.85rem', borderRadius: '10px', border: '1px solid #dcfce7', fontSize: '0.84rem', marginBottom: '1rem' }}>
-                    <div>
-                      <span style={{ color: '#6b7280', display: 'block' }}>Transferred Amount</span>
-                      <strong style={{ color: '#111827', fontSize: '1.05rem' }}>${verifiedAmt.toFixed(2)} USDT</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: '#6b7280', display: 'block' }}>Network &amp; Token</span>
-                      <strong>{manualVerificationResult.network} ({manualVerificationResult.token})</strong>
-                    </div>
-
-                    {scPercent > 0 && (
-                      <>
-                        <div>
-                          <span style={{ color: '#6b7280', display: 'block' }}>Service Charge ({scPercent}% On Top)</span>
-                          <strong style={{ color: '#d97706', fontSize: '0.95rem' }}>+${feeAmt.toFixed(2)} USDT</strong>
-                        </div>
-                        <div>
-                          <span style={{ color: '#6b7280', display: 'block' }}>Net Fund Wallet Credit</span>
-                          <strong style={{ color: '#059669', fontSize: '1.05rem' }}>+${netCredit.toFixed(2)} USD</strong>
-                        </div>
-                      </>
-                    )}
-
-                    <div style={{ gridColumn: 'span 2' }}>
-                      <span style={{ color: '#6b7280', display: 'block' }}>Sender Wallet</span>
-                      <code style={{ fontSize: '0.78rem', wordBreak: 'break-all' }}>{manualVerificationResult.wallet_address}</code>
-                    </div>
-                    <div style={{ gridColumn: 'span 2' }}>
-                      <span style={{ color: '#6b7280', display: 'block' }}>Transaction Hash</span>
-                      <code style={{ fontSize: '0.78rem', wordBreak: 'break-all' }}>{manualVerificationResult.transaction_hash}</code>
-                    </div>
-                    <div style={{ gridColumn: 'span 2', background: '#ecfdf5', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
-                      <div style={{ fontSize: '0.75rem', color: '#065f46', fontWeight: 600 }}>Credit Destination:</div>
-                      <div style={{ fontSize: '0.88rem', color: '#047857', fontWeight: 700, marginTop: '0.15rem' }}>
-                        Fund Wallet (Current: ${depositStats.fund_wallet.toFixed(2)} USD → After Approval: ${(depositStats.fund_wallet + netCredit).toFixed(2)} USD)
-                      </div>
-                    </div>
-                  </div>
-
-                  {manualSubmitError && (
-                    <div
-                      style={{
-                        background: '#fff1f2',
-                        border: '1px solid #fecdd3',
-                        color: '#9f1239',
-                        padding: '0.75rem 1rem',
-                        borderRadius: '10px',
-                        marginBottom: '0.85rem',
-                        display: 'flex',
-                        gap: '0.65rem',
-                        alignItems: 'flex-start',
-                        fontSize: '0.84rem',
-                        position: 'relative',
-                      }}
-                    >
-                      <AlertCircle size={16} style={{ color: '#e11d48', flexShrink: 0, marginTop: '2px' }} />
-                      <div style={{ flex: 1, paddingRight: '1.25rem' }}>
-                        <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Submission Notice:</strong>
-                        <span>{manualSubmitError}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setManualSubmitError('')}
-                        title="Dismiss"
-                        style={{
-                          position: 'absolute',
-                          top: '0.5rem',
-                          right: '0.5rem',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: '#9f1239',
-                          padding: '2px',
-                        }}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Submit Deposit Request Button */}
-                  <button
-                    type="button"
-                    onClick={handleSubmitManualRequest}
-                    disabled={isSubmittingManual}
-                    style={{
-                      width: '100%',
-                      padding: '0.85rem',
-                      borderRadius: '12px',
-                      border: 'none',
-                      background: '#059669',
-                      color: '#fff',
-                      fontWeight: 700,
-                      fontSize: '1rem',
-                      cursor: isSubmittingManual ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
-                    }}
-                  >
-                    {isSubmittingManual ? (
-                      <>
-                        <RefreshCw size={18} className="animate-spin" />
-                        <span>Submitting Request to Admin...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send size={18} />
-                        <span>Submit Deposit Request (+${netCredit.toFixed(2)} USD Net Credit)</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              );
-            })()}
-
             {/* Submission Complete Feedback */}
             {manualSubmitSuccess && (
-              <div style={{ marginTop: '1.5rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '14px', padding: '1.25rem', color: '#1e40af' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>
-                  <CheckCircle2 size={20} color="#2563eb" />
+              <div style={{ marginTop: '1.5rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '14px', padding: '1.25rem', color: '#166534' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, marginBottom: '0.35rem', color: '#15803d' }}>
+                  <CheckCircle2 size={20} color="#16a34a" />
                   <span>Request Submitted to Admin Panel</span>
                 </div>
                 <p style={{ margin: 0, fontSize: '0.88rem' }}>
-                  {manualSubmitSuccess} Your deposit status is currently <strong>Verified — Awaiting Admin Approval</strong>. You will see your <strong>Fund Wallet</strong> balance update as soon as the admin approves the request.
+                  {manualSubmitSuccess} Your deposit status is currently <strong>Pending Admin Approval</strong>. You will see your <strong>Fund Wallet</strong> balance update as soon as the admin approves the request.
                 </p>
               </div>
             )}
@@ -2107,7 +1801,7 @@ export function DepositPage() {
                     2
                   </div>
                   <div style={{ fontSize: '0.82rem', color: '#4b5563' }}>
-                    <strong style={{ color: '#111827' }}>Copy Tx Hash:</strong> From your wallet or BSCScan explorer, copy the 66-character Transaction Hash (0x...).
+                    <strong style={{ color: '#111827' }}>Note Reference (Optional):</strong> If available, note your transaction ID, UTR number, or payment reference.
                   </div>
                 </div>
 
@@ -2116,7 +1810,7 @@ export function DepositPage() {
                     3
                   </div>
                   <div style={{ fontSize: '0.82rem', color: '#4b5563' }}>
-                    <strong style={{ color: '#111827' }}>Verify &amp; Submit:</strong> Enter the amount and hash on the left, click <em>Verify</em> and then <em>Submit</em> for instant admin review.
+                    <strong style={{ color: '#111827' }}>Submit Request:</strong> Enter your deposit amount on the left and click <em>Submit Deposit Request</em> for Admin review and approval.
                   </div>
                 </div>
               </div>

@@ -7,10 +7,90 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class Community extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::forceDeleting(function (self $community) {
+            $community->cleanupAssociatedData();
+        });
+    }
+
+    /**
+     * Override delete to permanently purge community data and release slug/identifier.
+     */
+    public function delete()
+    {
+        if ($this->forceDeleting) {
+            return parent::delete();
+        }
+
+        return $this->purge();
+    }
+
+    /**
+     * Permanently purge the community, removing all community-exclusive posts,
+     * files, and member associations, and permanently deleting the database record.
+     */
+    public function purge(): bool
+    {
+        return (bool) DB::transaction(function () {
+            return $this->forceDelete();
+        });
+    }
+
+    /**
+     * Clean up all files and child posts exclusively belonging to this community.
+     */
+    public function cleanupAssociatedData(): void
+    {
+        // 1. Delete all community posts and their media
+        $this->posts()->chunkById(100, function ($posts) {
+            foreach ($posts as $post) {
+                self::deleteUploadedFile($post->media_path);
+                $post->delete();
+            }
+        });
+
+        // 2. Delete logo and cover photo
+        self::deleteUploadedFile($this->logo);
+        self::deleteUploadedFile($this->cover_photo);
+    }
+
+    /**
+     * Safely deletes an uploaded file from disk if it exists locally.
+     */
+    public static function deleteUploadedFile(?string $path): void
+    {
+        if (empty($path) || str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return;
+        }
+
+        $clean = ltrim($path, '/\\');
+
+        $fullPublic = public_path($clean);
+        if (File::exists($fullPublic) && ! File::isDirectory($fullPublic)) {
+            try {
+                File::delete($fullPublic);
+                return;
+            } catch (\Throwable $e) {
+            }
+        }
+
+        $fullStorage = storage_path('app/public/' . $clean);
+        if (File::exists($fullStorage) && ! File::isDirectory($fullStorage)) {
+            try {
+                File::delete($fullStorage);
+                return;
+            } catch (\Throwable $e) {
+            }
+        }
+    }
 
     public const CATEGORIES = [
         'Technology',
@@ -157,6 +237,11 @@ class Community extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'owner_id');
+    }
+
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class, 'community_id');
     }
 
     public function members(): HasMany
