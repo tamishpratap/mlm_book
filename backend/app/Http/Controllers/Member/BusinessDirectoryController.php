@@ -3,156 +3,132 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
-use App\Models\BusinessPage;
+use App\Models\Member;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BusinessDirectoryController extends Controller
 {
+    /**
+     * Display the member directory listing.
+     * Shows all listed user profiles except the authenticated member.
+     */
     public function directory(Request $request)
     {
+        /** @var Member $member */
         $member = auth('member')->user();
 
-        $filters = [
-            'q' => trim($request->query('q', '')),
-            'category' => trim($request->query('category', '')),
-            'country' => trim($request->query('country', '')),
-            'state' => trim($request->query('state', '')),
-            'city' => trim($request->query('city', '')),
-            'sort' => trim($request->query('sort', 'popular')),
-            'verified_only' => $request->boolean('verified_only'),
-        ];
+        $search = trim((string) ($request->query('q') ?? $request->query('search') ?? ''));
+        $country = trim((string) $request->query('country', ''));
+        $sort = trim((string) $request->query('sort', 'newest'));
 
-        $featuredPages = BusinessPage::publicPages()
-            ->with('owner')
-            ->featured()
-            ->latest()
-            ->take(4)
-            ->get();
+        $query = Member::query()
+            ->where('id', '!=', $member->id)
+            ->whereNull('blocked_at');
 
-        $trendingPages = BusinessPage::publicPages()
-            ->with('owner')
-            ->trending()
-            ->take(6)
-            ->get();
-
-        $recommendedPages = BusinessPage::publicPages()
-            ->with('owner')
-            ->where('is_verified', true)
-            ->latest()
-            ->take(4)
-            ->get();
-
-        // Count pages per category
-        $categoryCounts = BusinessPage::publicPages()
-            ->selectRaw('category, count(*) as total')
-            ->groupBy('category')
-            ->pluck('total', 'category')
-            ->toArray();
-
-        $categoriesList = [];
-        $activeCategories = \App\Models\BusinessPageCategory::getActiveCategories();
-        foreach ($activeCategories as $cat) {
-            $categoriesList[] = [
-                'name' => $cat->name,
-                'slug' => $cat->slug,
-                'count' => $categoryCounts[$cat->name] ?? 0,
-            ];
+        if (!empty($search)) {
+            $like = '%' . $search . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('name', 'like', $like)
+                    ->orWhere('user_id', 'like', $like)
+                    ->orWhere('email', 'like', $like)
+                    ->orWhere('city', 'like', $like)
+                    ->orWhere('country', 'like', $like);
+            });
         }
 
-        $directoryPages = BusinessPage::publicPages()
-            ->with('owner')
-            ->searchFilter($filters)
-            ->paginate(12)
-            ->withQueryString();
+        if (!empty($country) && $country !== 'All') {
+            $query->where('country', $country);
+        }
+
+        if ($sort === 'name') {
+            $query->orderBy('name', 'asc');
+        } elseif ($sort === 'oldest') {
+            $query->orderBy('id', 'asc');
+        } else {
+            $query->latest('id');
+        }
+
+        $members = $query->paginate(16)->through(function (Member $m) {
+            return [
+                'id' => $m->id,
+                'name' => $m->name,
+                'user_id' => $m->user_id,
+                'email' => $m->email,
+                'country' => $m->country ?? 'Global',
+                'city' => $m->city,
+                'profile_photo' => $m->profile_photo ? asset($m->profile_photo) : null,
+                'avatar_url' => $m->profile_photo ? asset($m->profile_photo) : null,
+                'bio' => $m->bio,
+                'is_verified' => (bool) $m->mobile_verified_at,
+                'created_at' => $m->created_at?->format('M d, Y'),
+            ];
+        });
+
+        // Dynamic list of active countries from countries table
+        $availableCountries = DB::table('countries')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name')
+            ->toArray();
+
+        if (empty($availableCountries)) {
+            $availableCountries = Member::query()
+                ->whereNotNull('country')
+                ->where('country', '!=', '')
+                ->distinct()
+                ->pluck('country')
+                ->sort()
+                ->values()
+                ->toArray();
+        }
+
+        $featuredMembers = Member::query()
+            ->where('id', '!=', $member->id)
+            ->whereNull('blocked_at')
+            ->whereNotNull('profile_photo')
+            ->latest()
+            ->take(4)
+            ->get()
+            ->map(function (Member $m) {
+                return [
+                    'id' => $m->id,
+                    'name' => $m->name,
+                    'user_id' => $m->user_id,
+                    'email' => $m->email,
+                    'country' => $m->country ?? 'Global',
+                    'city' => $m->city,
+                    'profile_photo' => $m->profile_photo ? asset($m->profile_photo) : null,
+                    'is_verified' => (bool) $m->mobile_verified_at,
+                ];
+            });
 
         if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
             return response()->json([
                 'success' => true,
-                'directory_pages' => $directoryPages,
-                'featured_pages' => $featuredPages,
-                'trending_pages' => $trendingPages,
-                'recommended_pages' => $recommendedPages,
-                'categories_list' => $categoriesList,
-                'filters' => $filters,
+                'members' => $members,
+                'featured_members' => $featuredMembers,
+                'available_countries' => $availableCountries,
+                'filters' => [
+                    'q' => $search,
+                    'country' => $country,
+                    'sort' => $sort,
+                ],
             ]);
         }
 
         return view('member.business-pages.directory.index', compact(
-            'directoryPages',
-            'featuredPages',
-            'trendingPages',
-            'recommendedPages',
-            'categoriesList',
-            'filters'
-        ));
-    }
-
-    public function category(Request $request, string $category)
-    {
-        $categoryName = BusinessPage::findCategoryBySlug($category);
-
-        if (! $categoryName) {
-            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
-                return response()->json(['success' => false, 'message' => 'Business Category Not Found.'], 404);
-            }
-            abort(404, 'Business Category Not Found.');
-        }
-
-        $filters = [
-            'q' => trim($request->query('q', '')),
-            'category' => $categoryName,
-            'country' => trim($request->query('country', '')),
-            'state' => trim($request->query('state', '')),
-            'city' => trim($request->query('city', '')),
-            'sort' => trim($request->query('sort', 'popular')),
-            'verified_only' => $request->boolean('verified_only'),
-        ];
-
-        $pages = BusinessPage::publicPages()
-            ->with('owner')
-            ->searchFilter($filters)
-            ->paginate(12)
-            ->withQueryString();
-
-        if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
-            return response()->json([
-                'success' => true,
-                'category_name' => $categoryName,
-                'pages' => $pages,
-                'filters' => $filters,
-            ]);
-        }
-
-        return view('member.business-pages.directory.category', compact(
-            'categoryName',
-            'pages',
-            'filters'
+            'members',
+            'featuredMembers',
+            'availableCountries',
+            'search',
+            'country'
         ));
     }
 
     public function search(Request $request)
     {
-        $filters = [
-            'q' => trim($request->query('q', '')),
-            'category' => trim($request->query('category', '')),
-            'country' => trim($request->query('country', '')),
-            'state' => trim($request->query('state', '')),
-            'city' => trim($request->query('city', '')),
-            'sort' => trim($request->query('sort', 'popular')),
-            'verified_only' => $request->boolean('verified_only'),
-        ];
-
-        $pages = BusinessPage::publicPages()
-            ->with('owner')
-            ->searchFilter($filters)
-            ->paginate(12);
-
-        return response()->json([
-            'success' => true,
-            'total' => $pages->total(),
-            'current_page' => $pages->currentPage(),
-            'last_page' => $pages->lastPage(),
-            'data' => $pages->items(),
-        ]);
+        return $this->directory($request);
     }
 }
+

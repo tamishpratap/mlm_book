@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants.dart';
+import '../../core/app_toast.dart';
 import '../../providers/business_provider.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -204,9 +205,7 @@ class _ExploreScreenState extends State<ExploreScreen> with SingleTickerProvider
               ),
               ElevatedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Joined community!')),
-                  );
+                  AppToast.success(context, 'Joined community!');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
+import '../../core/app_toast.dart';
+import '../../core/countries_data.dart';
 import 'friends_screen.dart';
 import 'profile_screen.dart';
 
@@ -34,6 +36,7 @@ class _NewConnectionsScreenState extends State<NewConnectionsScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchCountries();
     _fetchSuggestions();
   }
 
@@ -42,6 +45,23 @@ class _NewConnectionsScreenState extends State<NewConnectionsScreen> {
     _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchCountries() async {
+    try {
+      final res = await ApiClient.get('/countries');
+      if (res.success && res.data is Map && res.data['countries'] is List) {
+        final list = (res.data['countries'] as List)
+            .map((c) => c is Map ? (c['name']?.toString() ?? '') : c.toString())
+            .where((c) => c.isNotEmpty)
+            .toList();
+        if (mounted && list.isNotEmpty) {
+          setState(() {
+            _availableCountries = list;
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   void _onSearchChanged(String value) {
@@ -98,9 +118,12 @@ class _NewConnectionsScreenState extends State<NewConnectionsScreen> {
         rawList = (suggestionsRaw['data'] as List).whereType<Map<String, dynamic>>().toList();
       }
 
-      // Update available countries
-      if (data['available_countries'] is List) {
-        _availableCountries = (data['available_countries'] as List).map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+      // Update available countries if provided
+      if (data['available_countries'] is List && (data['available_countries'] as List).isNotEmpty) {
+        final serverCountries = (data['available_countries'] as List).map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+        if (serverCountries.isNotEmpty) {
+          _availableCountries = serverCountries;
+        }
       }
 
       // Update pagination
@@ -141,8 +164,6 @@ class _NewConnectionsScreenState extends State<NewConnectionsScreen> {
     if (memberId == 0 || (_loadingMemberIds[memberId] == true)) return;
 
     setState(() => _loadingMemberIds[memberId] = true);
-
-    // Optimistically update to pending_sent
     setState(() => _friendshipStates[memberId] = 'pending_sent');
 
     final res = await ApiClient.post('/friends/request/$memberId');
@@ -153,26 +174,10 @@ class _NewConnectionsScreenState extends State<NewConnectionsScreen> {
     if (res.success) {
       final newStatus = (res.data is Map && res.data['status'] != null) ? res.data['status'].toString() : 'pending_sent';
       setState(() => _friendshipStates[memberId] = newStatus);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Connection request sent to ${member['name'] ?? 'member'}!'),
-          backgroundColor: const Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      AppToast.success(context, 'Connection request sent to ${member['name'] ?? 'member'}!');
     } else {
-      // Revert on failure
       setState(() => _friendshipStates[memberId] = 'none');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(res.message ?? 'Failed to send connection request.'),
-          backgroundColor: const Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      AppToast.error(context, res.message ?? 'Failed to send connection request.');
     }
   }
 
@@ -181,8 +186,6 @@ class _NewConnectionsScreenState extends State<NewConnectionsScreen> {
     if (memberId == 0 || (_loadingMemberIds[memberId] == true)) return;
 
     setState(() => _loadingMemberIds[memberId] = true);
-
-    // Optimistically update to none
     setState(() => _friendshipStates[memberId] = 'none');
 
     final res = await ApiClient.post('/friends/requests/$memberId/cancel');
@@ -191,93 +194,206 @@ class _NewConnectionsScreenState extends State<NewConnectionsScreen> {
     setState(() => _loadingMemberIds[memberId] = false);
 
     if (res.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Connection request to ${member['name'] ?? 'member'} cancelled.'),
-          backgroundColor: const Color(0xFF64748B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      AppToast.info(context, 'Connection request cancelled.');
     } else {
-      // Revert if error
       setState(() => _friendshipStates[memberId] = 'pending_sent');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(res.message ?? 'Could not cancel request.'),
-          backgroundColor: const Color(0xFFEF4444),
-        ),
-      );
+      AppToast.error(context, res.message ?? 'Could not cancel request.');
     }
   }
 
   void _showCountrySelector() {
+    // Combine dataset with any dynamic countries
+    final allNames = <String>{};
+    if (_availableCountries.isNotEmpty) {
+      allNames.addAll(_availableCountries);
+    }
+    for (final c in CountriesData.all) {
+      allNames.add(c.name);
+    }
+    final fullList = allNames.toList()..sort((a, b) => a.compareTo(b));
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Select Country', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A))),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
+        String filterQuery = '';
+
+        return StatefulBuilder(
+          builder: (bottomSheetContext, setModalState) {
+            final displayList = fullList.where((c) {
+              if (filterQuery.isEmpty) return true;
+              return c.toLowerCase().contains(filterQuery.toLowerCase());
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
               ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.language, color: Color(0xFF3B82F6), size: 20),
-                      title: const Text('All Countries', style: TextStyle(fontWeight: FontWeight.w600)),
-                      trailing: _selectedCountry.isEmpty ? const Icon(Icons.check, color: Color(0xFF2563EB)) : null,
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        setState(() {
-                          _selectedCountry = '';
-                          _currentPage = 1;
-                        });
-                        _fetchSuggestions(page: 1);
-                      },
+              child: Column(
+                children: [
+                  // Top Drag Handle
+                  Container(
+                    margin: const EdgeInsets.only(top: 10, bottom: 6),
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    ..._availableCountries.map((c) {
-                      final isSelected = _selectedCountry == c;
-                      return ListTile(
-                        leading: const Icon(Icons.location_on_outlined, color: Color(0xFF64748B), size: 20),
-                        title: Text(c, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.w500)),
-                        trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF2563EB)) : null,
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          setState(() {
-                            _selectedCountry = c;
-                            _currentPage = 1;
+                  ),
+
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Select Country',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Search Field
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: TextField(
+                        autofocus: false,
+                        style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A)),
+                        decoration: const InputDecoration(
+                          hintText: 'Search country by name...',
+                          hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                          prefixIcon: Icon(Icons.search, size: 18, color: Color(0xFF94A3B8)),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 11),
+                        ),
+                        onChanged: (val) {
+                          setModalState(() {
+                            filterQuery = val.trim();
                           });
-                          _fetchSuggestions(page: 1);
                         },
-                      );
-                    }),
-                  ],
-                ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                  const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+                  // Country List
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      children: [
+                        // "All Countries" Option at top
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                          leading: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEFF6FF),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Text('🌐', style: TextStyle(fontSize: 18)),
+                            ),
+                          ),
+                          title: const Text(
+                            'All Countries (Global)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          trailing: _selectedCountry.isEmpty
+                              ? const Icon(Icons.check_circle_rounded, color: Color(0xFF2563EB), size: 20)
+                              : null,
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            setState(() {
+                              _selectedCountry = '';
+                              _currentPage = 1;
+                            });
+                            _fetchSuggestions(page: 1);
+                          },
+                        ),
+                        const Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF1F5F9)),
+
+                        ...displayList.map((countryName) {
+                          final isSelected = _selectedCountry == countryName;
+                          final flag = CountriesData.getFlag(countryName);
+
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                            leading: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Center(
+                                child: Text(flag, style: const TextStyle(fontSize: 18)),
+                              ),
+                            ),
+                            title: Text(
+                              countryName,
+                              style: TextStyle(
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                fontSize: 13.5,
+                                color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF1E293B),
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(Icons.check_circle_rounded, color: Color(0xFF2563EB), size: 20)
+                                : null,
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              setState(() {
+                                _selectedCountry = countryName;
+                                _currentPage = 1;
+                              });
+                              _fetchSuggestions(page: 1);
+                            },
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
+
 
   void _onFilterChanged(String filter) {
     if (_activeFilter == filter) return;
@@ -652,32 +768,56 @@ class _NewConnectionsScreenState extends State<NewConnectionsScreen> {
   }
 
   Widget _buildCountrySelectorButton() {
-    final displayText = _selectedCountry.isEmpty ? 'All Countries' : _selectedCountry;
+    final hasSelection = _selectedCountry.isNotEmpty;
+    final displayText = hasSelection ? _selectedCountry : 'All Countries';
+    final flag = hasSelection ? CountriesData.getFlag(_selectedCountry) : '🌐';
 
     return InkWell(
       onTap: _showCountrySelector,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         height: 46,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: hasSelection ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(
+            color: hasSelection ? const Color(0xFF93C5FD) : const Color(0xFFE2E8F0),
+            width: 1.2,
+          ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.language, size: 17, color: Color(0xFF94A3B8)),
+            Text(flag, style: const TextStyle(fontSize: 16)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 displayText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1E293B)),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: hasSelection ? FontWeight.w700 : FontWeight.w500,
+                  color: hasSelection ? const Color(0xFF1D4ED8) : const Color(0xFF1E293B),
+                ),
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF94A3B8)),
+            if (hasSelection)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCountry = '';
+                    _currentPage = 1;
+                  });
+                  _fetchSuggestions(page: 1);
+                },
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(Icons.close_rounded, size: 16, color: Color(0xFF3B82F6)),
+                ),
+              )
+            else
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF94A3B8)),
           ],
         ),
       ),

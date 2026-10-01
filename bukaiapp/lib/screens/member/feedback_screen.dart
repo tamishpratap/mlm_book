@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants.dart';
+import '../../core/app_toast.dart';
 import '../../models/feedback_model.dart';
 import '../../providers/feedback_provider.dart';
 
@@ -37,9 +38,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final message = _messageController.text.trim();
 
     if (subject.isEmpty || message.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter both subject and message.')),
-      );
+      AppToast.warning(context, 'Please enter both subject and message.');
       return;
     }
 
@@ -54,9 +53,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     if (success && mounted) {
       _subjectController.clear();
       _messageController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thank you! Feedback submitted successfully.'), backgroundColor: AppColors.success),
-      );
+      AppToast.success(context, 'Thank you! Feedback submitted successfully.');
     }
   }
 

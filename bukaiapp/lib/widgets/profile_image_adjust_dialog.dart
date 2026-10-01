@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../core/api_client.dart';
 import '../core/session_manager.dart';
+import '../core/app_toast.dart';
 import '../providers/auth_provider.dart';
 
 class ProfileImageAdjustDialog extends StatefulWidget {
@@ -110,19 +111,7 @@ class _ProfileImageAdjustDialogState extends State<ProfileImageAdjustDialog> {
       }
       if (mounted) {
         await context.read<AuthProvider>().initAuth();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text(isAvatar ? 'Profile photo updated!' : 'Cover photo updated!'),
-              ],
-            ),
-            backgroundColor: const Color(0xFF16A34A),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppToast.success(context, isAvatar ? 'Profile photo updated!' : 'Cover photo updated!');
         Navigator.pop(context, true);
       }
     } else {
@@ -282,74 +271,91 @@ class _ProfileImageAdjustDialogState extends State<ProfileImageAdjustDialog> {
 
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),
 
-                // 3. Modal Footer Actions (Exact match to screenshot)
+                // 3. Modal Footer Actions (Responsive & Overflow-safe)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Remove Photo Button
-                      if (widget.hasExistingPhoto && widget.onRemove != null)
-                        OutlinedButton.icon(
-                          onPressed: _isUploading
-                              ? null
-                              : () {
-                                  Navigator.pop(context);
-                                  widget.onRemove!();
-                                },
-                          icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFFEF4444)),
-                          label: Text(
-                            isAvatar ? 'Remove Photo' : 'Remove Cover',
-                            style: const TextStyle(color: Color(0xFFEF4444), fontSize: 13, fontWeight: FontWeight.w600),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFEF2F2),
-                            side: const BorderSide(color: Color(0xFFFEE2E2)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                          ),
-                        )
-                      else
-                        const SizedBox.shrink(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final hasRemove = widget.hasExistingPhoto && widget.onRemove != null;
 
-                      // Right Action Buttons: Cancel & Save Photo
-                      Row(
+                      return Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        runSpacing: 8,
+                        spacing: 8,
                         children: [
-                          OutlinedButton(
-                            onPressed: _isUploading ? null : () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF334155),
-                              side: const BorderSide(color: Color(0xFFCBD5E1)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-                            ),
-                            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
-                          ),
-                          const SizedBox(width: 10),
-                          ElevatedButton.icon(
-                            onPressed: (_imageBytes == null || _isUploading) ? null : _handleSave,
-                            icon: _isUploading
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.check, size: 16),
-                            label: Text(
-                              _isUploading ? 'Saving...' : (isAvatar ? 'Save Photo' : 'Save Cover'),
-                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF4F46E5),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-                            ),
+                          // Remove Photo Button
+                          if (hasRemove)
+                            OutlinedButton.icon(
+                              onPressed: _isUploading
+                                  ? null
+                                  : () {
+                                      Navigator.pop(context);
+                                      widget.onRemove!();
+                                    },
+                              icon: const Icon(Icons.delete_outline, size: 15, color: Color(0xFFEF4444)),
+                              label: Text(
+                                isAvatar ? 'Remove' : 'Remove Cover',
+                                style: const TextStyle(
+                                  color: Color(0xFFEF4444),
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFEF2F2),
+                                side: const BorderSide(color: Color(0xFFFEE2E2)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                                minimumSize: const Size(0, 38),
+                              ),
+                            )
+                          else
+                            const SizedBox.shrink(),
+
+                          // Right Action Buttons: Cancel & Save Photo
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              OutlinedButton(
+                                onPressed: _isUploading ? null : () => Navigator.pop(context),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF334155),
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                                  minimumSize: const Size(0, 38),
+                                ),
+                                child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                onPressed: (_imageBytes == null || _isUploading) ? null : _handleSave,
+                                icon: _isUploading
+                                    ? const SizedBox(
+                                        width: 13,
+                                        height: 13,
+                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.check, size: 15),
+                                label: Text(
+                                  _isUploading ? 'Saving...' : (isAvatar ? 'Save Photo' : 'Save Cover'),
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF4F46E5),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                                  minimumSize: const Size(0, 38),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
               ],

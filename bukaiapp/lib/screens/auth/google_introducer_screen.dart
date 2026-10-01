@@ -474,14 +474,14 @@ class _GoogleIntroducerScreenState extends State<GoogleIntroducerScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.verified, size: 14, color: Colors.blue.shade600),
+                          const Icon(Icons.verified, size: 14, color: Color(0xFF16A34A)),
                           const SizedBox(width: 4),
-                          Text(
+                          const Text(
                             'Verified Google Account',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Colors.blue.shade700,
+                              color: Color(0xFF16A34A),
                             ),
                           ),
                         ],

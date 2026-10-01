@@ -24,8 +24,8 @@ class MobileFeedController extends Controller
      */
     public function feed(Request $request): JsonResponse
     {
-        /** @var Member $member */
-        $member = auth('member')->user();
+        /** @var Member|null $member */
+        $member = $request->attributes->get('mobile_actor') ?? auth('member')->user() ?? $request->user();
 
         $query = Post::query()
             ->with(['member:id,name,user_id,profile_photo,mobile_verified_at', 'comments.member:id,name,user_id,profile_photo'])
@@ -91,7 +91,7 @@ class MobileFeedController extends Controller
     public function storePost(Request $request): JsonResponse
     {
         /** @var Member $member */
-        $member = auth('member')->user();
+        $member = $request->attributes->get('mobile_actor') ?? auth('member')->user() ?? $request->user();
 
         $validated = $request->validate([
             'body' => ['nullable', 'string', 'max:5000'],

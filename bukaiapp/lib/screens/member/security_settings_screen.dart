@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
-import '../../core/constants.dart';
+import '../../core/app_toast.dart';
 import '../../providers/auth_provider.dart';
 
 class SecuritySettingsScreen extends StatefulWidget {
@@ -34,9 +34,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     if (!_pwdFormKey.currentState!.validate()) return;
 
     if (_newPwdCtrl.text != _confirmPwdCtrl.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('New password and confirmation do not match.')),
-      );
+      AppToast.error(context, 'New password and confirmation do not match.');
       return;
     }
 
@@ -47,23 +45,16 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
       'new_password': _newPwdCtrl.text,
     });
 
+    if (!mounted) return;
     setState(() => _isChangingPwd = false);
 
     if (res.success) {
       _currentPwdCtrl.clear();
       _newPwdCtrl.clear();
       _confirmPwdCtrl.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.message ?? 'Password updated successfully!')),
-        );
-      }
+      AppToast.success(context, res.message ?? 'Password updated successfully!');
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.message ?? 'Failed to update password. Verify your current password.')),
-        );
-      }
+      AppToast.error(context, res.message ?? 'Failed to update password. Check current password.');
     }
   }
 
@@ -72,23 +63,30 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     final member = context.watch<AuthProvider>().currentMember;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: const Text('Security & Verification', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Security & Verification',
+          style: TextStyle(color: Color(0xFF0F172A), fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1.0),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Account Verification Status Card
+          // 1. Account Verification Status Card
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,157 +96,143 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: member?.isVerified == true ? AppColors.accentSoft : AppColors.primarySoft,
-                        shape: BoxShape.circle,
+                        color: member?.isVerified == true ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
-                        member?.isVerified == true ? Icons.verified_user : Icons.gpp_maybe,
-                        color: member?.isVerified == true ? AppColors.accent : AppColors.primary,
-                        size: 24,
+                        member?.isVerified == true ? Icons.verified : Icons.gpp_maybe_outlined,
+                        color: member?.isVerified == true ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                        size: 22,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            member?.isVerified == true ? 'Account Verified' : 'Standard Member Account',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary),
+                            member?.isVerified == true ? 'Mobile & WhatsApp Verified' : 'Standard Member Account',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF0F172A)),
                           ),
+                          const SizedBox(height: 2),
                           Text(
-                            'User ID: ${member?.userId ?? 'N/A'}',
-                            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            member?.isVerified == true
+                                ? 'Your phone number is verified for secure transactions.'
+                                : 'Complete mobile verification to unlock full privileges.',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                           ),
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: member?.isVerified == true ? AppColors.accent.withOpacity(0.12) : AppColors.secondarySoft,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        member?.isVerified == true ? 'ACTIVE' : 'TIER 1',
-                        style: TextStyle(
-                          color: member?.isVerified == true ? AppColors.accent : AppColors.secondary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-                const Divider(height: 24, color: AppColors.border),
-                _buildStatusRow(Icons.email_outlined, 'Registered Email', member?.email ?? 'N/A', isVerified: true),
-                const SizedBox(height: 10),
-                _buildStatusRow(Icons.phone_android_outlined, 'Phone / SMS OTP', member?.phone?.isNotEmpty == true ? member!.phone! : 'Not linked', isVerified: member?.phone?.isNotEmpty == true),
-                const SizedBox(height: 10),
-                _buildStatusRow(Icons.currency_bitcoin, 'Web3 USDT BEP-20', member?.web3WalletAddress?.isNotEmpty == true ? 'Linked (${member!.web3WalletAddress!.substring(0, 6)}...)' : 'Not linked', isVerified: member?.web3WalletAddress?.isNotEmpty == true),
               ],
             ),
           ),
-          const SizedBox(height: 24),
 
-          // Change Password Card
+          const SizedBox(height: 20),
+
+          // 2. Change Password Form Card
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Form(
               key: _pwdFormKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.lock_reset, color: AppColors.primary, size: 22),
+                  Row(
+                    children: const [
+                      Icon(Icons.lock_reset_rounded, color: Color(0xFF2563EB), size: 20),
                       SizedBox(width: 8),
-                      Text('Change Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textHeading)),
+                      Text(
+                        'Change Password',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A)),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  const Text('Ensure your account is using a strong and unique password.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
 
                   // Current Password
-                  _buildLabel('Current Password *'),
                   TextFormField(
                     controller: _currentPwdCtrl,
                     obscureText: _obscureCurrent,
-                    validator: (v) => (v == null || v.isEmpty) ? 'Enter current password' : null,
-                    decoration: _inputDecoration(
-                      'Enter current password',
-                      Icons.lock_outline,
-                      suffix: IconButton(
-                        icon: Icon(_obscureCurrent ? Icons.visibility_off : Icons.visibility, color: AppColors.textMuted, size: 20),
+                    style: const TextStyle(color: Color(0xFF0F172A)),
+                    decoration: InputDecoration(
+                      labelText: 'Current Password',
+                      labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscureCurrent ? Icons.visibility_off : Icons.visibility, size: 20),
                         onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
                       ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                     ),
+                    validator: (v) => (v == null || v.isEmpty) ? 'Please enter your current password' : null,
                   ),
                   const SizedBox(height: 14),
 
                   // New Password
-                  _buildLabel('New Password (min 6 characters) *'),
                   TextFormField(
                     controller: _newPwdCtrl,
                     obscureText: _obscureNew,
-                    validator: (v) {
-                      if (v == null || v.length < 6) return 'Password must be at least 6 characters';
-                      return null;
-                    },
-                    decoration: _inputDecoration(
-                      'Enter new password',
-                      Icons.vpn_key_outlined,
-                      suffix: IconButton(
-                        icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility, color: AppColors.textMuted, size: 20),
+                    style: const TextStyle(color: Color(0xFF0F172A)),
+                    decoration: InputDecoration(
+                      labelText: 'New Password',
+                      labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility, size: 20),
                         onPressed: () => setState(() => _obscureNew = !_obscureNew),
                       ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                     ),
+                    validator: (v) => (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null,
                   ),
                   const SizedBox(height: 14),
 
                   // Confirm New Password
-                  _buildLabel('Confirm New Password *'),
                   TextFormField(
                     controller: _confirmPwdCtrl,
                     obscureText: _obscureConfirm,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Confirm your new password';
-                      if (v != _newPwdCtrl.text) return 'Passwords do not match';
-                      return null;
-                    },
-                    decoration: _inputDecoration(
-                      'Re-enter new password',
-                      Icons.check_circle_outline,
-                      suffix: IconButton(
-                        icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility, color: AppColors.textMuted, size: 20),
+                    style: const TextStyle(color: Color(0xFF0F172A)),
+                    decoration: InputDecoration(
+                      labelText: 'Confirm New Password',
+                      labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility, size: 20),
                         onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                       ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                     ),
+                    validator: (v) => (v == null || v.isEmpty) ? 'Please confirm your new password' : null,
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 20),
 
-                  // Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _isChangingPwd ? null : _changePassword,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      child: _isChangingPwd
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Text('Update Password', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  ElevatedButton(
+                    onPressed: _isChangingPwd ? null : _changePassword,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(double.infinity, 44),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    child: _isChangingPwd
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text('Update Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   ),
                 ],
               ),
@@ -256,51 +240,6 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatusRow(IconData icon, String label, String value, {required bool isVerified}) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.textMuted),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-              Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-            ],
-          ),
-        ),
-        Icon(
-          isVerified ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: isVerified ? AppColors.accent : AppColors.textMuted,
-          size: 18,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint, IconData icon, {Widget? suffix}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-      prefixIcon: Icon(icon, color: AppColors.textMuted, size: 18),
-      suffixIcon: suffix,
-      filled: true,
-      fillColor: AppColors.background,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
     );
   }
 }

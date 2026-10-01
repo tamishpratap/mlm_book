@@ -91,6 +91,39 @@ class ApiClient {
     }
   }
 
+  static Future<ApiResponse> postMultiFiles(
+    String endpoint, {
+    Map<String, String>? fields,
+    Map<String, List<int>>? files,
+  }) async {
+    try {
+      final token = SessionManager.getToken();
+      final uri = Uri.parse('$baseUrl$endpoint');
+      final request = http.MultipartRequest('POST', uri);
+      request.headers.addAll({
+        'Accept': 'application/json',
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      });
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+      if (files != null) {
+        files.forEach((fieldName, bytes) {
+          request.files.add(http.MultipartFile.fromBytes(
+            fieldName,
+            bytes,
+            filename: '$fieldName.jpg',
+          ));
+        });
+      }
+      final streamedResponse = await request.send();
+      final res = await http.Response.fromStream(streamedResponse);
+      return _parseResponse(res);
+    } catch (e) {
+      return ApiResponse(success: false, statusCode: 500, message: 'Network error: $e');
+    }
+  }
+
   static ApiResponse _parseResponse(http.Response res) {
     try {
       final json = jsonDecode(res.body);

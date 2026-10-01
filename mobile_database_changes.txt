@@ -1,15 +1,16 @@
 -- =====================================================================
--- MLM BOOK MOBILE APP - DATABASE SCHEMA CHANGES
+-- MLM BOOK MOBILE APP - DATABASE SCHEMA & MIGRATION REFERENCE
 -- =====================================================================
--- This file tracks all mobile app related database table definitions
--- and schema alterations so they can be easily executed on the live server.
+-- This file tracks all mobile app related database table definitions,
+-- schema alterations, and seed definitions so they can be easily executed
+-- or verified on the live production server.
 -- Last Updated: 2026-10-01
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
 -- 1. Mobile Access Tokens Table (`mobile_access_tokens`)
 -- Used for Bearer token authentication in Flutter mobile app (Members & Admins)
--- Migration File: 2026_09_29_000000_create_mobile_access_tokens_table.php
+-- Migration File: database/migrations/2026_09_29_000000_create_mobile_access_tokens_table.php
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mobile_access_tokens` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -30,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `mobile_access_tokens` (
 -- ---------------------------------------------------------------------
 -- 2. Phone Number Change Requests Table (`phone_number_change_requests`)
 -- Used for mobile phone number modification requests & approval workflow
--- Migration File: 2026_09_29_130000_create_phone_number_change_requests_table.php
+-- Migration File: database/migrations/2026_09_29_130000_create_phone_number_change_requests_table.php
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `phone_number_change_requests` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -57,10 +58,117 @@ CREATE TABLE IF NOT EXISTS `phone_number_change_requests` (
 
 
 -- ---------------------------------------------------------------------
--- 3. Supplementary Mobile Verification Columns / Tables (Reference)
--- If these columns/tables are missing on the live database:
+-- 3. Countries Table (`countries`)
+-- Used for location dropdown selection, country filtering in Business Directory,
+-- New Connections discovery, and Business Page creation.
+-- Migration File: database/migrations/2026_10_01_180000_create_countries_table.php
 -- ---------------------------------------------------------------------
--- ALTER TABLE `members` ADD COLUMN IF NOT EXISTS `mobile_verification_requested_at` TIMESTAMP NULL DEFAULT NULL AFTER `mobile_verified_at`;
--- ALTER TABLE `members` ADD COLUMN IF NOT EXISTS `phone` VARCHAR(30) NULL DEFAULT NULL;
--- ALTER TABLE `members` ADD COLUMN IF NOT EXISTS `mobile_verified_at` TIMESTAMP NULL DEFAULT NULL;
+CREATE TABLE IF NOT EXISTS `countries` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL UNIQUE,
+  `iso2` VARCHAR(2) DEFAULT NULL,
+  `iso3` VARCHAR(3) DEFAULT NULL,
+  `phone_code` VARCHAR(10) DEFAULT NULL,
+  `flag_emoji` VARCHAR(10) DEFAULT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+-- ---------------------------------------------------------------------
+-- 4. 1-on-1 Direct Messages Table (`direct_messages`)
+-- Used for real-time and direct peer-to-peer messaging between members
+-- Migration File: database/migrations/2026_07_25_000000_create_direct_messages_table.php
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `direct_messages` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `sender_id` BIGINT UNSIGNED NOT NULL,
+  `receiver_id` BIGINT UNSIGNED NOT NULL,
+  `body` TEXT NOT NULL,
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  KEY `direct_messages_sender_id_receiver_id_index` (`sender_id`, `receiver_id`),
+  KEY `direct_messages_receiver_id_is_read_index` (`receiver_id`, `is_read`),
+  CONSTRAINT `fk_dm_sender_id` FOREIGN KEY (`sender_id`) REFERENCES `members` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_dm_receiver_id` FOREIGN KEY (`receiver_id`) REFERENCES `members` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ---------------------------------------------------------------------
+-- 5. Social Friendships & Connections Table (`friendships`)
+-- Used for Connection requests, friend lists, and mutual connections
+-- Migration File: database/migrations/2026_07_20_000000_create_friendships_table.php
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `friendships` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `member_one_id` BIGINT UNSIGNED NOT NULL,
+  `member_two_id` BIGINT UNSIGNED NOT NULL,
+  `requested_by_id` BIGINT UNSIGNED NOT NULL,
+  `status` ENUM('pending', 'accepted', 'rejected', 'blocked') NOT NULL DEFAULT 'pending',
+  `accepted_at` TIMESTAMP NULL DEFAULT NULL,
+  `rejected_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  UNIQUE KEY `friendships_member_pair_unique` (`member_one_id`, `member_two_id`),
+  KEY `friendships_requested_by_id_status_index` (`requested_by_id`, `status`),
+  KEY `friendships_member_one_status_index` (`member_one_id`, `status`),
+  KEY `friendships_member_two_status_index` (`member_two_id`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ---------------------------------------------------------------------
+-- 6. Social Followers Table (`followers`)
+-- Used for member-to-member and profile following system
+-- Migration File: database/migrations/2026_07_22_130000_create_followers_table.php
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `followers` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `follower_id` BIGINT UNSIGNED NOT NULL,
+  `following_id` BIGINT UNSIGNED NOT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  UNIQUE KEY `followers_unique_pair` (`follower_id`, `following_id`),
+  KEY `followers_following_id_index` (`following_id`),
+  CONSTRAINT `fk_follower_member` FOREIGN KEY (`follower_id`) REFERENCES `members` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_following_member` FOREIGN KEY (`following_id`) REFERENCES `members` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ---------------------------------------------------------------------
+-- 7. Blocked Users / Disconnections Table (`blocked_users`)
+-- Used to prevent disconnected or blocked users from showing in suggested connections
+-- Migration File: database/migrations/2026_07_22_140000_create_blocked_users_table.php
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `blocked_users` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `member_id` BIGINT UNSIGNED NOT NULL,
+  `blocked_member_id` BIGINT UNSIGNED NOT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  UNIQUE KEY `blocked_users_unique_pair` (`member_id`, `blocked_member_id`),
+  KEY `blocked_users_member_id_index` (`member_id`),
+  KEY `blocked_users_blocked_member_id_index` (`blocked_member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ---------------------------------------------------------------------
+-- 8. Key Member Schema Columns & Indexes Checklist (`members`)
+-- Used across mobile profile, directory search, and authentication
+-- ---------------------------------------------------------------------
+-- Verify the following columns exist on `members`:
+-- `user_id` VARCHAR(50) UNIQUE NOT NULL
+-- `introducer_id` VARCHAR(50) NULL DEFAULT NULL
+-- `direct_referral_count` INT UNSIGNED NOT NULL DEFAULT 0
+-- `country` VARCHAR(100) NULL DEFAULT NULL
+-- `city` VARCHAR(100) NULL DEFAULT NULL
+-- `bio` TEXT NULL DEFAULT NULL
+-- `profile_photo` VARCHAR(255) NULL DEFAULT NULL
+-- `cover_photo` VARCHAR(255) NULL DEFAULT NULL
+-- `mobile_verified_at` TIMESTAMP NULL DEFAULT NULL
+-- `wallet` DECIMAL(16, 4) NOT NULL DEFAULT 0.0000
+-- `p2p_wallet` DECIMAL(16, 4) NOT NULL DEFAULT 0.0000
+-- `ad_balance` DECIMAL(16, 4) NOT NULL DEFAULT 0.0000
+-- `reward_wallet_address` VARCHAR(64) NULL DEFAULT NULL
+-- `blocked_at` TIMESTAMP NULL DEFAULT NULL

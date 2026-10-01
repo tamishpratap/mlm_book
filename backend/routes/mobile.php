@@ -67,6 +67,8 @@ Route::middleware('mobile.auth:member')->group(function () {
     Route::post('/friends/request/{id}', [MobileSocialController::class, 'sendFriendRequest']);
     Route::delete('/friends/{id}', [MobileSocialController::class, 'removeFriend']);
     Route::post('/friends/follow/{id}', [MobileSocialController::class, 'toggleFollow']);
+    Route::get('/countries', [MobileSocialController::class, 'countries']);
+    Route::get('/business-directory', [MobileSocialController::class, 'businessDirectory']);
 
     // Notifications Center
     Route::get('/notifications', [MobileSocialController::class, 'notifications']);
@@ -87,6 +89,8 @@ Route::middleware('mobile.auth:member')->group(function () {
     // Business Pages & Ad Campaigns
     Route::get('/business-pages', [MobileBusinessAndCampaignController::class, 'businessPages']);
     Route::post('/business-pages', [MobileBusinessAndCampaignController::class, 'storeBusinessPage']);
+    Route::get('/business-pages/{slug}', [MobileBusinessAndCampaignController::class, 'businessPageDetail']);
+    Route::delete('/business-pages/{slug}', [MobileBusinessAndCampaignController::class, 'destroyBusinessPage']);
     Route::get('/business-pages/{slug}/campaigns', [MobileBusinessAndCampaignController::class, 'pageCampaigns']);
     Route::post('/business-pages/{slug}/campaigns', [MobileBusinessAndCampaignController::class, 'storeAdCampaign']);
     Route::get('/sponsored-feed', [MobileBusinessAndCampaignController::class, 'sponsoredFeed']);

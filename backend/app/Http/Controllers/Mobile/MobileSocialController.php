@@ -25,6 +25,29 @@ class MobileSocialController extends Controller
         $member = auth('member')->user();
         $member = $member->fresh() ?? $member;
 
+        $introducer = $member->introducer_id
+            ? Member::where('user_id', $member->introducer_id)
+                ->first(['id', 'name', 'user_id', 'email', 'phone', 'city', 'country', 'profile_photo', 'mobile_verified_at', 'created_at'])
+            : null;
+
+        $directReferrals = Member::where('introducer_id', $member->user_id)
+            ->latest('id')
+            ->get(['id', 'name', 'user_id', 'email', 'phone', 'city', 'country', 'profile_photo', 'mobile_verified_at', 'created_at'])
+            ->map(function ($ref) {
+                return [
+                    'id' => $ref->id,
+                    'name' => $ref->name,
+                    'user_id' => $ref->user_id,
+                    'email' => $ref->email,
+                    'phone' => $ref->phone,
+                    'city' => $ref->city,
+                    'country' => $ref->country,
+                    'avatar_url' => $ref->avatar_url,
+                    'is_verified' => $ref->isMobileVerified(),
+                    'created_at' => $ref->created_at?->toIso8601String(),
+                ];
+            });
+
         return response()->json([
             'success' => true,
             'profile' => [
@@ -44,6 +67,18 @@ class MobileSocialController extends Controller
                 'p2p_wallet' => (float) ($member->p2p_wallet ?? 0.00),
                 'ad_balance' => (float) ($member->p2p_wallet ?? 0.00),
                 'reward_balance' => (float) ($member->wallet ?? 0.00),
+                'introducer' => $introducer ? [
+                    'id' => $introducer->id,
+                    'name' => $introducer->name,
+                    'user_id' => $introducer->user_id,
+                    'email' => $introducer->email,
+                    'phone' => $introducer->phone,
+                    'city' => $introducer->city,
+                    'country' => $introducer->country,
+                    'avatar_url' => $introducer->avatar_url,
+                    'is_verified' => $introducer->isMobileVerified(),
+                ] : null,
+                'direct_referrals' => $directReferrals,
             ],
         ]);
     }
@@ -69,14 +104,20 @@ class MobileSocialController extends Controller
                 'id' => $target->id,
                 'name' => $target->name,
                 'user_id' => $target->user_id,
+                'email' => $target->email,
+                'phone' => $target->phone,
+                'city' => $target->city,
+                'country' => $target->country,
                 'bio' => $target->bio,
                 'avatar_url' => $target->avatar_url,
                 'cover_photo_url' => $target->cover_photo_url,
                 'is_verified' => $target->isMobileVerified(),
+                'direct_referrals_count' => $target->getVerifiedDirectReferralCount(),
                 'friends_count' => count($target->acceptedFriendIds()),
                 'followers_count' => $target->followers()->count(),
                 'is_friend' => $isFriend,
                 'is_following' => $isFollowing,
+                'created_at' => $target->created_at?->toIso8601String(),
             ],
         ]);
     }
@@ -146,15 +187,23 @@ class MobileSocialController extends Controller
             ->unique()
             ->values();
 
-        // 3. Dynamic list of countries from database member records
-        $availableCountries = Member::query()
-            ->sociallyEligible()
-            ->whereNotNull('country')
-            ->where('country', '!=', '')
-            ->distinct()
-            ->orderBy('country')
-            ->pluck('country')
+        // 3. Dynamic list of countries from database countries table (with member countries fallback)
+        $availableCountries = DB::table('countries')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name')
             ->values();
+
+        if ($availableCountries->isEmpty()) {
+            $availableCountries = Member::query()
+                ->sociallyEligible()
+                ->whereNotNull('country')
+                ->where('country', '!=', '')
+                ->distinct()
+                ->orderBy('country')
+                ->pluck('country')
+                ->values();
+        }
 
         // 4. Build base query for new connection discovery
         $query = Member::query()
@@ -820,4 +869,94 @@ class MobileSocialController extends Controller
             'member' => $member->fresh(),
         ]);
     }
+
+    /**
+     * Get list of all available countries for filtering and selection.
+     */
+    public function countries(Request $request): JsonResponse
+    {
+        $countries = DB::table('countries')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'iso2', 'iso3', 'phone_code', 'flag_emoji']);
+
+        return response()->json([
+            'success' => true,
+            'countries' => $countries,
+        ]);
+    }
+
+    /**
+     * Get member/user directory for mobile app.
+     * Shows all listed user profiles except the current authenticated user.
+     */
+    public function businessDirectory(Request $request): JsonResponse
+    {
+        /** @var Member $member */
+        $member = auth('member')->user();
+
+        $search = trim((string) ($request->query('q') ?? $request->query('search') ?? ''));
+        $country = trim((string) $request->query('country', ''));
+        $sort = trim((string) $request->query('sort', 'newest'));
+
+        $query = Member::query()
+            ->where('id', '!=', $member->id)
+            ->whereNull('blocked_at');
+
+        if (!empty($search)) {
+            $like = '%' . $search . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('name', 'like', $like)
+                    ->orWhere('user_id', 'like', $like)
+                    ->orWhere('email', 'like', $like)
+                    ->orWhere('city', 'like', $like)
+                    ->orWhere('country', 'like', $like);
+            });
+        }
+
+        if (!empty($country) && $country !== 'All') {
+            $query->where('country', $country);
+        }
+
+        if ($sort === 'name') {
+            $query->orderBy('name', 'asc');
+        } elseif ($sort === 'oldest') {
+            $query->orderBy('id', 'asc');
+        } else {
+            $query->latest('id');
+        }
+
+        $members = $query->paginate(16)->through(function (Member $m) {
+            return [
+                'id' => $m->id,
+                'name' => $m->name,
+                'user_id' => $m->user_id,
+                'email' => $m->email,
+                'country' => $m->country ?? 'Global',
+                'city' => $m->city,
+                'avatar_url' => $m->profile_photo ? asset($m->profile_photo) : null,
+                'bio' => $m->bio,
+                'is_verified' => (bool) $m->mobile_verified_at,
+                'created_at' => $m->created_at?->toIso8601String(),
+            ];
+        });
+
+        $availableCountries = DB::table('countries')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name')
+            ->toArray();
+
+        return response()->json([
+            'success' => true,
+            'members' => $members,
+            'available_countries' => $availableCountries,
+            'filters' => [
+                'q' => $search,
+                'country' => $country,
+                'sort' => $sort,
+            ],
+        ]);
+    }
 }
+

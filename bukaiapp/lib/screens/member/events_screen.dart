@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants.dart';
+import '../../core/app_toast.dart';
 import '../../models/event_model.dart';
 import '../../providers/event_provider.dart';
 
@@ -114,9 +115,7 @@ class _EventsScreenState extends State<EventsScreen> {
                     );
                     if (success && ctx.mounted) {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Event created successfully!'), backgroundColor: AppColors.success),
-                      );
+                      AppToast.success(context, 'Event created successfully!');
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -146,6 +145,7 @@ class _EventsScreenState extends State<EventsScreen> {
         title: const Text('Events Hub', style: TextStyle(color: AppColors.textHeading, fontWeight: FontWeight.bold, fontSize: 18)),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'events_fab',
         onPressed: _showCreateEventDialog,
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),

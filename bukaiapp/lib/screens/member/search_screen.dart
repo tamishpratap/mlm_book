@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/constants.dart';
+import '../../core/app_toast.dart';
 import '../../models/community_model.dart';
 import '../../providers/search_provider.dart';
 import 'community_detail_screen.dart';
@@ -88,23 +89,9 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     if (res.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Connection request sent to ${member['name'] ?? 'member'}!'),
-          backgroundColor: const Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      AppToast.success(context, 'Connection request sent to ${member['name'] ?? 'member'}!');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(res.message ?? 'Failed to send connection request.'),
-          backgroundColor: const Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      AppToast.error(context, res.message ?? 'Failed to send connection request.');
     }
   }
 
@@ -125,14 +112,7 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     if (res.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Connection request to ${member['name'] ?? 'member'} cancelled.'),
-          backgroundColor: const Color(0xFF64748B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      AppToast.info(context, 'Connection request to ${member['name'] ?? 'member'} cancelled.');
     }
   }
 

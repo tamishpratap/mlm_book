@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../core/constants.dart';
+import '../../core/app_bottom_sheet.dart';
+import '../../core/app_toast.dart';
 import '../../providers/wallet_provider.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -37,123 +38,115 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   void _showLinkWalletDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) {
-        bool otpSent = false;
-
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Link Destination USDT (BEP-20) Wallet',
-                    style: TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Enter your Binance Smart Chain BEP-20 wallet address. A 6-digit verification code will be sent to your email to confirm.',
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+    bool otpSent = false;
+    AppBottomSheet.show(
+      context,
+      title: 'Link BEP-20 Wallet',
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Enter your BNB Smart Chain (BEP-20) address. A 6-digit verification code will be sent to your email to verify.',
+                  style: TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                if (!otpSent) ...[
+                  TextField(
+                    controller: _walletAddressController,
+                    style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13.5),
+                    decoration: InputDecoration(
+                      labelText: 'BEP-20 Wallet Address (0x...)',
+                      labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  if (!otpSent) ...[
-                    TextField(
-                      controller: _walletAddressController,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-                      decoration: InputDecoration(
-                        labelText: 'BEP-20 Wallet Address (0x...)',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
-                        filled: true,
-                        fillColor: AppColors.background,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final addr = _walletAddressController.text.trim();
-                        if (addr.startsWith('0x') && addr.length == 42) {
-                          final ok = await context.read<WalletProvider>().sendWalletLinkOtp(addr);
-                          if (ok) {
-                            setModalState(() => otpSent = true);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Failed to send verification email.')),
-                            );
-                          }
+                  ElevatedButton(
+                    onPressed: () async {
+                      final addr = _walletAddressController.text.trim();
+                      if (addr.startsWith('0x') && addr.length == 42) {
+                        final ok = await context.read<WalletProvider>().sendWalletLinkOtp(addr);
+                        if (ok) {
+                          setModalState(() => otpSent = true);
+                          AppToast.info(context, 'Verification code sent to email');
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter a valid 42-char 0x... BEP-20 address.')),
-                          );
+                          AppToast.error(context, 'Failed to send verification code.');
                         }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: const Text('Send Verification Code', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      } else {
+                        AppToast.error(context, 'Please enter a valid 42-char 0x... BEP-20 address.');
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                  ] else ...[
-                    TextField(
-                      controller: _otpController,
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      maxLength: 6,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 24, letterSpacing: 8),
-                      decoration: InputDecoration(
-                        labelText: 'Enter 6-digit Code',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
-                        counterText: '',
-                        filled: true,
-                        fillColor: AppColors.background,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    child: const Text('Send Verification Code', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  ),
+                ] else ...[
+                  TextField(
+                    controller: _otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 20, letterSpacing: 8, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    decoration: InputDecoration(
+                      labelText: '6-Digit Code',
+                      labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      counterText: '',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final otp = _otpController.text.trim();
-                        if (otp.length == 6) {
-                          final ok = await context.read<WalletProvider>().verifyWalletLinkOtp(otp);
-                          if (ok && mounted) {
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Wallet address successfully linked!')),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Invalid or expired code.')),
-                            );
-                          }
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final otp = _otpController.text.trim();
+                      if (otp.length == 6) {
+                        final ok = await context.read<WalletProvider>().verifyWalletLinkOtp(otp);
+                        if (ok && mounted) {
+                          Navigator.pop(context);
+                          AppToast.success(context, 'Wallet address linked successfully!');
+                        } else {
+                          AppToast.error(context, 'Invalid or expired code.');
                         }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: const Text('Verify & Activate Wallet', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                  ],
+                    child: const Text('Verify & Activate Wallet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  ),
                 ],
-              ),
-            );
-          },
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -161,138 +154,122 @@ class _WalletScreenState extends State<WalletScreen> {
     final wp = context.read<WalletProvider>();
     final adminAddress = wp.depositConfig?['crypto_wallet_address']?.toString() ?? '0x1234567890abcdef1234567890abcdef12345678';
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Deposit Advertising Funds (USDT)',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Transfer USDT using the BEP-20 (BNB Smart Chain) network to the address below, then submit your transaction hash.',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 13),
-              ),
-              const SizedBox(height: 14),
+    AppBottomSheet.show(
+      context,
+      title: 'Deposit USDT (BEP-20)',
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Send USDT via BNB Smart Chain (BEP-20) to the address below, then submit the transaction hash.',
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 14),
 
-              // Admin Address Container
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Deposit Address (BEP-20 USDT):', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            adminAddress,
-                            style: const TextStyle(color: AppColors.accent, fontSize: 12, fontFamily: 'monospace'),
-                          ),
+            // Deposit address box
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Deposit Address (BEP-20):', style: TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          adminAddress,
+                          style: const TextStyle(color: Color(0xFF2563EB), fontSize: 12, fontFamily: 'monospace', fontWeight: FontWeight.w600),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.copy, color: AppColors.accent, size: 18),
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: adminAddress));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Address copied to clipboard!')),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy, color: Color(0xFF2563EB), size: 18),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: adminAddress));
+                          AppToast.success(context, 'Address copied to clipboard!');
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
+            ),
+            const SizedBox(height: 14),
 
-              // Amount input
-              TextField(
-                controller: _depositAmountController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Amount (USDT)',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  filled: true,
-                  fillColor: AppColors.background,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+            // Deposit Amount input
+            TextField(
+              controller: _depositAmountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(color: Color(0xFF0F172A)),
+              decoration: InputDecoration(
+                labelText: 'Deposit Amount (USDT)',
+                labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                prefixText: '\$ ',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
               ),
-              const SizedBox(height: 12),
+            ),
+            const SizedBox(height: 12),
 
-              // Transaction Hash input
-              TextField(
-                controller: _depositTxHashController,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Blockchain Transaction Hash (0x...)',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  filled: true,
-                  fillColor: AppColors.background,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+            // Tx Hash input
+            TextField(
+              controller: _depositTxHashController,
+              style: const TextStyle(color: Color(0xFF0F172A), fontSize: 12.5),
+              decoration: InputDecoration(
+                labelText: 'Blockchain Transaction Hash (0x...)',
+                labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
               ),
-              const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 18),
 
-              ElevatedButton(
-                onPressed: () async {
-                  final amount = double.tryParse(_depositAmountController.text.trim());
-                  final txHash = _depositTxHashController.text.trim();
+            ElevatedButton(
+              onPressed: () async {
+                final amount = double.tryParse(_depositAmountController.text.trim());
+                final txHash = _depositTxHashController.text.trim();
 
-                  if (amount != null && amount >= 1.0 && txHash.isNotEmpty) {
-                    final res = await context.read<WalletProvider>().submitDeposit(
-                          amount: amount,
-                          txHash: txHash,
-                        );
-                    if (mounted) {
-                      Navigator.pop(ctx);
-                      _depositAmountController.clear();
-                      _depositTxHashController.clear();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(res['message']?.toString() ?? ''),
-                          backgroundColor: res['success'] == true ? AppColors.accent : AppColors.danger,
-                        ),
+                if (amount != null && amount >= 1.0 && txHash.isNotEmpty) {
+                  final res = await context.read<WalletProvider>().submitDeposit(
+                        amount: amount,
+                        txHash: txHash,
                       );
+                  if (mounted) {
+                    Navigator.pop(context);
+                    _depositAmountController.clear();
+                    _depositTxHashController.clear();
+                    if (res['success'] == true) {
+                      AppToast.success(context, res['message']?.toString() ?? 'Deposit submitted!');
+                    } else {
+                      AppToast.error(context, res['message']?.toString() ?? 'Failed to submit deposit.');
                     }
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter valid amount and transaction hash.')),
-                    );
                   }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('Submit & Verify Deposit', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                } else {
+                  AppToast.error(context, 'Please enter a valid amount and transaction hash.');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-            ],
-          ),
-        );
-      },
+              child: const Text('Submit & Verify Deposit', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -302,11 +279,19 @@ class _WalletScreenState extends State<WalletScreen> {
     final wallet = wp.wallet;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Web3 & Reward Wallet', style: TextStyle(color: AppColors.textPrimary, fontSize: 18)),
+        surfaceTintColor: Colors.transparent,
+        title: const Text(
+          'Wallet & Earnings',
+          style: TextStyle(color: Color(0xFF0F172A), fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1.0),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -314,20 +299,24 @@ class _WalletScreenState extends State<WalletScreen> {
           await wp.fetchDepositConfig();
           await wp.fetchDepositHistory();
         },
-        color: AppColors.accent,
+        color: const Color(0xFF2563EB),
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Master Wallet Balance Card (Emerald Gradient)
+            // 1. Apple Wallet / Revolut Style Card (Gradient)
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                gradient: AppColors.walletGradient,
-                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(22),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accent.withOpacity(0.35),
-                    blurRadius: 20,
+                    color: const Color(0xFF0F172A).withOpacity(0.3),
+                    blurRadius: 18,
                     offset: const Offset(0, 8),
                   ),
                 ],
@@ -338,36 +327,43 @@ class _WalletScreenState extends State<WalletScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Total Rewards Balance',
-                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                      Row(
+                        children: const [
+                          Icon(Icons.account_balance_wallet_outlined, color: Colors.white70, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Main Reward Balance',
+                            style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                          ),
+                        ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.black26,
+                          color: Colors.white.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          wallet != null ? 'Tier: ${wallet.currentTierLabel}' : 'Standard Tier',
+                          wallet != null ? wallet.currentTierLabel : 'Standard Tier',
                           style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 14),
                   Text(
                     wallet?.rewardBalanceFormatted ?? '\$0.0000 USD',
-                    style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Verified Referrals', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                          const Text('Verified Referrals', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                          const SizedBox(height: 2),
                           Text(
                             '${wallet?.directVerifiedReferrals ?? 0} Members',
                             style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
@@ -377,7 +373,8 @@ class _WalletScreenState extends State<WalletScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text('Ad Balance (Funds)', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                          const Text('Ad Balance (USDT)', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                          const SizedBox(height: 2),
                           Text(
                             wallet?.adBalanceFormatted ?? '\$0.00 USDT',
                             style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
@@ -389,15 +386,56 @@ class _WalletScreenState extends State<WalletScreen> {
                 ],
               ),
             ),
+
             const SizedBox(height: 16),
 
-            // Destination Wallet Address Card
+            // 2. Action Buttons Row (Deposit Funds & Link Web3 Wallet)
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _showDepositDialog,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Deposit USDT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _showLinkWalletDialog,
+                    icon: const Icon(Icons.link, size: 18),
+                    label: Text(
+                      wallet?.walletAddress != null ? 'Change Wallet' : 'Link Wallet',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF0F172A),
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // 3. Destination Wallet Card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,19 +444,19 @@ class _WalletScreenState extends State<WalletScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Destination USDT (BEP-20) Address',
-                        style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                        'Linked BEP-20 Wallet',
+                        style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: wallet?.isWalletVerified == true ? AppColors.accent.withOpacity(0.2) : AppColors.warning.withOpacity(0.2),
+                          color: wallet?.isWalletVerified == true ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           wallet?.isWalletVerified == true ? 'Verified' : 'Unlinked',
                           style: TextStyle(
-                            color: wallet?.isWalletVerified == true ? AppColors.accent : AppColors.warning,
+                            color: wallet?.isWalletVerified == true ? const Color(0xFF16A34A) : const Color(0xFFD97706),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -430,55 +468,35 @@ class _WalletScreenState extends State<WalletScreen> {
                   Text(
                     wallet?.walletAddress != null && wallet!.walletAddress!.isNotEmpty
                         ? wallet.walletAddress!
-                        : 'No destination wallet linked yet.',
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12, fontFamily: 'monospace'),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _showLinkWalletDialog,
-                      icon: const Icon(Icons.link, color: AppColors.accent, size: 18),
-                      label: Text(
-                        wallet?.walletAddress != null ? 'Change Wallet Address' : 'Link Web3 Wallet',
-                        style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.accent),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
+                        : 'No destination wallet linked yet. Link your BEP-20 address to receive automated reward payouts.',
+                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 12.5, fontFamily: 'monospace'),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
 
-            // Deposit Ad Funds CTA
-            ElevatedButton.icon(
-              onPressed: _showDepositDialog,
-              icon: const Icon(Icons.add_card, color: Colors.white),
-              label: const Text('Deposit Advertising Funds (USDT BEP-20)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
             const SizedBox(height: 20),
 
-            // Deposit Transactions History
+            // 4. Deposit History Header
             const Text(
               'Deposit History',
-              style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 10),
 
             if (wp.deposits.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: Text('No deposit transactions found.', style: TextStyle(color: AppColors.textMuted)),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Center(
+                  child: Text(
+                    'No deposit transactions yet.',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                  ),
                 ),
               )
             else
@@ -493,11 +511,11 @@ class _WalletScreenState extends State<WalletScreen> {
     final isApproved = d.status == 'approved';
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -505,10 +523,10 @@ class _WalletScreenState extends State<WalletScreen> {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: isApproved ? AppColors.accent.withOpacity(0.15) : AppColors.warning.withOpacity(0.15),
+                backgroundColor: isApproved ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
                 child: Icon(
-                  isApproved ? Icons.check : Icons.hourglass_top,
-                  color: isApproved ? AppColors.accent : AppColors.warning,
+                  isApproved ? Icons.check_circle : Icons.hourglass_top,
+                  color: isApproved ? const Color(0xFF16A34A) : const Color(0xFFD97706),
                   size: 20,
                 ),
               ),
@@ -518,25 +536,29 @@ class _WalletScreenState extends State<WalletScreen> {
                 children: [
                   Text(
                     '+${d.amount} USDT',
-                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
                   ),
-                  Text(d.date, style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                  const SizedBox(height: 2),
+                  Text(
+                    d.createdAt?.toString().split('T').first ?? '',
+                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                  ),
                 ],
               ),
             ],
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: isApproved ? AppColors.accent.withOpacity(0.15) : AppColors.warning.withOpacity(0.15),
+              color: isApproved ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              d.status.toUpperCase(),
+              d.status?.toString().toUpperCase() ?? 'PENDING',
               style: TextStyle(
-                color: isApproved ? AppColors.accent : AppColors.warning,
-                fontWeight: FontWeight.bold,
+                color: isApproved ? const Color(0xFF16A34A) : const Color(0xFFD97706),
                 fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

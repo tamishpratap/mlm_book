@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/constants.dart';
+import '../../core/app_toast.dart';
 import '../../models/post_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
@@ -457,20 +458,11 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                     Navigator.pop(ctx);
                     final ok = await feed.sharePost(post, message: captionCtrl.text);
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(ok ? Icons.check_circle : Icons.info, color: Colors.white, size: 18),
-                              const SizedBox(width: 8),
-                              Text(ok ? 'Post shared to your feed!' : 'Failed to share post'),
-                            ],
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          backgroundColor: ok ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
-                        ),
-                      );
+                      if (ok) {
+                        AppToast.success(context, 'Post shared to your feed!');
+                      } else {
+                        AppToast.error(context, 'Failed to share post');
+                      }
                     }
                   },
                   icon: const Icon(Icons.repeat, size: 18, color: Colors.white),
@@ -494,20 +486,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                 subtitle: const Text('Share link anywhere', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 onTap: () {
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Row(
-                        children: [
-                          Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
-                          SizedBox(width: 8),
-                          Text('Post link copied to clipboard!'),
-                        ],
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      backgroundColor: const Color(0xFF1E293B),
-                    ),
-                  );
+                  AppToast.info(context, 'Post link copied to clipboard!');
                 },
               ),
             ],
@@ -901,29 +880,22 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                // [ 👍 Like ] Pill
+                // [ 👍 Like / Liked (X) ] Button (Combined single pill with count)
                 _buildActionPill(
                   iconWidget: post.isLiked
                       ? Text(post.activeReactionEmoji, style: const TextStyle(fontSize: 14))
                       : null,
                   icon: post.isLiked ? null : Icons.thumb_up_alt_outlined,
-                  label: post.isLiked ? post.activeReactionLabel : 'Like',
+                  label: post.isLiked
+                      ? (post.activeReactionLabel == 'Like' ? 'Liked (${post.likesCount})' : '${post.activeReactionLabel} (${post.likesCount})')
+                      : 'Like (${post.likesCount})',
                   color: post.isLiked ? Color(post.activeReactionColor) : const Color(0xFF475569),
                   isActive: post.isLiked,
                   onTap: () => feed.toggleLike(post),
                 ),
                 const SizedBox(width: 8),
 
-                // [ 👍 1 ] Count Pill -> Opens Reactors Modal
-                _buildActionPill(
-                  iconWidget: Text(post.isLiked ? post.activeReactionEmoji : '👍', style: const TextStyle(fontSize: 13)),
-                  label: '${post.likesCount}',
-                  color: const Color(0xFF475569),
-                  onTap: () => _showReactorsModal(context, post),
-                ),
-                const SizedBox(width: 8),
-
-                // [ 💬 Comments (3) ] Pill -> Opens Comments Sheet
+                // [ 💬 Comments (X) ] Pill -> Opens Comments Sheet
                 _buildActionPill(
                   icon: Icons.chat_bubble_outline,
                   label: 'Comments (${post.commentsCount})',
@@ -932,7 +904,7 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                 ),
                 const SizedBox(width: 8),
 
-                // [ 🔖 Saved (1) ] Pill -> Toggles Saved
+                // [ 🔖 Saved (X) ] Pill -> Toggles Saved
                 _buildActionPill(
                   icon: post.isSaved ? Icons.bookmark : Icons.bookmark_border,
                   label: post.isSaved ? 'Saved (${post.savesCount > 0 ? post.savesCount : 1})' : 'Save (${post.savesCount})',
@@ -941,39 +913,20 @@ class _SavedPostsScreenState extends State<SavedPostsScreen> {
                   onTap: () async {
                     await feed.toggleSavePost(post.id);
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(post.isSaved ? Icons.bookmark_added : Icons.bookmark_remove, color: Colors.white, size: 18),
-                              const SizedBox(width: 8),
-                              Text(post.isSaved ? 'Post saved to bookmarks!' : 'Post removed from bookmarks'),
-                            ],
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          backgroundColor: const Color(0xFF1E293B),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
+                      if (post.isSaved) {
+                        AppToast.success(context, 'Post saved to bookmarks!');
+                      } else {
+                        AppToast.info(context, 'Post removed from bookmarks');
+                      }
                     }
                   },
                 ),
                 const SizedBox(width: 8),
 
-                // [ ↗ Share ] Pill
+                // [ ↗ Share (X) ] Pill
                 _buildActionPill(
                   icon: Icons.share_outlined,
-                  label: 'Share',
-                  color: const Color(0xFF475569),
-                  onTap: () => _showShareModal(context, post, feed),
-                ),
-                const SizedBox(width: 8),
-
-                // [ 🔁 0 Shares ] Pill
-                _buildActionPill(
-                  icon: Icons.repeat,
-                  label: '${post.sharesCount} Shares',
+                  label: 'Share (${post.sharesCount})',
                   color: const Color(0xFF475569),
                   onTap: () => _showShareModal(context, post, feed),
                 ),

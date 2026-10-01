@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/constants.dart';
 import '../../core/session_manager.dart';
+import '../../core/app_toast.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/profile_image_adjust_dialog.dart';
 
@@ -204,19 +205,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         setState(() {
           _successMessage = 'Your profile has been updated successfully.';
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white, size: 18),
-                SizedBox(width: 8),
-                Text('Profile updated successfully!'),
-              ],
-            ),
-            backgroundColor: Color(0xFF16A34A),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppToast.success(context, 'Profile updated successfully!');
         Future.delayed(const Duration(milliseconds: 900), () {
           if (mounted) Navigator.pop(context);
         });

@@ -27,37 +27,121 @@ class MobileBusinessAndCampaignController extends Controller
     {
         /** @var Member $member */
         $member = auth('member')->user();
+        $rawTab = $request->query('tab', 'all');
+        $tab = in_array($rawTab, ['all', 'my'], true) ? $rawTab : 'all';
 
-        $myPages = BusinessPage::where('member_id', $member->id)->latest()->get()->map(function (BusinessPage $p) {
+        // My Business Pages
+        $myPagesQuery = BusinessPage::query()
+            ->with('owner')
+            ->where('member_id', $member->id);
+
+        $myCount = $myPagesQuery->count();
+        $myPages = $myPagesQuery->latest()->get()->map(function (BusinessPage $p) use ($member) {
             return [
                 'id' => $p->id,
-                'name' => $p->name,
+                'page_name' => $p->page_name,
+                'page_username' => $p->page_username,
                 'slug' => $p->slug,
-                'category' => $p->category?->name ?? 'General',
-                'avatar_url' => $p->profile_photo_url ?? asset('images/default_page.png'),
-                'followers_count' => $p->followers()->count(),
-                'rating' => round($p->reviews()->avg('rating') ?? 0, 1),
+                'category' => $p->category ?? 'General',
+                'description' => $p->description,
+                'website' => $p->website,
+                'email' => $p->email,
+                'phone' => $p->phone,
+                'city' => $p->city,
+                'state' => $p->state,
+                'country' => $p->country,
+                'avatar_url' => $p->logo,
+                'banner_url' => $p->cover_photo,
+                'visibility' => $p->visibility ?? 'public',
                 'is_verified' => (bool) $p->is_verified,
+                'is_owner' => true,
+                'created_at' => $p->created_at?->toIso8601String(),
             ];
         });
 
-        $explorePages = BusinessPage::where('member_id', '!=', $member->id)->latest()->take(20)->get()->map(function (BusinessPage $p) {
+        // Main Query according to tab & filters
+        $query = BusinessPage::query()->with('owner');
+
+        if ($tab === 'my') {
+            $query->where('member_id', $member->id);
+        } else {
+            $query->where(function ($q) use ($member) {
+                $q->where('visibility', 'public')
+                  ->orWhere('member_id', $member->id);
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = '%'.$request->query('search').'%';
+            $query->where(function ($q) use ($search) {
+                $q->where('page_name', 'like', $search)
+                    ->orWhere('page_username', 'like', $search)
+                    ->orWhere('description', 'like', $search)
+                    ->orWhere('category', 'like', $search)
+                    ->orWhere('city', 'like', $search)
+                    ->orWhere('country', 'like', $search);
+            });
+        }
+
+        if ($request->filled('category') && $request->query('category') !== 'All') {
+            $query->where('category', $request->query('category'));
+        }
+
+        $pages = $query->latest('created_at')->paginate(15)->through(function (BusinessPage $p) use ($member) {
             return [
                 'id' => $p->id,
-                'name' => $p->name,
+                'page_name' => $p->page_name,
+                'page_username' => $p->page_username,
                 'slug' => $p->slug,
-                'category' => $p->category?->name ?? 'General',
-                'avatar_url' => $p->profile_photo_url ?? asset('images/default_page.png'),
-                'followers_count' => $p->followers()->count(),
-                'rating' => round($p->reviews()->avg('rating') ?? 0, 1),
+                'category' => $p->category ?? 'General',
+                'description' => $p->description,
+                'website' => $p->website,
+                'email' => $p->email,
+                'phone' => $p->phone,
+                'city' => $p->city,
+                'state' => $p->state,
+                'country' => $p->country,
+                'avatar_url' => $p->logo,
+                'banner_url' => $p->cover_photo,
+                'visibility' => $p->visibility ?? 'public',
                 'is_verified' => (bool) $p->is_verified,
+                'is_owner' => $p->member_id === $member->id,
+                'created_at' => $p->created_at?->toIso8601String(),
             ];
         });
+
+        $categories = BusinessPage::categories();
+        if (empty($categories)) {
+            $categories = [
+                'Technology & IT',
+                'Financial Services',
+                'E-Commerce & Retail',
+                'Health & Wellness',
+                'Real Estate',
+                'Education & Training',
+                'Marketing & Advertising',
+                'Direct Selling & MLM',
+                'Entertainment',
+                'Food & Beverages',
+                'Travel & Tourism',
+                'Consulting',
+            ];
+        }
+
+        // Fetch active countries from countries table
+        $countries = DB::table('countries')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'iso2', 'phone_code', 'flag_emoji']);
 
         return response()->json([
             'success' => true,
+            'pages' => $pages,
             'my_pages' => $myPages,
-            'explore_pages' => $explorePages,
+            'my_count' => $myCount,
+            'categories' => $categories,
+            'countries' => $countries,
+            'visibilities' => BusinessPage::VISIBILITIES,
         ]);
     }
 
@@ -69,29 +153,64 @@ class MobileBusinessAndCampaignController extends Controller
         /** @var Member $member */
         $member = auth('member')->user();
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'bio' => ['nullable', 'string', 'max:500'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'website' => ['nullable', 'url', 'max:255'],
-        ]);
+        $pageName = trim((string) ($request->input('page_name') ?? $request->input('name') ?? ''));
+        if (empty($pageName)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please provide a business page name.',
+            ], 422);
+        }
 
-        $baseSlug = Str::slug($validated['name']);
+        $baseSlug = Str::slug($pageName);
         $slug = $baseSlug;
         $counter = 1;
         while (BusinessPage::where('slug', $slug)->exists()) {
             $slug = $baseSlug . '-' . $counter++;
         }
 
+        $baseUsername = Str::slug($pageName, '');
+        $pageUsername = $baseUsername;
+        $uCounter = 1;
+        while (BusinessPage::where('page_username', $pageUsername)->exists()) {
+            $pageUsername = $baseUsername . $uCounter++;
+        }
+
+        $coverPath = null;
+        if ($request->hasFile('cover_photo')) {
+            $coverPath = $this->storeFile($request->file('cover_photo'), 'uploads/business_pages/covers');
+        } elseif ($request->hasFile('cover')) {
+            $coverPath = $this->storeFile($request->file('cover'), 'uploads/business_pages/covers');
+        }
+
+        $logoPath = null;
+        if ($request->hasFile('logo')) {
+            $logoPath = $this->storeFile($request->file('logo'), 'uploads/business_pages/logos');
+        } elseif ($request->hasFile('avatar')) {
+            $logoPath = $this->storeFile($request->file('avatar'), 'uploads/business_pages/logos');
+        }
+
+        $code = trim((string) $request->input('phone_country_code', ''));
+        $digits = trim((string) ($request->input('phone_number') ?? $request->input('phone') ?? ''));
+        $phoneCombined = filled($digits) ? (filled($code) ? ($code . ' ' . $digits) : $digits) : null;
+
         $page = BusinessPage::create([
+            'page_id' => 'biz_' . Str::random(10),
             'member_id' => $member->id,
-            'name' => $validated['name'],
+            'page_name' => $pageName,
+            'page_username' => $request->filled('page_username') ? trim((string) $request->input('page_username')) : $pageUsername,
             'slug' => $slug,
-            'bio' => $validated['bio'] ?? null,
-            'phone' => $validated['phone'] ?? null,
-            'email' => $validated['email'] ?? null,
-            'website' => $validated['website'] ?? null,
+            'category' => $request->input('category', 'Technology & IT'),
+            'description' => $request->input('description') ?? $request->input('bio'),
+            'website' => $request->input('website'),
+            'email' => $request->input('email'),
+            'phone' => $phoneCombined,
+            'address' => $request->input('address') ?? $request->input('street_address'),
+            'city' => $request->input('city'),
+            'state' => $request->input('state'),
+            'country' => $request->input('country', 'India'),
+            'visibility' => $request->input('visibility', 'public'),
+            'cover_photo' => $coverPath,
+            'logo' => $logoPath,
             'status' => 'active',
         ]);
 
@@ -100,10 +219,89 @@ class MobileBusinessAndCampaignController extends Controller
             'message' => 'Business Page created successfully.',
             'page' => [
                 'id' => $page->id,
-                'name' => $page->name,
+                'page_name' => $page->page_name,
+                'page_username' => $page->page_username,
                 'slug' => $page->slug,
+                'category' => $page->category,
+                'description' => $page->description,
+                'website' => $page->website,
+                'email' => $page->email,
+                'phone' => $page->phone,
+                'city' => $page->city,
+                'state' => $page->state,
+                'country' => $page->country,
+                'avatar_url' => $page->logo,
+                'banner_url' => $page->cover_photo,
+                'visibility' => $page->visibility,
+                'is_verified' => (bool) $page->is_verified,
+                'is_owner' => true,
+                'created_at' => $page->created_at?->toIso8601String(),
             ],
         ], 201);
+    }
+
+    /**
+     * Show detail of a business page for mobile.
+     */
+    public function businessPageDetail(Request $request, string $slug): JsonResponse
+    {
+        /** @var Member $member */
+        $member = auth('member')->user();
+        $page = BusinessPage::where('slug', $slug)->with('owner:id,name,user_id,profile_photo')->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'page' => [
+                'id' => $page->id,
+                'page_name' => $page->page_name,
+                'page_username' => $page->page_username,
+                'slug' => $page->slug,
+                'category' => $page->category ?? 'Technology & IT',
+                'description' => $page->description,
+                'website' => $page->website,
+                'email' => $page->email,
+                'phone' => $page->phone,
+                'city' => $page->city,
+                'state' => $page->state,
+                'country' => $page->country,
+                'avatar_url' => $page->logo,
+                'banner_url' => $page->cover_photo,
+                'visibility' => $page->visibility ?? 'public',
+                'is_verified' => (bool) $page->is_verified,
+                'is_owner' => $page->member_id === $member->id,
+                'created_at' => $page->created_at?->toIso8601String(),
+                'owner' => [
+                    'id' => $page->owner?->id,
+                    'name' => $page->owner?->name,
+                    'user_id' => $page->owner?->user_id,
+                    'profile_photo' => $page->owner?->profile_photo,
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Delete business page.
+     */
+    public function destroyBusinessPage(Request $request, string $slug): JsonResponse
+    {
+        /** @var Member $member */
+        $member = auth('member')->user();
+        $page = BusinessPage::where('slug', $slug)->firstOrFail();
+
+        if ($page->member_id !== $member->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to delete this business page.',
+            ], 403);
+        }
+
+        $page->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Business page deleted successfully.',
+        ]);
     }
 
     /**
@@ -394,41 +592,98 @@ class MobileBusinessAndCampaignController extends Controller
     {
         /** @var Member $member */
         $member = auth('member')->user();
-        $tab = $request->query('tab', 'all');
+        $rawTab = $request->query('tab', 'all');
+        $tab = in_array($rawTab, ['all', 'joined', 'my', 'discover'], true) ? $rawTab : 'all';
+
+        // Joined count
+        $joinedCount = Community::query()
+            ->whereHas('members', function ($mq) use ($member) {
+                $mq->where('member_id', $member->id)->where('status', 'accepted');
+            })
+            ->count();
+
+        // My count
+        $myCount = Community::query()
+            ->where('owner_id', $member->id)
+            ->count();
 
         $query = Community::query()->with('owner:id,name,user_id,profile_photo');
 
         if ($tab === 'joined') {
             $query->whereHas('members', function ($mq) use ($member) {
-                $mq->where('member_id', $member->id);
+                $mq->where('member_id', $member->id)->where('status', 'accepted');
             });
+        } elseif ($tab === 'my') {
+            $query->where('owner_id', $member->id);
         } elseif ($tab === 'discover') {
-            $query->whereDoesntHave('members', function ($mq) use ($member) {
-                $mq->where('member_id', $member->id);
+            $query->where('visibility', '!=', 'secret')
+                ->where('owner_id', '!=', $member->id)
+                ->whereDoesntHave('members', function ($mq) use ($member) {
+                    $mq->where('member_id', $member->id)->where('status', 'accepted');
+                });
+        } else {
+            $query->where('visibility', '!=', 'secret');
+        }
+
+        if ($request->filled('search')) {
+            $search = '%'.$request->query('search').'%';
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', $search)
+                    ->orWhere('description', 'like', $search)
+                    ->orWhere('category', 'like', $search);
             });
         }
 
-        $communities = $query->latest()->paginate(15)->through(function (Community $c) use ($member) {
-            $isMember = $c->members()->where('member_id', $member->id)->exists();
+        if ($request->filled('category') && $request->query('category') !== 'All') {
+            $query->where('category', $request->query('category'));
+        }
+
+        $communities = $query->latest('created_at')->paginate(15)->through(function (Community $c) use ($member) {
+            $isMember = $c->members()->where('member_id', $member->id)->where('status', 'accepted')->exists();
+            $isPending = $c->members()->where('member_id', $member->id)->where('status', 'pending')->exists();
 
             return [
                 'id' => $c->id,
                 'name' => $c->name,
                 'slug' => $c->slug,
                 'description' => $c->description,
-                'category' => $c->category ?? 'General',
+                'category' => $c->category ?? 'Technology',
                 'visibility' => $c->visibility ?? 'public',
-                'members_count' => $c->members_count ?? $c->members()->count(),
-                'avatar_url' => $c->avatar ?? null,
-                'banner_url' => $c->cover_image ?? null,
+                'members_count' => $c->members_count ?? $c->members()->where('status', 'accepted')->count(),
+                'avatar_url' => $c->logo ?? $c->avatar ?? null,
+                'banner_url' => $c->cover_photo ?? $c->cover_image ?? null,
+                'owner_name' => $c->owner?->name ?? 'Community Member',
+                'owner' => [
+                    'id' => $c->owner?->id,
+                    'name' => $c->owner?->name,
+                    'profile_photo' => $c->owner?->profile_photo,
+                ],
                 'is_member' => $isMember,
+                'is_pending' => $isPending,
                 'is_owner' => $c->owner_id === $member->id,
             ];
         });
 
+        $categories = defined(Community::class.'::CATEGORIES') ? Community::CATEGORIES : [
+            'Technology',
+            'Business',
+            'Crypto',
+            'Marketing',
+            'Gaming',
+            'Education',
+            'Lifestyle',
+            'Health & Wellness',
+            'E-Commerce',
+            'MLM & Direct Sales',
+        ];
+
         return response()->json([
             'success' => true,
             'communities' => $communities,
+            'joined_count' => $joinedCount,
+            'my_count' => $myCount,
+            'categories' => $categories,
+            'visibilities' => Community::VISIBILITIES,
         ]);
     }
 
@@ -560,5 +815,22 @@ class MobileBusinessAndCampaignController extends Controller
             'joined' => true,
             'message' => 'Joined community successfully!',
         ]);
+    }
+
+    private function storeFile($file, string $directory): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $fileName = Str::uuid() . '.' . $extension;
+        $type = str_contains($directory, 'logo') || str_contains($directory, 'avatar') ? 'logo' : 'cover';
+
+        $storedPath = app(\App\Http\Controllers\ImageCompressionController::class)->compressAndStore(
+            $file,
+            $directory,
+            $type,
+            $fileName,
+            'public_uploads'
+        );
+
+        return $storedPath ?: ($directory . '/' . $fileName);
     }
 }

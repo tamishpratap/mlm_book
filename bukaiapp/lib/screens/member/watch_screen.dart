@@ -862,7 +862,7 @@ class _WatchScreenState extends State<WatchScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                // [ 👍 Like ] Pill (with reaction picker on long press)
+                // [ 👍 Like / Liked (X) ] Pill (with reaction picker on long press)
                 GestureDetector(
                   onLongPress: () => _showReactionPicker(context, post, feed),
                   child: _buildActionPill(
@@ -870,20 +870,13 @@ class _WatchScreenState extends State<WatchScreen> {
                         ? Text(post.activeReactionEmoji, style: const TextStyle(fontSize: 13))
                         : null,
                     icon: post.isLiked ? null : Icons.thumb_up_alt_outlined,
-                    label: post.isLiked ? post.activeReactionLabel : 'Like',
+                    label: post.isLiked
+                        ? (post.activeReactionLabel == 'Like' ? 'Liked (${post.likesCount})' : '${post.activeReactionLabel} (${post.likesCount})')
+                        : 'Like (${post.likesCount})',
                     color: post.isLiked ? Color(post.activeReactionColor) : const Color(0xFF475569),
                     isActive: post.isLiked,
                     onTap: () => feed.toggleLike(post),
                   ),
-                ),
-                const SizedBox(width: 8),
-
-                // [ 👍 0 ] Count Pill (tap opens reactors)
-                _buildActionPill(
-                  iconWidget: Text(post.isLiked ? post.activeReactionEmoji : '👍', style: const TextStyle(fontSize: 13)),
-                  label: '${post.likesCount}',
-                  color: const Color(0xFF475569),
-                  onTap: () => _showReactorsModal(context, post),
                 ),
                 const SizedBox(width: 8),
 
@@ -909,10 +902,10 @@ class _WatchScreenState extends State<WatchScreen> {
                 ),
                 const SizedBox(width: 8),
 
-                // [ ↗ Share ] Pill
+                // [ ↗ Share (X) ] Pill
                 _buildActionPill(
                   icon: Icons.share_outlined,
-                  label: 'Share',
+                  label: 'Share (${post.sharesCount})',
                   color: const Color(0xFF475569),
                   onTap: () => _showShareModal(context, post, feed),
                 ),

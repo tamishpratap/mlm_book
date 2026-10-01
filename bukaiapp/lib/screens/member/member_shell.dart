@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/app_dialog.dart';
 import '../../core/constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../widgets/member_sidebar_widget.dart';
-import '../admin/admin_shell.dart';
 import '../auth/login_screen.dart';
 import 'account_settings_screen.dart';
+import 'business_directory_screen.dart';
 import 'business_screen.dart';
 import 'communities_screen.dart';
 import 'dashboard_screen.dart';
 import 'events_screen.dart';
-import 'explore_screen.dart';
 import 'feed_screen.dart';
 import 'feedback_screen.dart';
 import 'friends_screen.dart';
@@ -33,7 +33,7 @@ class MemberShell extends StatefulWidget {
 
 class _MemberShellState extends State<MemberShell> {
   int _currentIndex = 0;
-  MemberSidebarItem _activeSidebarItem = MemberSidebarItem.home;
+  MemberSidebarItem _activeSidebarItem = MemberSidebarItem.socials;
 
   late final List<Widget> _screens;
 
@@ -41,17 +41,15 @@ class _MemberShellState extends State<MemberShell> {
   void initState() {
     super.initState();
     _screens = [
-      DashboardScreen(
-        onNavigateToFeed: () => _updateIndex(1, MemberSidebarItem.socials),
-        onNavigateToWatch: () => _updateIndex(2, MemberSidebarItem.watch),
-        onNavigateToExplore: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExploreScreen())),
-        onNavigateToBusiness: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BusinessScreen(initialTab: 0))),
-        onNavigateToWallet: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen())),
-      ),
-      const FeedScreen(),
-      const WatchScreen(),
-      const BusinessScreen(),
-      const WalletScreen(),
+      const FeedScreen(), // 0: Socials
+      BusinessScreen(
+        onBack: () => _updateIndex(0, MemberSidebarItem.socials),
+      ), // 1: Business
+      CommunitiesScreen(
+        onBack: () => _updateIndex(0, MemberSidebarItem.socials),
+      ), // 2: Community
+      const WalletScreen(), // 3: Wallet
+      const AccountSettingsScreen(), // 4: Settings
     ];
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -74,10 +72,40 @@ class _MemberShellState extends State<MemberShell> {
 
     switch (item) {
       case MemberSidebarItem.home:
-        setState(() => _currentIndex = 0);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DashboardScreen(
+              onNavigateToFeed: () {
+                if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+                _updateIndex(0, MemberSidebarItem.socials);
+              },
+              onNavigateToBusiness: () {
+                if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+                _updateIndex(1, MemberSidebarItem.businessPages);
+              },
+              onNavigateToWallet: () {
+                if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+                _updateIndex(3, MemberSidebarItem.socials);
+              },
+            ),
+          ),
+        );
         break;
       case MemberSidebarItem.socials:
+        setState(() => _currentIndex = 0);
+        break;
+      case MemberSidebarItem.businessPages:
         setState(() => _currentIndex = 1);
+        break;
+      case MemberSidebarItem.businessDirectory:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const BusinessDirectoryScreen()));
+        break;
+      case MemberSidebarItem.community:
+        setState(() => _currentIndex = 2);
+        break;
+      case MemberSidebarItem.accountSettings:
+        setState(() => _currentIndex = 4);
         break;
       case MemberSidebarItem.profile:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
@@ -95,22 +123,10 @@ class _MemberShellState extends State<MemberShell> {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const FriendsScreen(initialTab: 3)));
         break;
       case MemberSidebarItem.watch:
-        setState(() => _currentIndex = 2);
-        break;
-      case MemberSidebarItem.community:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunitiesScreen()));
-        break;
-      case MemberSidebarItem.businessPages:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const BusinessScreen(initialTab: 0)));
-        break;
-      case MemberSidebarItem.businessDirectory:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const BusinessScreen(initialTab: 1)));
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const WatchScreen()));
         break;
       case MemberSidebarItem.events:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsScreen()));
-        break;
-      case MemberSidebarItem.accountSettings:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountSettingsScreen()));
         break;
       case MemberSidebarItem.feedback:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const FeedbackScreen()));
@@ -118,39 +134,17 @@ class _MemberShellState extends State<MemberShell> {
     }
   }
 
-  void _handleOpenAdmin({bool fromDrawer = false}) {
-    if (fromDrawer && Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
-    }
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminShell()));
-  }
-
   Future<void> _handleLogout({bool fromDrawer = false}) async {
     if (fromDrawer && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('Are you sure you want to log out of MLM Book?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Log Out'),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Log Out',
+      message: 'Are you sure you want to log out of your MLM Book account?',
+      confirmText: 'Log Out',
+      isDestructive: true,
+      icon: Icons.logout_rounded,
     );
 
     if (confirmed == true && mounted) {
@@ -177,7 +171,9 @@ class _MemberShellState extends State<MemberShell> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
+      appBar: (_currentIndex == 1 || _currentIndex == 2)
+          ? null
+          : AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -320,7 +316,6 @@ class _MemberShellState extends State<MemberShell> {
               child: MemberSidebarWidget(
                 activeItem: _activeSidebarItem,
                 onSelectItem: (item) => _handleSidebarSelect(item, fromDrawer: true),
-                onOpenAdmin: () => _handleOpenAdmin(fromDrawer: true),
                 onLogout: () => _handleLogout(fromDrawer: true),
                 isDrawer: true,
               ),
@@ -333,7 +328,6 @@ class _MemberShellState extends State<MemberShell> {
                 MemberSidebarWidget(
                   activeItem: _activeSidebarItem,
                   onSelectItem: (item) => _handleSidebarSelect(item, fromDrawer: false),
-                  onOpenAdmin: () => _handleOpenAdmin(fromDrawer: false),
                   onLogout: () => _handleLogout(fromDrawer: false),
                   isDrawer: false,
                 ),
@@ -362,10 +356,10 @@ class _MemberShellState extends State<MemberShell> {
                 selectedIndex: _currentIndex,
                 onDestinationSelected: (idx) {
                   final sidebarItems = [
-                    MemberSidebarItem.home,
                     MemberSidebarItem.socials,
-                    MemberSidebarItem.watch,
                     MemberSidebarItem.businessPages,
+                    MemberSidebarItem.community,
+                    MemberSidebarItem.socials, // index 3 Wallet
                     MemberSidebarItem.accountSettings,
                   ];
                   _updateIndex(idx, sidebarItems[idx.clamp(0, sidebarItems.length - 1)]);
@@ -376,19 +370,9 @@ class _MemberShellState extends State<MemberShell> {
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                 destinations: const [
                   NavigationDestination(
-                    icon: Icon(Icons.home_outlined, color: AppColors.textMuted),
-                    selectedIcon: Icon(Icons.home_rounded, color: AppColors.primary),
-                    label: 'Home',
-                  ),
-                  NavigationDestination(
                     icon: Icon(Icons.auto_awesome_outlined, color: AppColors.textMuted),
                     selectedIcon: Icon(Icons.auto_awesome, color: AppColors.primary),
                     label: 'Socials',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.smart_display_outlined, color: AppColors.textMuted),
-                    selectedIcon: Icon(Icons.smart_display_rounded, color: Colors.redAccent),
-                    label: 'Watch',
                   ),
                   NavigationDestination(
                     icon: Icon(Icons.business_outlined, color: AppColors.textMuted),
@@ -396,9 +380,19 @@ class _MemberShellState extends State<MemberShell> {
                     label: 'Business',
                   ),
                   NavigationDestination(
+                    icon: Icon(Icons.groups_outlined, color: AppColors.textMuted),
+                    selectedIcon: Icon(Icons.groups_rounded, color: AppColors.primary),
+                    label: 'Community',
+                  ),
+                  NavigationDestination(
                     icon: Icon(Icons.account_balance_wallet_outlined, color: AppColors.textMuted),
                     selectedIcon: Icon(Icons.account_balance_wallet_rounded, color: AppColors.accent),
                     label: 'Wallet',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.settings_outlined, color: AppColors.textMuted),
+                    selectedIcon: Icon(Icons.settings_rounded, color: AppColors.primary),
+                    label: 'Settings',
                   ),
                 ],
               ),

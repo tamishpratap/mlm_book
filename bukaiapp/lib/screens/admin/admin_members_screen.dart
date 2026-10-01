@@ -130,7 +130,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                                             ),
                                             if (isVerified) ...[
                                               const SizedBox(width: 4),
-                                              const Icon(Icons.verified, color: AppColors.accent, size: 14),
+                                              const Icon(Icons.verified, color: Color(0xFF16A34A), size: 14),
                                             ],
                                           ],
                                         ),

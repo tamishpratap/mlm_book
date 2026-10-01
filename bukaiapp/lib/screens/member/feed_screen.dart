@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/constants.dart';
+import '../../core/app_toast.dart';
 import '../../models/post_model.dart';
 import '../../models/story_model.dart';
 import '../../providers/auth_provider.dart';
@@ -52,117 +53,39 @@ class _FeedScreenState extends State<FeedScreen> {
     return _commentControllers.putIfAbsent(postId, () => TextEditingController());
   }
 
-  // Pick Photo or Video file from device
-  Future<void> _pickMedia([String type = 'any']) async {
+  // Pick Photo file from device (Video upload commented out for the time being)
+  Future<void> _pickMedia([String type = 'image']) async {
     try {
       XFile? file;
-      if (type == 'image') {
-        file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-      } else if (type == 'video') {
-        file = await _picker.pickVideo(source: ImageSource.gallery);
-      } else {
-        // Allows user to select photo or video directly from device files
-        file = await _picker.pickMedia(imageQuality: 85);
-      }
+      file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
 
       if (file != null) {
         final bytes = await file.readAsBytes();
-        final name = file.name.toLowerCase();
-        final isVideo = name.endsWith('.mp4') ||
-            name.endsWith('.mov') ||
-            name.endsWith('.avi') ||
-            name.endsWith('.mkv') ||
-            name.endsWith('.webm');
         setState(() {
           _selectedMediaBytes = bytes;
           _selectedMediaName = file!.name;
-          _selectedMediaType = isVideo ? 'video' : 'image';
+          _selectedMediaType = 'image';
           _selectedMediaUrl = null;
         });
       }
     } catch (e) {
-      debugPrint('Error picking media: $e');
+      debugPrint('Error picking photo: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not select file: $e')),
-        );
+        AppToast.error(context, 'Could not select photo: $e');
       }
     }
   }
 
-  // Bottom sheet to choose media - ONLY file upload option (photo or video only)
+  // Choose photo to upload (Video uploads commented out for time being)
   void _showMediaPickerOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const Text(
-                'Add Photo / Video',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A)),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Upload photo or video only from your device',
-                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                tileColor: const Color(0xFFF8FAFC),
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.file_upload_outlined, color: AppColors.primary, size: 24),
-                ),
-                title: const Text(
-                  'Upload File (Photo / Video)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
-                ),
-                subtitle: const Text(
-                  'Upload photo (JPG, PNG, GIF) or video (MP4) only',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF94A3B8)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickMedia('any');
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    _pickMedia('image');
   }
 
   // Publish new post
   Future<void> _publishPost() async {
     final text = _postTextCtrl.text.trim();
     if (text.isEmpty && _selectedMediaBytes == null && _selectedMediaUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please write something or attach a photo/video.')),
-      );
+      AppToast.warning(context, 'Please write something or attach a photo.');
       return;
     }
 
@@ -183,13 +106,9 @@ class _FeedScreenState extends State<FeedScreen> {
         _selectedMediaType = null;
         _selectedMediaUrl = null;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Post published successfully!')),
-      );
+      AppToast.success(context, 'Post published successfully!');
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(feed.lastError ?? 'Failed to publish post. Please try again.')),
-      );
+      AppToast.error(context, feed.lastError ?? 'Failed to publish post. Please try again.');
     }
   }
 
@@ -481,89 +400,78 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   // -------------------------------------------------------------
-  // 2. Post Composer Card (Exact Image 1 & Image 2 Design)
+  // 2. Post Composer Card (Clean aligned avatar + pill input)
   // -------------------------------------------------------------
   Widget _buildPostComposerCard(dynamic member, bool isPublishing) {
-    final memberName = member?.name?.isNotEmpty == true ? member!.name! : 'Abhay Sahany';
+    final memberName = member?.name?.isNotEmpty == true ? member!.name! : '';
     final initials = memberName.isNotEmpty
         ? memberName.trim().split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join()
-        : 'AS';
+        : 'M';
+    final avatarUrl = AppConstants.resolveMediaUrl(member?.avatarUrl);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Top Row: Avatar + Large light-blue rounded input box
+          // Top Row: Avatar + Pill input field (Clean vertical alignment matching web design)
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // User Avatar
               ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: Image.asset(
-                  'assets/images/profile_1.jpg',
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.cover,
-                  errorBuilder: (ctx, err, stack) => Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF3B82F6), Color(0xFF6366F1)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        initials,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ),
-                  ),
-                ),
+                borderRadius: BorderRadius.circular(20),
+                child: avatarUrl != null && avatarUrl.isNotEmpty
+                    ? Image.network(
+                        avatarUrl,
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => _buildFallbackAvatar(initials),
+                      )
+                    : _buildFallbackAvatar(initials),
               ),
               const SizedBox(width: 12),
 
-              // Light blue bordered text input container
+              // Light grey/blue rounded pill input box
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFBFDBFE), width: 1.5),
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                   child: TextField(
                     controller: _postTextCtrl,
-                    minLines: 2,
-                    maxLines: 5,
+                    minLines: 1,
+                    maxLines: 4,
                     style: const TextStyle(fontSize: 14.5, color: Color(0xFF1E293B)),
                     decoration: InputDecoration(
-                      hintText: "What's on your mind, $memberName?",
+                      hintText: memberName.isNotEmpty
+                          ? "What's on your mind, $memberName?"
+                          : "What's on your mind?",
                       hintStyle: const TextStyle(
-                        color: Color(0xFF94A3B8),
+                        color: Color(0xFF64748B),
                         fontSize: 14,
                         fontWeight: FontWeight.normal,
                       ),
                       border: InputBorder.none,
                       isDense: true,
+                      contentPadding: EdgeInsets.zero,
                     ),
                   ),
                 ),
@@ -585,16 +493,13 @@ class _FeedScreenState extends State<FeedScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: _selectedMediaBytes != null && _selectedMediaType == 'image'
+                    child: _selectedMediaBytes != null
                         ? Image.memory(_selectedMediaBytes!, width: 50, height: 50, fit: BoxFit.cover)
                         : Container(
                             width: 50,
                             height: 50,
                             color: Colors.black12,
-                            child: Icon(
-                              _selectedMediaType == 'video' ? Icons.videocam : Icons.image,
-                              color: AppColors.primary,
-                            ),
+                            child: const Icon(Icons.image, color: AppColors.primary),
                           ),
                   ),
                   const SizedBox(width: 10),
@@ -603,17 +508,17 @@ class _FeedScreenState extends State<FeedScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _selectedMediaName ?? 'Attached Media',
+                          _selectedMediaName ?? 'Attached Photo',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
                         ),
-                        Text(
-                          _selectedMediaType?.toUpperCase() ?? 'MEDIA',
+                        const Text(
+                          'PHOTO',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: _selectedMediaType == 'video' ? Colors.red : Colors.green,
+                            color: Colors.green,
                           ),
                         ),
                       ],
@@ -638,26 +543,26 @@ class _FeedScreenState extends State<FeedScreen> {
           // Divider Line
           const SizedBox(height: 12),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          // Bottom Row: [Photo / video] on Left, [Post] Button on Right
+          // Bottom Row: [Photo] Action on Left, [Post] Button on Right (Video upload commented out)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // "Photo / video" Action Button
+              // "Photo" Action Button (Video option commented out)
               InkWell(
                 onTap: _showMediaPickerOptions,
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   child: Row(
-                    children: [
-                      const Icon(Icons.image_outlined, color: Color(0xFF16A34A), size: 20),
-                      const SizedBox(width: 8),
+                    children: const [
+                      Icon(Icons.photo_library_outlined, color: Color(0xFF16A34A), size: 20),
+                      SizedBox(width: 8),
                       Text(
-                        'Photo / video',
+                        'Photo',
                         style: TextStyle(
-                          color: const Color(0xFF334155),
+                          color: Color(0xFF334155),
                           fontWeight: FontWeight.w600,
                           fontSize: 13.5,
                         ),
@@ -692,6 +597,27 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
+  Widget _buildFallbackAvatar(String initials) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [Color(0xFF3B82F6), Color(0xFF6366F1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+      ),
+    );
+  }
+
   // -------------------------------------------------------------
   // 3. Post Card (Exact Image 3 Design)
   // -------------------------------------------------------------
@@ -701,6 +627,7 @@ class _FeedScreenState extends State<FeedScreen> {
         ? authorName.trim().split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join()
         : 'AS';
 
+    final isAuthor = currentMember != null && (post.author.id == currentMember.id || post.author.userId == currentMember.userId);
     final commentCtrl = _getCommentController(post.id);
 
     return Container(
@@ -750,13 +677,24 @@ class _FeedScreenState extends State<FeedScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      authorName,
-                      style: const TextStyle(
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            authorName,
+                            style: const TextStyle(
+                              color: Color(0xFF0F172A),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (post.author.isVerified) ...[
+                          const SizedBox(width: 4),
+                          const Icon(Icons.verified, color: Color(0xFF16A34A), size: 15),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Row(
@@ -878,6 +816,55 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ],
 
+          // Reaction Banner (Green Box: "X members reacted to your post" | "View Reactions")
+          if (isAuthor && post.likesCount > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.thumb_up_alt_outlined, color: Color(0xFF16A34A), size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        text: '${post.likesCount} ${post.likesCount == 1 ? "member" : "members"} ',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF15803D),
+                          fontSize: 13,
+                        ),
+                        children: const [
+                          TextSpan(
+                            text: 'reacted to your post',
+                            style: TextStyle(fontWeight: FontWeight.normal),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => _showReactorsModal(context, post),
+                    child: const Text(
+                      'View Reactions',
+                      style: TextStyle(
+                        color: Color(0xFF16A34A),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 14),
 
           // Action Row: Pill outline buttons matching Image 3
@@ -885,26 +872,19 @@ class _FeedScreenState extends State<FeedScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                // [ 👍 Like / React ] Button
+                // [ 👍 Like / Liked (X) ] Button (Combined single pill with count)
                 _buildActionPill(
                   iconWidget: post.isLiked
                       ? Text(post.activeReactionEmoji, style: const TextStyle(fontSize: 14))
                       : null,
                   icon: post.isLiked ? null : Icons.thumb_up_alt_outlined,
-                  label: post.isLiked ? post.activeReactionLabel : 'Like',
+                  label: post.isLiked
+                      ? (post.activeReactionLabel == 'Like' ? 'Liked (${post.likesCount})' : '${post.activeReactionLabel} (${post.likesCount})')
+                      : 'Like (${post.likesCount})',
                   color: post.isLiked ? Color(post.activeReactionColor) : const Color(0xFF475569),
                   isActive: post.isLiked,
                   onTap: () => feed.toggleLike(post),
                   onLongPress: () => _showReactionPicker(context, post, feed),
-                ),
-                const SizedBox(width: 8),
-
-                // [ 👍 0 ] Count Pill -> Opens Reactors Modal
-                _buildActionPill(
-                  iconWidget: Text(post.isLiked ? post.activeReactionEmoji : '👍', style: const TextStyle(fontSize: 13)),
-                  label: '${post.likesCount}',
-                  color: const Color(0xFF475569),
-                  onTap: () => _showReactorsModal(context, post),
                 ),
                 const SizedBox(width: 8),
 
@@ -926,39 +906,20 @@ class _FeedScreenState extends State<FeedScreen> {
                   onTap: () async {
                     await feed.toggleSavePost(post.id);
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(post.isSaved ? Icons.bookmark_added : Icons.bookmark_remove, color: Colors.white, size: 18),
-                              const SizedBox(width: 8),
-                              Text(post.isSaved ? 'Post saved to bookmarks!' : 'Post removed from bookmarks'),
-                            ],
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          backgroundColor: const Color(0xFF1E293B),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
+                      if (post.isSaved) {
+                        AppToast.success(context, 'Post saved to bookmarks!');
+                      } else {
+                        AppToast.info(context, 'Post removed from bookmarks');
+                      }
                     }
                   },
                 ),
                 const SizedBox(width: 8),
 
-                // [ ➦ Share ] Pill -> Opens Share Modal
+                // [ ➦ Share (X) ] Pill -> Opens Share Modal
                 _buildActionPill(
                   icon: Icons.share_outlined,
-                  label: 'Share',
-                  color: const Color(0xFF475569),
-                  onTap: () => _showShareModal(context, post, feed),
-                ),
-                const SizedBox(width: 8),
-
-                // [ 🔁 0 Shares ] Pill -> Opens Share Modal
-                _buildActionPill(
-                  icon: Icons.repeat,
-                  label: '${post.sharesCount} Shares',
+                  label: 'Share (${post.sharesCount})',
                   color: const Color(0xFF475569),
                   onTap: () => _showShareModal(context, post, feed),
                 ),
@@ -1421,20 +1382,11 @@ class _FeedScreenState extends State<FeedScreen> {
                     Navigator.pop(ctx);
                     final ok = await feed.sharePost(post, message: captionCtrl.text);
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(ok ? Icons.check_circle : Icons.info, color: Colors.white, size: 18),
-                              const SizedBox(width: 8),
-                              Text(ok ? 'Post shared to your feed!' : 'Failed to share post'),
-                            ],
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          backgroundColor: ok ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
-                        ),
-                      );
+                      if (ok) {
+                        AppToast.success(context, 'Post shared to your feed!');
+                      } else {
+                        AppToast.error(context, 'Failed to share post');
+                      }
                     }
                   },
                   icon: const Icon(Icons.repeat, size: 18, color: Colors.white),
@@ -1460,20 +1412,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 subtitle: const Text('Share link anywhere', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 onTap: () {
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Row(
-                        children: [
-                          Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
-                          SizedBox(width: 8),
-                          Text('Post link copied to clipboard!'),
-                        ],
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      backgroundColor: const Color(0xFF1E293B),
-                    ),
-                  );
+                  AppToast.info(context, 'Post link copied to clipboard!');
                 },
               ),
             ],
@@ -1769,12 +1708,7 @@ class _FeedScreenState extends State<FeedScreen> {
               } catch (e) {
                 debugPrint('Story pick error: $e');
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('File selection error: $e'),
-                      backgroundColor: const Color(0xFFEF4444),
-                    ),
-                  );
+                  AppToast.error(context, 'File selection error: $e');
                 }
               }
             }
@@ -2206,31 +2140,11 @@ class _FeedScreenState extends State<FeedScreen> {
                                       if (ok) {
                                         if (context.mounted) {
                                           Navigator.of(dialogCtx).pop();
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: const Row(
-                                                children: [
-                                                  Icon(Icons.check_circle, color: Colors.white, size: 18),
-                                                  SizedBox(width: 8),
-                                                  Text('Story shared successfully!'),
-                                                ],
-                                              ),
-                                              behavior: SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                              backgroundColor: const Color(0xFF16A34A),
-                                              duration: const Duration(seconds: 3),
-                                            ),
-                                          );
+                                          AppToast.success(context, 'Story shared successfully!');
                                         }
                                       } else {
                                         if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(feed.lastError ?? 'Failed to upload story. Please try again.'),
-                                              behavior: SnackBarBehavior.floating,
-                                              backgroundColor: const Color(0xFFEF4444),
-                                            ),
-                                          );
+                                          AppToast.error(context, feed.lastError ?? 'Failed to upload story. Please try again.');
                                         }
                                       }
                                     },
@@ -2886,25 +2800,7 @@ class _StoryViewerDialogWidgetState extends State<_StoryViewerDialogWidget>
                                 });
                                 _animController.forward();
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Row(
-                                        children: [
-                                          Icon(
-                                            isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
-                                            color: Colors.white,
-                                            size: 18,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(isMuted ? 'Story audio muted' : 'Story audio unmuted'),
-                                        ],
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: const Color(0xFF1E293B),
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
+                                  AppToast.info(context, isMuted ? 'Story audio muted' : 'Story audio unmuted');
                                 }
                               },
                             ),
@@ -2953,47 +2849,9 @@ class _StoryViewerDialogWidgetState extends State<_StoryViewerDialogWidget>
                                       if (!isOwnStory) {
                                         _animController.forward();
                                         if (context.mounted) {
-                                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Row(
-                                                children: [
-                                                  Icon(Icons.info_outline, color: Colors.white, size: 18),
-                                                  SizedBox(width: 8),
-                                                  Text('You can only delete your own stories.'),
-                                                ],
-                                              ),
-                                              behavior: SnackBarBehavior.floating,
-                                              backgroundColor: Color(0xFFE11D48),
-                                              duration: Duration(seconds: 2),
-                                            ),
-                                          );
+                                          AppToast.warning(context, 'You can only delete your own stories.');
                                         }
                                         return;
-                                      }
-
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Row(
-                                              children: [
-                                                SizedBox(
-                                                  width: 16,
-                                                  height: 16,
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                                SizedBox(width: 10),
-                                                Text('Deleting story...'),
-                                              ],
-                                            ),
-                                            behavior: SnackBarBehavior.floating,
-                                            duration: Duration(seconds: 1),
-                                          ),
-                                        );
                                       }
 
                                       final ok = await feed.deleteStory(currentStoryId);
@@ -3012,34 +2870,12 @@ class _StoryViewerDialogWidgetState extends State<_StoryViewerDialogWidget>
                                           _startStoryAnimation();
                                         }
                                         if (context.mounted) {
-                                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Row(
-                                                children: [
-                                                  Icon(Icons.check_circle, color: Colors.white, size: 18),
-                                                  SizedBox(width: 8),
-                                                  Text('Story deleted successfully.'),
-                                                ],
-                                              ),
-                                              behavior: SnackBarBehavior.floating,
-                                              backgroundColor: Color(0xFF16A34A),
-                                              duration: Duration(seconds: 2),
-                                            ),
-                                          );
+                                          AppToast.success(context, 'Story deleted successfully.');
                                         }
                                       } else {
                                         _animController.forward();
                                         if (context.mounted) {
-                                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(feed.lastError ?? 'Failed to delete story.'),
-                                              behavior: SnackBarBehavior.floating,
-                                              backgroundColor: const Color(0xFFEF4444),
-                                              duration: const Duration(seconds: 3),
-                                            ),
-                                          );
+                                          AppToast.error(context, feed.lastError ?? 'Failed to delete story.');
                                         }
                                       }
                                     },
@@ -3061,21 +2897,7 @@ class _StoryViewerDialogWidgetState extends State<_StoryViewerDialogWidget>
                                         debugPrint('Clipboard copy error: $e');
                                       }
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Row(
-                                              children: [
-                                                Icon(Icons.link, color: Colors.white, size: 18),
-                                                SizedBox(width: 8),
-                                                Text('Story link copied to clipboard!'),
-                                              ],
-                                            ),
-                                            behavior: SnackBarBehavior.floating,
-                                            backgroundColor: Color(0xFF2563EB),
-                                            duration: Duration(seconds: 2),
-                                          ),
-                                        );
+                                        AppToast.info(context, 'Story link copied to clipboard!');
                                       }
                                     },
                                   ),
