@@ -659,7 +659,7 @@ class ReportManagementController extends Controller
                 if ($report->reportable_type === 'community') {
                     $community = Community::find($report->community_id);
                     if ($community) {
-                        $community->delete();
+                        $community->purge();
                     }
                 } elseif ($report->reportable_type === 'post') {
                     $commPost = CommunityPost::find($report->reportable_id);

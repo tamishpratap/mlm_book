@@ -71,7 +71,7 @@ export function AdCampaignDetailModal({
   // Search & Filtering state
   const [searchInputValue, setSearchInputValue] = useState('');
   const [engagementSearch, setEngagementSearch] = useState('');
-  const [engagementActionFilter, setEngagementActionFilter] = useState('all'); // all, interested, clicked, visited_landing_page, rewarded
+  const [engagementActionFilter, setEngagementActionFilter] = useState('interested'); // interested, rewarded, clicked, visited_landing_page, all
   const [rewardStatusFilter, setRewardStatusFilter] = useState('all'); // all, rewarded, not_rewarded, failed
   const [verificationFilter, setVerificationFilter] = useState('all'); // all, verified, unverified
   const [datePreset, setDatePreset] = useState('all'); // all, today, yesterday, last_7_days, last_30_days, custom
@@ -243,7 +243,7 @@ export function AdCampaignDetailModal({
   const handleClearAllFilters = () => {
     setSearchInputValue('');
     setEngagementSearch('');
-    setEngagementActionFilter('all');
+    setEngagementActionFilter('interested');
     setRewardStatusFilter('all');
     setVerificationFilter('all');
     setDatePreset('all');
@@ -257,7 +257,7 @@ export function AdCampaignDetailModal({
   const hasActiveFilters = useMemo(() => {
     return (
       Boolean(engagementSearch) ||
-      engagementActionFilter !== 'all' ||
+      engagementActionFilter !== 'interested' ||
       rewardStatusFilter !== 'all' ||
       verificationFilter !== 'all' ||
       datePreset !== 'all' ||
@@ -1640,11 +1640,11 @@ export function AdCampaignDetailModal({
                 }}
               >
                 {[
-                  { id: 'all', label: 'All Activity', count: engagementSummary.total_engagements },
                   { id: 'interested', label: 'Interested Leads', count: engagementSummary.interested_count },
                   { id: 'rewarded', label: 'Rewarded Members', count: engagementSummary.total_rewards_count },
-                  { id: 'visited_landing_page', label: 'Landing Visits', count: engagementSummary.landing_visit_count },
                   { id: 'clicked', label: 'Ad Clicks', count: engagementSummary.click_count },
+                  { id: 'visited_landing_page', label: 'Landing Visits', count: engagementSummary.landing_visit_count },
+                  { id: 'all', label: 'All Activity', count: engagementSummary.total_engagements },
                 ].map((tab) => {
                   const isSelected = engagementActionFilter === tab.id;
                   return (
@@ -2023,7 +2023,7 @@ export function AdCampaignDetailModal({
                       </span>
                     )}
 
-                    {engagementActionFilter !== 'all' && (
+                    {engagementActionFilter !== 'interested' && (
                       <span
                         style={{
                           padding: '3px 8px',
@@ -2043,7 +2043,7 @@ export function AdCampaignDetailModal({
                           size={12}
                           style={{ cursor: 'pointer', color: '#94a3b8' }}
                           onClick={() => {
-                            setEngagementActionFilter('all');
+                            setEngagementActionFilter('interested');
                             setEngagementPage(1);
                           }}
                         />

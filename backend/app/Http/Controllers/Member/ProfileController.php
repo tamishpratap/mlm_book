@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessPage;
 use App\Models\Friendship;
 use App\Models\Member;
 use App\Models\Post;
@@ -177,6 +178,7 @@ class ProfileController extends Controller
             return response()->json([
                 'success' => true,
                 'member' => $member,
+                'countries' => BusinessPage::COUNTRIES,
             ]);
         }
 
