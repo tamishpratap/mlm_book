@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DepositVerificationController extends Controller
 {
@@ -241,10 +242,10 @@ class DepositVerificationController extends Controller
     }
 
     /**
-     * Submit verified manual deposit request to Admin Panel.
+     * Submit manual deposit request to Admin Panel for manual review and approval.
      * Records transaction in `import_funds` (and `ad_deposits` for unified admin management).
      */
-    public function submitManualRequest(Request $request, BscTransactionVerifierService $verifier): JsonResponse
+    public function submitManualRequest(Request $request, ?BscTransactionVerifierService $verifier = null): JsonResponse
     {
         $member = $request->user('member') ?? $request->user();
         if (!$member) {
@@ -253,16 +254,16 @@ class DepositVerificationController extends Controller
 
         $request->validate([
             'amount' => ['required', 'numeric', 'min:10', 'max:10000000'],
-            'transaction_hash' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{64}$/'],
-            'wallet_address' => ['nullable', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'transaction_hash' => ['nullable', 'string', 'max:255'],
+            'transaction_reference' => ['nullable', 'string', 'max:255'],
+            'wallet_address' => ['nullable', 'string', 'max:255'],
         ], [
             'amount.min' => 'Minimum deposit amount is $10 USD equivalent.',
-            'transaction_hash.regex' => 'Invalid transaction hash format. Must be a 66-character hexadecimal hash starting with 0x.',
-            'wallet_address.regex' => 'Invalid wallet address format. Must be a valid 42-character BSC (BEP-20) address starting with 0x.',
         ]);
 
-        $amount = round((float) $request->input('amount'), 2);
-        $txHash = trim($request->input('transaction_hash'));
+        $baseAmount = round((float) $request->input('amount'), 2);
+        $txHashInput = trim((string) ($request->input('transaction_reference') ?: $request->input('transaction_hash')));
+        $txHash = !empty($txHashInput) ? $txHashInput : 'MANUAL-' . strtoupper(Str::random(10));
         $walletAddress = $request->input('wallet_address') ? trim($request->input('wallet_address')) : null;
 
         $recipientWallet = Setting::get('deposit_crypto_wallet_address', '');
@@ -271,77 +272,24 @@ class DepositVerificationController extends Controller
         }
 
         $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
+        $feeAmount = $feePercent > 0.00 ? round(($baseAmount * $feePercent) / 100, 4) : 0.00;
+        $totalAmount = round($baseAmount + $feeAmount, 4);
 
-        // Re-verify on-chain (zero-trust backend rule)
-        $verification = $verifier->verifyTransaction(
-            $txHash,
-            $amount,
-            $recipientWallet,
-            10.00,
-            true,
-            $walletAddress
-        );
+        return DB::transaction(function () use ($member, $baseAmount, $totalAmount, $feeAmount, $feePercent, $txHash, $walletAddress, $recipientWallet) {
+            if (!str_starts_with($txHash, 'MANUAL-')) {
+                $existing = ImportFund::where(function ($q) use ($txHash) {
+                        $q->where('transaction_hash', $txHash)->orWhere('txnid', $txHash);
+                    })
+                    ->whereIn('deposit_status', [ImportFund::STATUS_APPROVED, ImportFund::STATUS_VERIFIED, ImportFund::STATUS_PENDING])
+                    ->lockForUpdate()
+                    ->first();
 
-        if (!$verification['verified'] && $feePercent > 0.00) {
-            $possibleTotals = [
-                round($amount * (1 + ($feePercent / 100)), 2),
-                round($amount / (1 + ($feePercent / 100)), 2),
-            ];
-
-            foreach ($possibleTotals as $altAmount) {
-                if ($altAmount >= 10.00 && abs($altAmount - $amount) > 0.01) {
-                    $altVerification = $verifier->verifyTransaction(
-                        $txHash,
-                        $altAmount,
-                        $recipientWallet,
-                        10.00,
-                        true,
-                        $walletAddress
-                    );
-                    if ($altVerification['verified']) {
-                        $verification = $altVerification;
-                        break;
-                    }
+                if ($existing) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This transaction ID / reference has already been submitted or processed.',
+                    ], 422);
                 }
-            }
-        }
-
-        if (!$verification['verified']) {
-            return response()->json([
-                'success' => false,
-                'status' => $verification['status'] ?? 'verification_failed',
-                'message' => $verification['message'] ?? 'Transaction verification failed on BNB Smart Chain.',
-            ], 422);
-        }
-
-        return DB::transaction(function () use ($member, $amount, $txHash, $verification, $recipientWallet) {
-            // Lock and check duplicate inside transaction
-            $existing = ImportFund::where(function ($q) use ($txHash) {
-                    $q->where('transaction_hash', $txHash)->orWhere('txnid', $txHash);
-                })
-                ->whereIn('deposit_status', [ImportFund::STATUS_APPROVED, ImportFund::STATUS_VERIFIED, ImportFund::STATUS_PENDING])
-                ->lockForUpdate()
-                ->first();
-
-            if ($existing) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This transaction hash has already been submitted or processed.',
-                ], 422);
-            }
-
-            $fromAddress = $verification['from_address'] ?? null;
-            $verifiedAmount = (float) $verification['transferred_amount'];
-
-            // Calculate dynamic Service Charge / Platform Fee on top:
-            // Formula requested: Net Amount = Received Amount / (1 + feePercent / 100)
-            $feePercent = (float) Setting::get('deposit_fee_percent', 0.00);
-            if ($feePercent > 0.00) {
-                $netAmount = round($verifiedAmount / (1 + ($feePercent / 100)), 4);
-                $feeAmount = round($verifiedAmount - $netAmount, 4);
-            } else {
-                $netAmount = round($verifiedAmount, 4);
-                $feeAmount = 0.00;
             }
 
             // 1. Create record in import_funds
@@ -351,71 +299,68 @@ class DepositVerificationController extends Controller
                 'member_id' => $member->id,
                 'txnid' => substr($txHash, 0, 100),
                 'transaction_hash' => $txHash,
-                'amount' => $netAmount,
+                'amount' => $baseAmount, // Net fund wallet credit
                 'type' => 'Add',
                 'wallet_type' => 'USDT',
-                'wallet_address' => $fromAddress,
-                'network' => $verification['network'] ?? 'BEP-20',
-                'token' => $verification['token'] ?? 'USDT',
-                'contract_address' => $verification['contract_address'] ?? null,
+                'wallet_address' => $walletAddress,
+                'network' => 'BEP-20',
+                'token' => 'USDT',
+                'contract_address' => null,
                 'added_by' => 'User',
                 'status' => ImportFund::LEGACY_PENDING,
-                'verification_status' => 'verified',
-                'deposit_status' => ImportFund::STATUS_VERIFIED, // Verified — Awaiting Admin Approval
-                'verification_payload' => $verification,
-                'admin_notes' => "Manual request verified on-chain: {$verifiedAmount} USDT. Service Charge ({$feePercent}%): {$feeAmount} USDT. Net: {$netAmount} USD.",
+                'verification_status' => 'pending',
+                'deposit_status' => ImportFund::STATUS_PENDING, // Pending Admin Approval
+                'admin_notes' => "Manual deposit request submitted: Total {$totalAmount} USDT. Net: {$baseAmount} USD. Service Charge ({$feePercent}%): {$feeAmount} USDT. Awaiting Admin Approval.",
                 'mode' => 'Mannual',
-                'verified_at' => now(),
             ]);
 
             // 2. Also register in ad_deposits to allow unified admin review
             $adDeposit = AdDeposit::create([
                 'member_id' => $member->id,
-                'amount_inr' => $verifiedAmount,
+                'amount_inr' => $totalAmount,
                 'fee_percent' => $feePercent,
                 'fee_amount_inr' => $feeAmount,
-                'net_amount_inr' => $netAmount,
-                'submitted_amount' => $amount,
-                'verified_amount' => $verifiedAmount,
+                'net_amount_inr' => $baseAmount,
+                'submitted_amount' => $totalAmount,
+                'verified_amount' => $totalAmount,
                 'currency_in' => 'USDT',
                 'currency_out' => 'USDT',
                 'network' => 'BEP-20',
                 'token' => 'USDT',
                 'wallet_address' => $recipientWallet,
-                'sender_address' => $fromAddress,
-                'block_number' => $verification['block_number'] ?? null,
+                'sender_address' => $walletAddress,
                 'exchange_rate' => 1.00,
-                'expected_usd_amount' => $netAmount,
+                'expected_usd_amount' => $baseAmount,
                 'transaction_reference' => $txHash,
                 'transaction_hash' => $txHash,
                 'status' => AdDeposit::STATUS_PENDING,
-                'verification_status' => 'verified',
-                'verification_source' => $verification['verification_source'] ?? 'bsc_rpc',
-                'verification_payload' => $verification,
+                'verification_status' => 'pending',
+                'verification_source' => 'manual',
                 'submitted_at' => now(),
-                'admin_notes' => "Manual request verified on-chain: {$verifiedAmount} USDT to {$recipientWallet}. Service Charge ({$feePercent}%): {$feeAmount} USDT. Net: {$netAmount} USD. Awaiting Admin Approval.",
+                'admin_notes' => "Manual deposit request submitted by member: Total {$totalAmount} USDT to {$recipientWallet}. Service Charge ({$feePercent}%): {$feeAmount} USDT. Net: {$baseAmount} USD. Awaiting Admin Approval.",
             ]);
 
+            $isHexHash = (bool) preg_match('/^0x[a-fA-F0-9]{64}$/', $txHash);
             $network = Setting::get('bsc_network', config('blockchain.bsc.network', 'mainnet'));
-            $explorerUrl = config("blockchain.bsc.explorer_tx_url.{$network}", 'https://bscscan.com/tx/') . $txHash;
+            $explorerUrl = $isHexHash ? config("blockchain.bsc.explorer_tx_url.{$network}", 'https://bscscan.com/tx/') . $txHash : null;
 
             return response()->json([
                 'success' => true,
-                'status' => 'verified',
-                'message' => "Your deposit request has been submitted to the Admin Panel. Status: Verified — Awaiting Admin Approval (Net Credit: \${$netAmount} USD).",
+                'status' => 'pending',
+                'message' => "Your manual deposit request has been submitted to the Admin Panel. Status: Pending Admin Approval (Net Credit: \${$baseAmount} USD).",
                 'deposit' => [
                     'id' => $importFund->id,
                     'orderid' => $importFund->orderid,
-                    'amount' => $verifiedAmount,
-                    'net_amount' => $netAmount,
+                    'amount' => $totalAmount,
+                    'net_amount' => $baseAmount,
                     'fee_amount' => $feeAmount,
                     'fee_percent' => $feePercent,
                     'transaction_hash' => $txHash,
-                    'wallet_address' => $fromAddress,
+                    'wallet_address' => $walletAddress,
                     'network' => 'BEP-20',
                     'token' => 'USDT',
-                    'deposit_status' => ImportFund::STATUS_VERIFIED,
-                    'status_label' => 'Verified — Awaiting Admin Approval',
+                    'deposit_status' => ImportFund::STATUS_PENDING,
+                    'status_label' => 'Pending Admin Approval',
                     'explorer_url' => $explorerUrl,
                     'created_at' => $importFund->created_at->toISOString(),
                 ],

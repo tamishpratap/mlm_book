@@ -348,6 +348,11 @@ export function StoryViewer({
     };
   }, [isVideo, storyData, isStoryPaused, handleNext]);
 
+  const handleNextRef = useRef(handleNext);
+  useEffect(() => {
+    handleNextRef.current = handleNext;
+  });
+
   // Image / Text story progress timer (5000ms duration contract)
   useEffect(() => {
     if (isVideo || isStoryPaused) {
@@ -373,7 +378,7 @@ export function StoryViewer({
           return;
         }
         setProgressPercent(100);
-        handleNext();
+        handleNextRef.current?.();
       } else {
         progressTimerRef.current = requestAnimationFrame(tick);
       }
@@ -387,7 +392,7 @@ export function StoryViewer({
         progressTimerRef.current = null;
       }
     };
-  }, [isVideo, isStoryPaused, handleNext]);
+  }, [isVideo, isStoryPaused]);
 
   // Keyboard navigation & Escape handling
   useEffect(() => {
@@ -634,8 +639,8 @@ export function StoryViewer({
   const normalizedReaction = typeof userReaction === 'string' ? userReaction.toLowerCase().trim() : null;
   const activeReactionConfig = normalizedReaction && REACTION_CONFIG[normalizedReaction] ? REACTION_CONFIG[normalizedReaction] : null;
 
-  const authorStoryCount = storyData?.author_story_count || 1;
-  const authorStoryIndex = storyData?.author_story_index || 0;
+  const authorStoryCount = Math.max(1, Number(storyData?.author_story_count ?? 1));
+  const authorStoryIndex = Number(storyData?.author_story_index ?? 0);
 
   if (typeof document === 'undefined') return null;
   const modalRoot = document.getElementById('modal-root') || document.body;
@@ -699,11 +704,18 @@ export function StoryViewer({
           {Array.from({ length: authorStoryCount }).map((_, i) => {
             let width = '0%';
             if (i < authorStoryIndex) width = '100%';
-            else if (i === authorStoryIndex) width = `${progressPercent}%`;
+            else if (i === authorStoryIndex) width = `${Math.min(100, Math.max(0, progressPercent))}%`;
 
             return (
               <div className="story-viewer__progress-segment" key={i}>
-                <div className="story-viewer__progress-fill" style={{ width }} />
+                <div
+                  className="story-viewer__progress-fill"
+                  style={{
+                    width,
+                    transition: 'none',
+                    willChange: 'width',
+                  }}
+                />
               </div>
             );
           })}
