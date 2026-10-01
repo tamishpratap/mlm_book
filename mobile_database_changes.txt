@@ -1,0 +1,66 @@
+-- =====================================================================
+-- MLM BOOK MOBILE APP - DATABASE SCHEMA CHANGES
+-- =====================================================================
+-- This file tracks all mobile app related database table definitions
+-- and schema alterations so they can be easily executed on the live server.
+-- Last Updated: 2026-10-01
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 1. Mobile Access Tokens Table (`mobile_access_tokens`)
+-- Used for Bearer token authentication in Flutter mobile app (Members & Admins)
+-- Migration File: 2026_09_29_000000_create_mobile_access_tokens_table.php
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mobile_access_tokens` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `audience` VARCHAR(20) NOT NULL DEFAULT 'member' COMMENT 'member or admin',
+  `actor_id` BIGINT UNSIGNED NOT NULL,
+  `token_hash` VARCHAR(64) NOT NULL,
+  `device_name` VARCHAR(120) DEFAULT NULL,
+  `last_ip` VARCHAR(45) DEFAULT NULL,
+  `last_used_at` TIMESTAMP NULL DEFAULT NULL,
+  `expires_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  UNIQUE KEY `mobile_access_tokens_token_hash_unique` (`token_hash`),
+  KEY `mobile_access_tokens_audience_actor_id_index` (`audience`, `actor_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ---------------------------------------------------------------------
+-- 2. Phone Number Change Requests Table (`phone_number_change_requests`)
+-- Used for mobile phone number modification requests & approval workflow
+-- Migration File: 2026_09_29_130000_create_phone_number_change_requests_table.php
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `phone_number_change_requests` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `member_id` BIGINT UNSIGNED NOT NULL,
+  `old_phone` VARCHAR(30) NOT NULL,
+  `new_phone` VARCHAR(30) NOT NULL,
+  `status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+  `whatsapp_verified_at` TIMESTAMP NULL DEFAULT NULL,
+  `rejection_reason` TEXT DEFAULT NULL,
+  `approved_by` BIGINT UNSIGNED DEFAULT NULL,
+  `approved_at` TIMESTAMP NULL DEFAULT NULL,
+  `rejected_by` BIGINT UNSIGNED DEFAULT NULL,
+  `rejected_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  KEY `phone_number_change_requests_member_id_status_index` (`member_id`, `status`),
+  KEY `phone_number_change_requests_status_index` (`status`),
+  KEY `phone_number_change_requests_new_phone_index` (`new_phone`),
+  KEY `phone_number_change_requests_created_at_index` (`created_at`),
+  CONSTRAINT `fk_phone_change_member_id` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_phone_change_approved_by` FOREIGN KEY (`approved_by`) REFERENCES `admins` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_phone_change_rejected_by` FOREIGN KEY (`rejected_by`) REFERENCES `admins` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ---------------------------------------------------------------------
+-- 3. Supplementary Mobile Verification Columns / Tables (Reference)
+-- If these columns/tables are missing on the live database:
+-- ---------------------------------------------------------------------
+-- ALTER TABLE `members` ADD COLUMN IF NOT EXISTS `mobile_verification_requested_at` TIMESTAMP NULL DEFAULT NULL AFTER `mobile_verified_at`;
+-- ALTER TABLE `members` ADD COLUMN IF NOT EXISTS `phone` VARCHAR(30) NULL DEFAULT NULL;
+-- ALTER TABLE `members` ADD COLUMN IF NOT EXISTS `mobile_verified_at` TIMESTAMP NULL DEFAULT NULL;
+
