@@ -382,7 +382,9 @@ export function WithdrawalPage() {
 
   // Real-time calculation
   const parsedGross = parseFloat(grossAmount) || 0;
-  const serviceChargePercent = config?.service_charge_percent !== undefined ? parseFloat(config.service_charge_percent) : 0.0;
+  const serviceChargePercent = config?.service_charge_percent !== undefined
+    ? parseFloat(config.service_charge_percent)
+    : (config?.withdrawal_service_charge_percent !== undefined ? parseFloat(config.withdrawal_service_charge_percent) : 0.0);
   const calculatedServiceCharge = parsedGross > 0 ? +(parsedGross * (serviceChargePercent / 100)).toFixed(2) : 0;
   const calculatedNetAmount = parsedGross > 0 ? +(parsedGross - calculatedServiceCharge).toFixed(2) : 0;
 
@@ -841,7 +843,7 @@ export function WithdrawalPage() {
                     <th>Request ID</th>
                     <th>Date</th>
                     <th>Gross Amount</th>
-                    <th>Service Charge (10%)</th>
+                    <th>Service Charge {serviceChargePercent > 0 ? `(${serviceChargePercent}%)` : ''}</th>
                     <th>Net Amount</th>
                     <th>Wallet Address</th>
                     <th>Status</th>
