@@ -2108,7 +2108,7 @@ class BusinessAdCampaignController extends Controller
         $engagementService = app(AdCampaignEngagementService::class);
 
         $filters = [
-            'action' => $request->input('action', 'all'),
+            'action' => AdCampaignActivity::ACTION_INTERESTED,
             'reward_status' => $request->input('reward_status', 'all'),
             'verification' => $request->input('verification', $request->boolean('verified_only') ? 'verified' : 'all'),
             'date_preset' => $request->input('date_preset', 'all'),
@@ -2295,7 +2295,7 @@ class BusinessAdCampaignController extends Controller
         }
 
         $filters = [
-            'action' => $request->input('action', 'all'),
+            'action' => AdCampaignActivity::ACTION_INTERESTED,
             'reward_status' => $request->input('reward_status', 'all'),
             'verification' => $request->input('verification', $request->boolean('verified_only') ? 'verified' : 'all'),
             'date_preset' => $request->input('date_preset', 'all'),
