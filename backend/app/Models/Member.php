@@ -218,6 +218,13 @@ class Member extends Authenticatable
         });
     }
 
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where($field ?? 'id', $value)
+            ->orWhere('user_id', $value)
+            ->first();
+    }
+
     public function isBlocked(): bool
     {
         return $this->blocked_at !== null;

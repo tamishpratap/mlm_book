@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   MapPin,
   CalendarDays,
@@ -51,7 +51,16 @@ function getSanitizedErrorMessage(err) {
 export function MemberProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   const { user: currentUser } = useAuth();
+
+  const passedMember = routeLocation.state?.member;
+  const isPassedMemberForCurrentId = Boolean(
+    passedMember && (
+      (passedMember.id != null && String(passedMember.id) === String(id)) ||
+      (passedMember.user_id != null && String(passedMember.user_id) === String(id))
+    )
+  );
 
   const [profileData, setProfileData] = useState(null);
   const [activeTab, setActiveTab] = useState('timeline');
@@ -189,7 +198,7 @@ export function MemberProfilePage() {
     }
   };
 
-  const member = profileData?.member;
+  const member = profileData?.member || (isPassedMemberForCurrentId ? passedMember : null);
   const friendship = profileData?.friendship;
   const friendshipState = profileData?.friendship_state || 'none';
   const currentMemberId = currentUser?.id != null ? Number(currentUser.id) : null;
@@ -214,7 +223,7 @@ export function MemberProfilePage() {
   const directReferralsCount = profileData?.direct_referral_count ?? counts.direct_referrals ?? directReferrals.length;
   const introducer = profileData?.introducer || null;
 
-  const rawPhoto = member?.profile_photo_url || member?.profile_photo;
+  const rawPhoto = member?.profile_photo_url || member?.profile_photo || member?.avatar_url;
   const photoUrl = rawPhoto ? getAvatarUrl(rawPhoto) : null;
   const coverUrl = member?.cover_photo ? getCoverUrl(member.cover_photo) : null;
   const location = [member?.city, member?.country].filter(Boolean).join(', ');
@@ -230,7 +239,7 @@ export function MemberProfilePage() {
     { key: 'activity', label: 'Activity', icon: Activity },
   ];
 
-  if (isLoading && !profileData) {
+  if (isLoading && !member) {
     return (
       <main className="member-main" id="member-profile-main">
         <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
@@ -240,7 +249,7 @@ export function MemberProfilePage() {
     );
   }
 
-  if (error || !member) {
+  if (error && !member) {
     return (
       <main className="member-main" id="member-profile-main">
         <div style={{ marginBottom: '16px' }}>
@@ -527,7 +536,7 @@ export function MemberProfilePage() {
                     <h2>Private Profile</h2>
                     <p>Connect with {member.name} to view their full timeline posts and activity.</p>
                   </section>
-                ) : profileData.posts?.data && profileData.posts.data.length > 0 ? (
+                ) : profileData?.posts?.data && profileData.posts.data.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {profileData.posts.data.map((post) => (
                       <PostCard key={post.id} post={post} />
@@ -593,7 +602,7 @@ export function MemberProfilePage() {
 
             {activeTab === 'photos' && (
               <div>
-                {profileData.photos && profileData.photos.length > 0 ? (
+                {profileData?.photos && profileData.photos.length > 0 ? (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 140px), 1fr))', gap: '12px' }}>
                     {profileData.photos.map((p) => {
                       const mUrl = getMediaUrl(p.media_path, 'posts/images') || `/${p.media_path}`;
@@ -621,7 +630,7 @@ export function MemberProfilePage() {
 
             {activeTab === 'videos' && (
               <div>
-                {profileData.videos && profileData.videos.length > 0 ? (
+                {profileData?.videos && profileData.videos.length > 0 ? (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: '12px' }}>
                     {profileData.videos.map((v) => {
                       const vUrl = getMediaUrl(v.media_path, 'posts/videos') || `/${v.media_path}`;
@@ -647,7 +656,7 @@ export function MemberProfilePage() {
 
             {activeTab === 'friends' && (
               <div>
-                {profileData.friends_list && profileData.friends_list.length > 0 ? (
+                {profileData?.friends_list && profileData.friends_list.length > 0 ? (
                   <section className="card connection-requests-card" style={{ padding: '0', overflow: 'hidden' }}>
                     <div className="connection-requests-list">
                       {profileData.friends_list.map((f) => (
@@ -742,7 +751,7 @@ export function MemberProfilePage() {
 
             {isSelf && activeTab === 'stories' && (
               <div>
-                {profileData.stories && profileData.stories.length > 0 ? (
+                {profileData?.stories && profileData.stories.length > 0 ? (
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     {profileData.stories.map((s) => (
                       <div key={s.id} style={{ width: '120px', height: '180px' }}>

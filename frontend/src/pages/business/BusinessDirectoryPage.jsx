@@ -464,7 +464,7 @@ export function BusinessDirectoryPage() {
                     {/* Left & Center: Avatar + Info */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0, flex: 1 }}>
                       {/* Avatar */}
-                      <Link to={`/member/profile/${m.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                      <Link to={`/member/people/${m.id || m.user_id}`} state={{ member: m }} style={{ textDecoration: 'none', flexShrink: 0 }}>
                         <div
                           style={{
                             width: '54px',
@@ -495,7 +495,8 @@ export function BusinessDirectoryPage() {
                         {/* Name + Verified + Username */}
                         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
                           <Link
-                            to={`/member/profile/${m.id}`}
+                            to={`/member/people/${m.id || m.user_id}`}
+                            state={{ member: m }}
                             style={{
                               textDecoration: 'none',
                               color: '#0f172a',
@@ -622,7 +623,8 @@ export function BusinessDirectoryPage() {
                       </Link>
 
                       <Link
-                        to={`/member/profile/${m.id}`}
+                        to={`/member/people/${m.id || m.user_id}`}
+                        state={{ member: m }}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -682,7 +684,7 @@ export function BusinessDirectoryPage() {
                     <div>
                       {/* Top Header: Avatar & Info */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-                        <Link to={`/member/profile/${m.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                        <Link to={`/member/people/${m.id || m.user_id}`} state={{ member: m }} style={{ textDecoration: 'none', flexShrink: 0 }}>
                           <div
                             style={{
                               width: '56px',
@@ -711,7 +713,8 @@ export function BusinessDirectoryPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <Link
-                              to={`/member/profile/${m.id}`}
+                              to={`/member/people/${m.id || m.user_id}`}
+                              state={{ member: m }}
                               style={{
                                 textDecoration: 'none',
                                 color: '#0f172a',
@@ -819,7 +822,8 @@ export function BusinessDirectoryPage() {
                       </Link>
 
                       <Link
-                        to={`/member/profile/${m.id}`}
+                        to={`/member/people/${m.id || m.user_id}`}
+                        state={{ member: m }}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
