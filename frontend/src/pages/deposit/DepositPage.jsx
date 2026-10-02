@@ -399,12 +399,22 @@ export function DepositPage() {
       return;
     }
 
+    const trimmedTxHash = manualTxHash.trim();
+    if (!trimmedTxHash) {
+      setManualSubmitError('Transaction Hash (Txn Hash) is required. Please enter your blockchain transaction hash.');
+      return;
+    }
+    if (trimmedTxHash.length < 4) {
+      setManualSubmitError('Please enter a valid Transaction Hash (at least 4 characters).');
+      return;
+    }
+
     setIsSubmittingManual(true);
     try {
       const res = await depositApi.submitManualDepositRequest({
         amount: baseAmount,
-        transaction_reference: manualTxHash.trim() || undefined,
-        transaction_hash: manualTxHash.trim() || undefined,
+        transaction_reference: trimmedTxHash,
+        transaction_hash: trimmedTxHash,
         wallet_address: walletAddress || undefined,
       });
 
@@ -1494,19 +1504,26 @@ export function DepositPage() {
                 })()}
               </div>
 
-              {/* Optional Transaction ID / UTR / Reference */}
+              {/* Required Transaction Hash */}
               <div style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                   <label htmlFor="manual-txhash" style={{ fontSize: '0.88rem', fontWeight: 600, color: '#374151' }}>
-                    Transaction ID / UTR / Reference <span style={{ color: '#6b7280', fontSize: '0.8rem', fontWeight: 400 }}>(Optional)</span>
+                    Transaction Hash (Txn Hash) <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
                   </label>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#dc2626', background: '#fef2f2', padding: '2px 8px', borderRadius: '6px', border: '1px solid #fee2e2' }}>
+                    Required
+                  </span>
                 </div>
                 <input
                   id="manual-txhash"
                   type="text"
+                  required
                   value={manualTxHash}
-                  onChange={(e) => setManualTxHash(e.target.value)}
-                  placeholder="e.g. UTR number, transfer reference or txn hash (optional)"
+                  onChange={(e) => {
+                    setManualTxHash(e.target.value);
+                    if (manualSubmitError) setManualSubmitError('');
+                  }}
+                  placeholder="e.g. 0x... (Blockchain Transaction Hash)"
                   disabled={isSubmittingManual}
                   style={{
                     width: '100%',
@@ -1519,7 +1536,7 @@ export function DepositPage() {
                   }}
                 />
                 <small style={{ color: '#6b7280', fontSize: '0.78rem' }}>
-                  Enter payment reference, UTR or transaction ID if available. Not required.
+                  Enter the blockchain transaction hash (Txn Hash). Required for verification to prevent duplicate submissions.
                 </small>
               </div>
 
@@ -1821,7 +1838,7 @@ export function DepositPage() {
                     2
                   </div>
                   <div style={{ fontSize: '0.82rem', color: '#4b5563' }}>
-                    <strong style={{ color: '#111827' }}>Note Reference (Optional):</strong> If available, note your transaction ID, UTR number, or payment reference.
+                    <strong style={{ color: '#111827' }}>Transaction Hash (Required):</strong> Enter the blockchain Txn Hash (0x...) from your transfer.
                   </div>
                 </div>
 

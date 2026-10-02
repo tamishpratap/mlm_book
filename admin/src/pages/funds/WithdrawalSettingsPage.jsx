@@ -296,9 +296,10 @@ export function WithdrawalSettingsPage() {
                         value={serviceChargePercent}
                         onChange={(e) => setServiceChargePercent(e.target.value)}
                         placeholder="10.00"
-                        className="w-full text-lg font-bold border border-slate-300 rounded-xl pl-4 pr-12 py-3 bg-white text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
+                        className="w-full text-lg font-bold border border-slate-300 rounded-xl has-end-addon pl-4 pr-12 py-3 bg-white text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
+                        style={{ paddingRight: '3rem' }}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-base pointer-events-none">
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-base pointer-events-none select-none z-10">
                         %
                       </span>
                     </div>
@@ -367,7 +368,7 @@ export function WithdrawalSettingsPage() {
                       Minimum Withdrawal ($ USD)
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm pointer-events-none select-none z-10">
                         $
                       </span>
                       <InputText
@@ -378,7 +379,8 @@ export function WithdrawalSettingsPage() {
                         value={minWithdrawalAmount}
                         onChange={(e) => setMinWithdrawalAmount(e.target.value)}
                         placeholder="5.00"
-                        className="w-full text-base font-bold border border-slate-300 rounded-lg pl-8 pr-3 py-2 bg-white text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                        className="w-full text-base font-bold border border-slate-300 rounded-lg has-start-addon pl-10 pr-3 py-2 bg-white text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                        style={{ paddingLeft: '2.5rem' }}
                       />
                     </div>
                     <p className="text-[11px] text-slate-500">
@@ -392,7 +394,7 @@ export function WithdrawalSettingsPage() {
                       Maximum Withdrawal ($ USD)
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm pointer-events-none select-none z-10">
                         $
                       </span>
                       <InputText
@@ -403,7 +405,8 @@ export function WithdrawalSettingsPage() {
                         value={maxWithdrawalAmount}
                         onChange={(e) => setMaxWithdrawalAmount(e.target.value)}
                         placeholder="10000.00"
-                        className="w-full text-base font-bold border border-slate-300 rounded-lg pl-8 pr-3 py-2 bg-white text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                        className="w-full text-base font-bold border border-slate-300 rounded-lg has-start-addon pl-10 pr-3 py-2 bg-white text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                        style={{ paddingLeft: '2.5rem' }}
                       />
                     </div>
                     <p className="text-[11px] text-slate-500">
@@ -518,7 +521,7 @@ export function WithdrawalSettingsPage() {
                     Test Gross Withdrawal Amount ($):
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none select-none z-10">
                       $
                     </span>
                     <input
@@ -528,7 +531,8 @@ export function WithdrawalSettingsPage() {
                       value={simTestAmount}
                       onChange={(e) => setSimTestAmount(e.target.value)}
                       placeholder="100.00"
-                      className="w-full bg-white/10 border border-white/20 rounded-xl pl-8 pr-4 py-2 text-white font-bold text-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/15"
+                      className="w-full bg-white/10 border border-white/20 rounded-xl has-start-addon pl-10 pr-4 py-2 text-white font-bold text-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/15"
+                      style={{ paddingLeft: '2.5rem' }}
                     />
                   </div>
                 </div>

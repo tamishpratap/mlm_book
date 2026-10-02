@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Member;
 use App\Http\Controllers\Controller;
 use App\Models\AdDeposit;
 use App\Models\BusinessPage;
+use App\Models\ImportFund;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -118,6 +119,20 @@ class AdDepositController extends Controller
             ->exists();
 
         if ($existingTx) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This transaction hash has already been submitted or processed. Each blockchain transaction can only be used once.',
+            ], 422);
+        }
+
+        $existingImport = ImportFund::where(function ($q) use ($txRef) {
+                $q->where('transaction_hash', $txRef)
+                  ->orWhere('txnid', $txRef);
+            })
+            ->whereIn('deposit_status', [ImportFund::STATUS_APPROVED, ImportFund::STATUS_VERIFIED, ImportFund::STATUS_PENDING])
+            ->exists();
+
+        if ($existingImport) {
             return response()->json([
                 'success' => false,
                 'message' => 'This transaction hash has already been submitted or processed. Each blockchain transaction can only be used once.',

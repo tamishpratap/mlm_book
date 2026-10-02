@@ -596,7 +596,7 @@ export function RewardRulesPage() {
               Reward Amount (USD) <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-2 text-sm text-neutral-400 font-mono">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-400 font-mono pointer-events-none select-none z-10">$</span>
               <input
                 type="number"
                 step="0.0001"
@@ -604,7 +604,8 @@ export function RewardRulesPage() {
                 required
                 value={rewardAmount}
                 onChange={(e) => setRewardAmount(e.target.value)}
-                className="w-full pl-7 pr-3 py-2 text-sm font-mono bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full pl-9 pr-3 py-2 text-sm font-mono has-start-addon bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                style={{ paddingLeft: '2.25rem' }}
                 placeholder="0.0250"
               />
             </div>

@@ -125,28 +125,30 @@ body {
 .has-start-icon,
 .p-inputtext.has-start-icon,
 input.has-start-icon,
-select.has-start-icon {
-  padding-left: 2.5rem !important; /* 40px safe clearance */
-}
-
+select.has-start-icon,
 .has-start-addon,
 .p-inputtext.has-start-addon,
 input.has-start-addon,
-select.has-start-addon {
+select.has-start-addon,
+.relative > span.absolute[class*="left-"] + .p-inputtext,
+.relative > span.absolute[class*="left-"] + input,
+.relative > div.absolute[class*="left-"] + .p-inputtext,
+.relative > div.absolute[class*="left-"] + input {
   padding-left: 2.5rem !important; /* 40px safe clearance */
 }
 
 .has-end-icon,
 .p-inputtext.has-end-icon,
 input.has-end-icon,
-select.has-end-icon {
-  padding-right: 2.5rem !important; /* 40px safe clearance */
-}
-
+select.has-end-icon,
 .has-end-addon,
 .p-inputtext.has-end-addon,
 input.has-end-addon,
-select.has-end-addon {
+select.has-end-addon,
+.relative > .p-inputtext:has(+ span.absolute[class*="right-"]),
+.relative > input:has(+ span.absolute[class*="right-"]),
+.relative > .p-inputtext:has(+ div.absolute[class*="right-"]),
+.relative > input:has(+ div.absolute[class*="right-"]) {
   padding-right: 2.5rem !important; /* 40px safe clearance */
 }
 

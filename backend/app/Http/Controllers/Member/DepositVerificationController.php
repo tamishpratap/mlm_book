@@ -277,8 +277,18 @@ class DepositVerificationController extends Controller
         ]);
 
         $baseAmount = round((float) $request->input('amount'), 2);
-        $txHashInput = trim((string) ($request->input('transaction_reference') ?: $request->input('transaction_hash')));
-        $txHash = !empty($txHashInput) ? $txHashInput : 'MANUAL-' . strtoupper(Str::random(10));
+        $txHash = trim((string) ($request->input('transaction_reference') ?: $request->input('transaction_hash')));
+
+        if (empty($txHash) || strlen($txHash) < 4) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction Hash (Txn Hash) is required to verify your deposit (minimum 4 characters).',
+                'errors' => [
+                    'transaction_hash' => ['Transaction Hash is required.'],
+                ],
+            ], 422);
+        }
+
         $walletAddress = $request->input('wallet_address') ? trim($request->input('wallet_address')) : null;
 
         $recipientWallet = Setting::get('deposit_crypto_wallet_address', '');
@@ -291,20 +301,34 @@ class DepositVerificationController extends Controller
         $totalAmount = round($baseAmount + $feeAmount, 4);
 
         return DB::transaction(function () use ($member, $baseAmount, $totalAmount, $feeAmount, $feePercent, $txHash, $walletAddress, $recipientWallet) {
-            if (!str_starts_with($txHash, 'MANUAL-')) {
-                $existing = ImportFund::where(function ($q) use ($txHash) {
-                        $q->where('transaction_hash', $txHash)->orWhere('txnid', $txHash);
-                    })
-                    ->whereIn('deposit_status', [ImportFund::STATUS_APPROVED, ImportFund::STATUS_VERIFIED, ImportFund::STATUS_PENDING])
-                    ->lockForUpdate()
-                    ->first();
+            // Check ImportFund for duplicate transaction hash
+            $existingImport = ImportFund::where(function ($q) use ($txHash) {
+                    $q->where('transaction_hash', $txHash)->orWhere('txnid', $txHash);
+                })
+                ->whereIn('deposit_status', [ImportFund::STATUS_APPROVED, ImportFund::STATUS_VERIFIED, ImportFund::STATUS_PENDING])
+                ->lockForUpdate()
+                ->first();
 
-                if ($existing) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This transaction ID / reference has already been submitted or processed.',
-                    ], 422);
-                }
+            if ($existingImport) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This Transaction Hash has already been submitted or processed. Each blockchain transaction can only be used once.',
+                ], 422);
+            }
+
+            // Check AdDeposit for duplicate transaction hash
+            $existingAd = AdDeposit::where(function ($q) use ($txHash) {
+                    $q->where('transaction_hash', $txHash)->orWhere('transaction_reference', $txHash);
+                })
+                ->whereIn('status', [AdDeposit::STATUS_APPROVED, AdDeposit::STATUS_PENDING])
+                ->lockForUpdate()
+                ->first();
+
+            if ($existingAd) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This Transaction Hash has already been submitted or processed. Each blockchain transaction can only be used once.',
+                ], 422);
             }
 
             // 1. Create record in import_funds
