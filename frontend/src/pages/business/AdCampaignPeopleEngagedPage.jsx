@@ -751,58 +751,6 @@ export function AdCampaignPeopleEngagedPage() {
         </div>
       </header>
 
-      {/* Interested KPI Summary Cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '14px',
-          marginBottom: '24px',
-        }}
-      >
-        <div className="card" style={{ padding: '16px 20px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Star size={22} />
-            </div>
-            <div>
-              <strong style={{ fontSize: '22px', fontWeight: 800, color: '#92400e', display: 'block', lineHeight: 1.1 }}>
-                {summary.interested_count ?? engagementsPaginated.total ?? 0}
-              </strong>
-              <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>Interested Leads</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '16px 20px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Users size={22} />
-            </div>
-            <div>
-              <strong style={{ fontSize: '22px', fontWeight: 800, color: '#1e293b', display: 'block', lineHeight: 1.1 }}>
-                {engagementsPaginated.filtered_unique_members || summary.interested_count || 0}
-              </strong>
-              <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>Interested Members</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '16px 20px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <strong style={{ fontSize: '22px', fontWeight: 800, color: '#15803d', display: 'block', lineHeight: 1.1 }}>
-                {summary.verified_members_count || 0}
-              </strong>
-              <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>Verified Leads</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Audience Table / Grid Section (Event-style Directory) */}
       <section
         className="card"
@@ -827,25 +775,10 @@ export function AdCampaignPeopleEngagedPage() {
             borderBottom: '1px solid #f1f5f9',
           }}
         >
-          {/* Section Header with Active Filter Count Badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Users size={18} color="#2563eb" />
-              <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>People Engaged</span>
-            </div>
-            <span
-              style={{
-                padding: '3px 10px',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: 700,
-                backgroundColor: '#fffbeb',
-                color: '#b45309',
-                border: '1px solid #fde68a',
-              }}
-            >
-              Interested ({engagementsPaginated.total})
-            </span>
+          {/* Section Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Users size={18} color="#2563eb" />
+            <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>People Engaged</span>
           </div>
 
           {/* Search & View Mode Toggle */}
