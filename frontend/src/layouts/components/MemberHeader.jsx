@@ -258,7 +258,7 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
           </NavLink>
           <NavLink to="/member/business-directory" className={getNavClass('/member/business-directory')}>
             <MessageSquare size={18} />
-            <span>Direct Message</span>
+            <span>Business Directory</span>
           </NavLink>
           {/* Events Navigation - Temporarily Disabled */}
           {/*
