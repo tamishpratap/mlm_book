@@ -18,7 +18,7 @@ class MemberDirectoryProfileController extends Controller
         $currentMember = auth('member')->user();
         $isSelf = $currentMember && $currentMember->is($member);
 
-        if (! $isSelf && ! $member->isSociallyEligible()) {
+        if (! $isSelf && $member->isBlocked()) {
             if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
