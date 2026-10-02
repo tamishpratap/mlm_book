@@ -103,12 +103,12 @@ export function FriendRequestsPage() {
             </div>
           </header>
 
-          <div className="friend-requests-tabs" style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+          <div className="friend-requests-tabs" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <button
               type="button"
               className={`member-button ${activeTab === 'all' ? 'member-button--primary' : 'member-button--secondary'}`}
               onClick={() => setActiveTab('all')}
-              style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '20px' }}
+              style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '20px', margin: 0 }}
             >
               All ({incomingRequests.length + outgoingRequests.length})
             </button>
@@ -116,7 +116,7 @@ export function FriendRequestsPage() {
               type="button"
               className={`member-button ${activeTab === 'incoming' ? 'member-button--primary' : 'member-button--secondary'}`}
               onClick={() => setActiveTab('incoming')}
-              style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '20px' }}
+              style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '20px', margin: 0 }}
             >
               Incoming ({incomingRequests.length})
             </button>
@@ -124,7 +124,7 @@ export function FriendRequestsPage() {
               type="button"
               className={`member-button ${activeTab === 'sent' ? 'member-button--primary' : 'member-button--secondary'}`}
               onClick={() => setActiveTab('sent')}
-              style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '20px' }}
+              style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '20px', margin: 0 }}
             >
               Sent ({outgoingRequests.length})
             </button>
