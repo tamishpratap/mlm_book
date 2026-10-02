@@ -47,6 +47,10 @@ class AdDepositController extends Controller
                 'currency_symbol' => 'USDT',
                 'fee_percent' => (float) Setting::get('deposit_fee_percent', 0.00),
                 'service_charge_percent' => (float) Setting::get('deposit_fee_percent', 0.00),
+                'min_deposit' => (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00)),
+                'max_deposit' => (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00)),
+                'minimum_deposit_amount' => (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00)),
+                'maximum_deposit_amount' => (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00)),
                 'instructions' => $instructions,
                 'disclaimer' => $disclaimer,
                 'is_available' => $isAvailable,
@@ -68,21 +72,32 @@ class AdDepositController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         }
 
+        $minDeposit = (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00));
+        $maxDeposit = (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00));
+
         $request->validate([
-            'amount_usdt' => ['nullable', 'numeric', 'min:1', 'max:10000000'],
-            'amount_usd' => ['nullable', 'numeric', 'min:1', 'max:10000000'],
-            'amount' => ['nullable', 'numeric', 'min:1', 'max:10000000'],
-            'amount_inr' => ['nullable', 'numeric', 'min:1', 'max:10000000'],
+            'amount_usdt' => ['nullable', 'numeric', 'min:0.01', 'max:10000000'],
+            'amount_usd' => ['nullable', 'numeric', 'min:0.01', 'max:10000000'],
+            'amount' => ['nullable', 'numeric', 'min:0.01', 'max:10000000'],
+            'amount_inr' => ['nullable', 'numeric', 'min:0.01', 'max:10000000'],
             'transaction_hash' => ['nullable', 'string', 'min:4', 'max:150'],
             'transaction_reference' => ['nullable', 'string', 'min:4', 'max:150'],
             'business_page_slug' => ['nullable', 'string', 'max:255'],
         ]);
 
         $rawAmount = $request->input('amount_usdt') ?? $request->input('amount_usd') ?? $request->input('amount') ?? $request->input('amount_inr');
-        if (!$rawAmount || (float) $rawAmount < 1) {
+        $numericAmount = (float) $rawAmount;
+        if (!$rawAmount || $numericAmount < $minDeposit) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please enter a valid deposit amount of at least 1.00 USDT.',
+                'message' => "Please enter a valid deposit amount of at least \${$minDeposit} USDT.",
+            ], 422);
+        }
+
+        if ($maxDeposit > 0 && $numericAmount > $maxDeposit) {
+            return response()->json([
+                'success' => false,
+                'message' => "Maximum deposit amount allowed is \${$maxDeposit} USDT.",
             ], 422);
         }
 

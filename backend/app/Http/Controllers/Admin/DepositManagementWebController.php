@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Services\BscTransactionVerifierService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -221,8 +222,9 @@ class DepositManagementWebController extends Controller
         }
 
         $adminNotes = trim((string) $request->input('admin_notes', ''));
+        $adminId = Auth::guard('admin')->id() ?? Auth::id();
 
-        DB::transaction(function () use ($deposit, $adminNotes) {
+        DB::transaction(function () use ($deposit, $adminNotes, $adminId) {
             // Lock deposit record
             $lockedDeposit = ImportFund::where('id', $deposit->id)->lockForUpdate()->first();
             if ($lockedDeposit->deposit_status === ImportFund::STATUS_APPROVED) {
@@ -249,7 +251,7 @@ class DepositManagementWebController extends Controller
                 'status' => ImportFund::LEGACY_APPROVED,
                 'verification_status' => 'verified',
                 'verified_at' => now(),
-                'verified_by' => auth()->id(),
+                'verified_by' => $adminId,
                 'admin_notes' => !empty($adminNotes) ? $adminNotes : ($lockedDeposit->admin_notes ?: 'Approved by Admin'),
             ]);
 
@@ -262,7 +264,7 @@ class DepositManagementWebController extends Controller
                 })->update([
                     'status' => AdDeposit::STATUS_APPROVED,
                     'verification_status' => 'verified',
-                    'verified_by' => auth()->id(),
+                    'verified_by' => $adminId,
                     'admin_notes' => !empty($adminNotes) ? $adminNotes : 'Approved by Admin',
                 ]);
             }
@@ -284,13 +286,14 @@ class DepositManagementWebController extends Controller
         }
 
         $rejectionReason = trim((string) $request->input('rejection_reason', 'Rejected by administrator.'));
+        $adminId = Auth::guard('admin')->id() ?? Auth::id();
 
         $deposit->update([
             'deposit_status' => ImportFund::STATUS_REJECTED,
             'status' => ImportFund::LEGACY_REJECTED,
             'rejection_reason' => $rejectionReason,
             'admin_notes' => "Rejected: {$rejectionReason}",
-            'verified_by' => auth()->id(),
+            'verified_by' => $adminId,
         ]);
 
         $txHash = $deposit->transaction_hash ?: $deposit->txnid;
@@ -317,7 +320,8 @@ class DepositManagementWebController extends Controller
         $usdtContract = Setting::get('bsc_usdt_contract', config("blockchain.bsc.usdt_contract.{$network}", BscTransactionVerifierService::DEFAULT_MAINNET_USDT_CONTRACT));
         $instructions = Setting::get('deposit_instructions', 'Transfer payment in USDT (BEP-20) to the crypto wallet address.');
         $qrImage = Setting::get('deposit_qr_image', '');
-        $minDeposit = 10.00;
+        $minDeposit = (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00));
+        $maxDeposit = (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00));
         $depositFeePercent = (float) Setting::get('deposit_fee_percent', 0.00);
 
         return view('admin.deposits.settings', compact(
@@ -327,6 +331,7 @@ class DepositManagementWebController extends Controller
             'instructions',
             'qrImage',
             'minDeposit',
+            'maxDeposit',
             'depositFeePercent'
         ));
     }
@@ -343,6 +348,10 @@ class DepositManagementWebController extends Controller
             'qr_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'deposit_fee_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'service_charge_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'minimum_deposit_amount' => ['nullable', 'numeric', 'min:0.01', 'max:1000000'],
+            'maximum_deposit_amount' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
+            'min_deposit_amount' => ['nullable', 'numeric', 'min:0.01', 'max:1000000'],
+            'max_deposit_amount' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
         ]);
 
         if ($request->filled('crypto_wallet_address')) {
@@ -355,6 +364,18 @@ class DepositManagementWebController extends Controller
             $feeVal = $request->input('deposit_fee_percent', $request->input('service_charge_percent'));
             $feePercent = round(max(0.00, min(100.00, (float) $feeVal)), 2);
             Setting::set('deposit_fee_percent', number_format($feePercent, 2, '.', ''));
+        }
+
+        if ($request->has('minimum_deposit_amount') || $request->has('min_deposit_amount')) {
+            $minVal = round(max(0.01, (float) $request->input('minimum_deposit_amount', $request->input('min_deposit_amount'))), 2);
+            Setting::set('minimum_deposit_amount', number_format($minVal, 2, '.', ''), 'funds');
+            Setting::set('deposit_min_amount', number_format($minVal, 2, '.', ''), 'funds');
+        }
+
+        if ($request->has('maximum_deposit_amount') || $request->has('max_deposit_amount')) {
+            $maxVal = round(max(0.00, (float) $request->input('maximum_deposit_amount', $request->input('max_deposit_amount'))), 2);
+            Setting::set('maximum_deposit_amount', number_format($maxVal, 2, '.', ''), 'funds');
+            Setting::set('deposit_max_amount', number_format($maxVal, 2, '.', ''), 'funds');
         }
 
         if ($request->has('deposit_instructions')) {

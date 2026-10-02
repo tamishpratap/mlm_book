@@ -145,6 +145,8 @@ class MobileWalletController extends Controller
     {
         $qrPath = Setting::get('deposit_qr_image');
         $qrUrl = $qrPath ? (str_starts_with($qrPath, 'http') ? $qrPath : asset($qrPath)) : null;
+        $minDeposit = (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00));
+        $maxDeposit = (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00));
 
         return response()->json([
             'success' => true,
@@ -153,7 +155,10 @@ class MobileWalletController extends Controller
                 'network' => 'BEP-20 (BNB Smart Chain)',
                 'token' => 'USDT',
                 'qr_url' => $qrUrl,
-                'min_deposit' => 1.00,
+                'min_deposit' => $minDeposit,
+                'max_deposit' => $maxDeposit,
+                'minimum_deposit_amount' => $minDeposit,
+                'maximum_deposit_amount' => $maxDeposit,
                 'instructions' => 'Send USDT via BEP-20 network to the address above. After completing transaction, enter the Transaction Hash below to verify and credit funds automatically.',
             ],
         ]);
@@ -167,9 +172,16 @@ class MobileWalletController extends Controller
         /** @var Member $member */
         $member = auth('member')->user();
 
+        $minDeposit = (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00));
+        $maxDeposit = (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00));
+        $maxRule = ($maxDeposit > 0 && $maxDeposit >= $minDeposit) ? ('max:' . $maxDeposit) : 'max:10000000';
+
         $validated = $request->validate([
-            'amount_usdt' => ['required', 'numeric', 'min:1'],
+            'amount_usdt' => ['required', 'numeric', 'min:' . $minDeposit, $maxRule],
             'transaction_hash' => ['required', 'string', 'min:10', 'max:150'],
+        ], [
+            'amount_usdt.min' => "Minimum deposit amount is \${$minDeposit} USDT.",
+            'amount_usdt.max' => "Maximum deposit amount is \${$maxDeposit} USDT.",
         ]);
 
         $txHash = trim($validated['transaction_hash']);

@@ -11,6 +11,7 @@ import {
   Check,
   ShieldCheck,
   Percent,
+  Sliders,
 } from 'lucide-react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
@@ -51,9 +52,11 @@ export function DepositSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  // Form State (USD + Crypto Wallet + Dynamic Service Charge)
+  // Form State (USD + Crypto Wallet + Dynamic Service Charge + Limits)
   const [cryptoWalletAddress, setCryptoWalletAddress] = useState('');
   const [serviceChargePercent, setServiceChargePercent] = useState('0.00');
+  const [minDepositAmount, setMinDepositAmount] = useState('10.00');
+  const [maxDepositAmount, setMaxDepositAmount] = useState('10000.00');
   const [instructions, setInstructions] = useState('');
   const [currentQrUrl, setCurrentQrUrl] = useState(null);
   const [copiedWallet, setCopiedWallet] = useState(false);
@@ -75,6 +78,16 @@ export function DepositSettingsPage() {
           s.deposit_fee_percent !== undefined
             ? String(s.deposit_fee_percent)
             : (s.service_charge_percent !== undefined ? String(s.service_charge_percent) : '0.00')
+        );
+        setMinDepositAmount(
+          s.minimum_deposit_amount !== undefined
+            ? String(s.minimum_deposit_amount)
+            : (s.min_deposit_amount !== undefined ? String(s.min_deposit_amount) : '10.00')
+        );
+        setMaxDepositAmount(
+          s.maximum_deposit_amount !== undefined
+            ? String(s.maximum_deposit_amount)
+            : (s.max_deposit_amount !== undefined ? String(s.max_deposit_amount) : '10000.00')
         );
         setInstructions(s.deposit_instructions || '');
         setCurrentQrUrl(s.deposit_qr_url || null);
@@ -99,6 +112,16 @@ export function DepositSettingsPage() {
           s.deposit_fee_percent !== undefined
             ? String(s.deposit_fee_percent)
             : (s.service_charge_percent !== undefined ? String(s.service_charge_percent) : '0.00')
+        );
+        setMinDepositAmount(
+          s.minimum_deposit_amount !== undefined
+            ? String(s.minimum_deposit_amount)
+            : (s.min_deposit_amount !== undefined ? String(s.min_deposit_amount) : '10.00')
+        );
+        setMaxDepositAmount(
+          s.maximum_deposit_amount !== undefined
+            ? String(s.maximum_deposit_amount)
+            : (s.max_deposit_amount !== undefined ? String(s.max_deposit_amount) : '10000.00')
         );
         setInstructions(s.deposit_instructions || '');
         setCurrentQrUrl(s.deposit_qr_url || null);
@@ -145,6 +168,28 @@ export function DepositSettingsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const parsedMin = parseFloat(minDepositAmount);
+    if (isNaN(parsedMin) || parsedMin <= 0) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Validation Error',
+        detail: 'Minimum deposit amount must be at least $0.01.',
+        life: 4000,
+      });
+      return;
+    }
+
+    const parsedMax = parseFloat(maxDepositAmount);
+    if (!isNaN(parsedMax) && parsedMax > 0 && parsedMax < parsedMin) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Validation Error',
+        detail: 'Maximum deposit amount cannot be less than minimum deposit amount.',
+        life: 4000,
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const payload = {
@@ -152,6 +197,10 @@ export function DepositSettingsPage() {
         deposit_instructions: instructions.trim(),
         deposit_fee_percent: parseFloat(serviceChargePercent) || 0,
         service_charge_percent: parseFloat(serviceChargePercent) || 0,
+        minimum_deposit_amount: parsedMin,
+        min_deposit_amount: parsedMin,
+        maximum_deposit_amount: isNaN(parsedMax) ? 0 : parsedMax,
+        max_deposit_amount: isNaN(parsedMax) ? 0 : parsedMax,
       };
 
       const files = {};
@@ -167,6 +216,12 @@ export function DepositSettingsPage() {
           ? String(s.deposit_fee_percent)
           : (s.service_charge_percent !== undefined ? String(s.service_charge_percent) : '0.00')
       );
+      if (s.minimum_deposit_amount !== undefined || s.min_deposit_amount !== undefined) {
+        setMinDepositAmount(String(s.minimum_deposit_amount ?? s.min_deposit_amount));
+      }
+      if (s.maximum_deposit_amount !== undefined || s.max_deposit_amount !== undefined) {
+        setMaxDepositAmount(String(s.maximum_deposit_amount ?? s.max_deposit_amount));
+      }
       setInstructions(s.deposit_instructions || '');
       setCurrentQrUrl(s.deposit_qr_url || null);
       setSelectedFile(null);
@@ -175,7 +230,7 @@ export function DepositSettingsPage() {
       toast.current?.show({
         severity: 'success',
         summary: 'Settings Saved',
-        detail: 'Deposit Service Charge, Crypto Wallet Address, and Payment QR settings updated successfully.',
+        detail: `Deposit settings saved! Limits: $${parsedMin} - ${parsedMax > 0 ? '$' + parsedMax.toLocaleString() : 'Unlimited'} USDT.`,
         life: 4000,
       });
     } catch (err) {
@@ -339,7 +394,145 @@ export function DepositSettingsPage() {
           </div>
         </div>
 
-        {/* Card 3: Payment Currency & Dynamic Service Charge */}
+        {/* Card 3: Deposit Minimum & Maximum Limits */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-100 text-amber-700">
+                <Sliders className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Deposit Minimum & Maximum Limits
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Define the minimum and maximum gross amounts allowed per deposit transaction (in USD / USDT).
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600">
+              <span>Allowed Range:</span>
+              <span className="px-2 py-0.5 rounded-md font-bold text-xs bg-indigo-100 text-indigo-800">
+                ${parseFloat(minDepositAmount) || 0} - {parseFloat(maxDepositAmount) > 0 ? `$${parseFloat(maxDepositAmount).toLocaleString()}` : 'Unlimited'} USDT
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Minimum Deposit Amount */}
+            <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Minimum Deposit ($ USD / USDT)
+                </label>
+                <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                  Required Floor
+                </span>
+              </div>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">
+                  $
+                </span>
+                <InputText
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max="1000000"
+                  value={minDepositAmount}
+                  onChange={(e) => setMinDepositAmount(e.target.value)}
+                  placeholder="10.00"
+                  className="w-full text-base font-bold border border-slate-300 rounded-lg pl-8 pr-3 py-2 bg-white text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                />
+              </div>
+
+              {/* Preset Buttons for Min Deposit */}
+              <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                {[
+                  { label: '$5', val: '5.00' },
+                  { label: '$10 (Standard)', val: '10.00' },
+                  { label: '$25', val: '25.00' },
+                  { label: '$50', val: '50.00' },
+                  { label: '$100', val: '100.00' },
+                ].map((preset) => (
+                  <button
+                    key={preset.val}
+                    type="button"
+                    onClick={() => setMinDepositAmount(preset.val)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                      parseFloat(minDepositAmount) === parseFloat(preset.val)
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-[11px] text-slate-500">
+                Deposits below this floor amount will be blocked and rejected automatically.
+              </p>
+            </div>
+
+            {/* Maximum Deposit Amount */}
+            <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Maximum Deposit ($ USD / USDT)
+                </label>
+                <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                  Ceiling Limit
+                </span>
+              </div>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">
+                  $
+                </span>
+                <InputText
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="10000000"
+                  value={maxDepositAmount}
+                  onChange={(e) => setMaxDepositAmount(e.target.value)}
+                  placeholder="10000.00"
+                  className="w-full text-base font-bold border border-slate-300 rounded-lg pl-8 pr-3 py-2 bg-white text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+
+              {/* Preset Buttons for Max Deposit */}
+              <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                {[
+                  { label: '$1,000', val: '1000.00' },
+                  { label: '$5,000', val: '5000.00' },
+                  { label: '$10,000', val: '10000.00' },
+                  { label: '$50,000', val: '50000.00' },
+                  { label: 'Unlimited (0)', val: '0' },
+                ].map((preset) => (
+                  <button
+                    key={preset.val}
+                    type="button"
+                    onClick={() => setMaxDepositAmount(preset.val)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                      parseFloat(maxDepositAmount) === parseFloat(preset.val)
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-[11px] text-slate-500">
+                Per-transaction ceiling. Enter <strong>0</strong> for unlimited maximum deposit amount.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Payment Currency & Dynamic Service Charge */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-3">
@@ -433,17 +626,17 @@ export function DepositSettingsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
             {/* Currency Card */}
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
               <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
                 Payment Currency
               </div>
               <div className="text-2xl font-black text-indigo-600">
-                USDT (BEP-20)
+                USDT
               </div>
               <span className="text-[11px] text-slate-400 mt-1 block">
-                BNB Smart Chain Network
+                BEP-20 (BNB Chain)
               </span>
             </div>
 
@@ -456,7 +649,20 @@ export function DepositSettingsPage() {
                 Crypto + QR
               </div>
               <span className="text-[11px] text-slate-400 mt-1 block">
-                Wallet address & scan QR
+                Wallet address & QR
+              </span>
+            </div>
+
+            {/* Deposit Range Limit Card */}
+            <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200">
+              <div className="text-xs font-bold uppercase tracking-wider text-amber-800 mb-1">
+                Deposit Limits
+              </div>
+              <div className="text-xl font-black text-amber-700 truncate">
+                ${parseFloat(minDepositAmount) || 10} - {parseFloat(maxDepositAmount) > 0 ? `$${parseFloat(maxDepositAmount).toLocaleString()}` : '∞'}
+              </div>
+              <span className="text-[11px] text-slate-500 mt-1 block">
+                {parseFloat(maxDepositAmount) > 0 ? 'Min to Max allowed' : 'Min (Unlimited max)'}
               </span>
             </div>
 
@@ -479,7 +685,7 @@ export function DepositSettingsPage() {
               <span className="text-[11px] text-slate-400 mt-1 block">
                 {parseFloat(serviceChargePercent) > 0
                   ? `Net Credit: ${(100 - parseFloat(serviceChargePercent)).toFixed(2)}%`
-                  : '1 USDT = 1 USDT ad credit'}
+                  : '1 USDT = 1 USD credit'}
               </span>
             </div>
           </div>

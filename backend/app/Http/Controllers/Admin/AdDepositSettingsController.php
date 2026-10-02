@@ -38,6 +38,10 @@ class AdDepositSettingsController extends Controller
                 'deposit_currency_symbol' => 'USDT',
                 'deposit_fee_percent' => (float) Setting::get('deposit_fee_percent', 0.00),
                 'service_charge_percent' => (float) Setting::get('deposit_fee_percent', 0.00),
+                'minimum_deposit_amount' => (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00)),
+                'maximum_deposit_amount' => (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00)),
+                'min_deposit_amount' => (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00)),
+                'max_deposit_amount' => (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00)),
                 'deposit_instructions' => Setting::get('deposit_instructions', 'Transfer payment in USDT (BEP-20) using the configured crypto wallet address or QR code. Enter your transaction hash after completing payment.'),
                 'deposit_disclaimer' => 'IMPORTANT: Deposits are accepted exclusively in USDT (BEP-20). Any other token or network is not supported and will not be credited.',
                 // Legacy preserved keys
@@ -49,7 +53,7 @@ class AdDepositSettingsController extends Controller
     }
 
     /**
-     * Update deposit settings (Crypto Wallet Address, QR image, Instructions, Service Charge / Fee).
+     * Update deposit settings (Crypto Wallet Address, QR image, Instructions, Service Charge / Fee, Min / Max Deposit Amount).
      */
     public function updateSettings(Request $request): JsonResponse
     {
@@ -59,6 +63,10 @@ class AdDepositSettingsController extends Controller
             'deposit_qr_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:5120'],
             'deposit_fee_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'service_charge_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'minimum_deposit_amount' => ['nullable', 'numeric', 'min:0.01', 'max:1000000'],
+            'maximum_deposit_amount' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
+            'min_deposit_amount' => ['nullable', 'numeric', 'min:0.01', 'max:1000000'],
+            'max_deposit_amount' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
         ], [
             'deposit_crypto_wallet_address.regex' => 'Destination crypto wallet address must be a valid 42-character BSC/EVM address starting with 0x.',
         ]);
@@ -96,6 +104,19 @@ class AdDepositSettingsController extends Controller
             $feeVal = $request->input('deposit_fee_percent', $request->input('service_charge_percent'));
             $feePercent = round(max(0.00, min(100.00, (float) $feeVal)), 2);
             Setting::set('deposit_fee_percent', number_format($feePercent, 2, '.', ''), 'funds');
+        }
+
+        // Minimum & Maximum Deposit Amounts (in USD / USDT)
+        if ($request->has('minimum_deposit_amount') || $request->has('min_deposit_amount')) {
+            $minVal = round(max(0.01, (float) $request->input('minimum_deposit_amount', $request->input('min_deposit_amount'))), 2);
+            Setting::set('minimum_deposit_amount', number_format($minVal, 2, '.', ''), 'funds');
+            Setting::set('deposit_min_amount', number_format($minVal, 2, '.', ''), 'funds');
+        }
+
+        if ($request->has('maximum_deposit_amount') || $request->has('max_deposit_amount')) {
+            $maxVal = round(max(0.00, (float) $request->input('maximum_deposit_amount', $request->input('max_deposit_amount'))), 2);
+            Setting::set('maximum_deposit_amount', number_format($maxVal, 2, '.', ''), 'funds');
+            Setting::set('deposit_max_amount', number_format($maxVal, 2, '.', ''), 'funds');
         }
 
         if ($request->has('deposit_instructions')) {

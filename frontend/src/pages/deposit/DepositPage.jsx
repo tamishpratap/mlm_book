@@ -209,8 +209,14 @@ export function DepositPage() {
     setDappSuccessData(null);
 
     const baseAmount = parseFloat(dappAmount);
-    if (isNaN(baseAmount) || baseAmount < 10) {
-      setDappError('Minimum deposit amount is $10.00 USD equivalent.');
+    const minLimit = Number(config?.min_deposit ?? config?.minimum_deposit_amount ?? 10);
+    const maxLimit = Number(config?.max_deposit ?? config?.maximum_deposit_amount ?? 0);
+    if (isNaN(baseAmount) || baseAmount < minLimit) {
+      setDappError(`Minimum deposit amount is $${minLimit.toFixed(2)} USD equivalent.`);
+      return;
+    }
+    if (maxLimit > 0 && baseAmount > maxLimit) {
+      setDappError(`Maximum deposit amount allowed is $${maxLimit.toFixed(2)} USD equivalent.`);
       return;
     }
 
@@ -313,8 +319,14 @@ export function DepositPage() {
   const handleSimulateDappDeposit = async () => {
     setDappError('');
     const baseAmount = parseFloat(dappAmount);
-    if (isNaN(baseAmount) || baseAmount < 10) {
-      setDappError('Minimum deposit amount is $10.00 USD equivalent.');
+    const minLimit = Number(config?.min_deposit ?? config?.minimum_deposit_amount ?? 10);
+    const maxLimit = Number(config?.max_deposit ?? config?.maximum_deposit_amount ?? 0);
+    if (isNaN(baseAmount) || baseAmount < minLimit) {
+      setDappError(`Minimum deposit amount is $${minLimit.toFixed(2)} USD equivalent.`);
+      return;
+    }
+    if (maxLimit > 0 && baseAmount > maxLimit) {
+      setDappError(`Maximum deposit amount allowed is $${maxLimit.toFixed(2)} USD equivalent.`);
       return;
     }
 
@@ -376,8 +388,14 @@ export function DepositPage() {
     setManualSubmitSuccess(null);
 
     const baseAmount = parseFloat(manualAmount);
-    if (isNaN(baseAmount) || baseAmount < 10) {
-      setManualSubmitError('Minimum deposit amount is $10.00 USD equivalent.');
+    const minLimit = Number(config?.min_deposit ?? config?.minimum_deposit_amount ?? 10);
+    const maxLimit = Number(config?.max_deposit ?? config?.maximum_deposit_amount ?? 0);
+    if (isNaN(baseAmount) || baseAmount < minLimit) {
+      setManualSubmitError(`Minimum deposit amount is $${minLimit.toFixed(2)} USD equivalent.`);
+      return;
+    }
+    if (maxLimit > 0 && baseAmount > maxLimit) {
+      setManualSubmitError(`Maximum deposit amount allowed is $${maxLimit.toFixed(2)} USD equivalent.`);
       return;
     }
 
@@ -926,7 +944,8 @@ export function DepositPage() {
                     Desired Deposit Amount (USD)
                   </label>
                   <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>
-                    Minimum Credit: $10.00 USD
+                    Minimum: ${Number(config?.min_deposit ?? config?.minimum_deposit_amount ?? 10).toFixed(2)} USD
+                    {Number(config?.max_deposit ?? config?.maximum_deposit_amount ?? 0) > 0 ? ` | Max: $${Number(config.max_deposit ?? config.maximum_deposit_amount).toLocaleString()} USD` : ''}
                   </span>
                 </div>
 
@@ -935,8 +954,8 @@ export function DepositPage() {
                     id="dapp-amount"
                     type="number"
                     step="1"
-                    min="10"
-                    max="100000"
+                    min={Number(config?.min_deposit ?? config?.minimum_deposit_amount ?? 10)}
+                    max={Number(config?.max_deposit ?? config?.maximum_deposit_amount ?? 0) > 0 ? Number(config.max_deposit ?? config.maximum_deposit_amount) : 10000000}
                     value={dappAmount}
                     onChange={(e) => setDappAmount(e.target.value)}
                     placeholder="50"
@@ -1220,7 +1239,7 @@ export function DepositPage() {
                   <Coins size={16} />
                 </div>
                 <div>
-                  <strong>Minimum Amount:</strong> $10.00 USDT. Transactions lower than $10 will be rejected.
+                  <strong>Deposit Limits:</strong> Min ${Number(config?.min_deposit ?? config?.minimum_deposit_amount ?? 10).toFixed(2)} USDT{Number(config?.max_deposit ?? config?.maximum_deposit_amount ?? 0) > 0 ? ` to Max $${Number(config.max_deposit ?? config.maximum_deposit_amount).toLocaleString()} USDT` : ''}.
                 </div>
               </li>
               <li style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.88rem', color: '#4b5563' }}>
@@ -1335,7 +1354,8 @@ export function DepositPage() {
                     Desired Deposit Amount (USD) <span style={{ color: '#dc2626' }}>*</span>
                   </label>
                   <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>
-                    Minimum Credit: $10.00 USD
+                    Minimum: ${Number(config?.min_deposit ?? config?.minimum_deposit_amount ?? 10).toFixed(2)} USD
+                    {Number(config?.max_deposit ?? config?.maximum_deposit_amount ?? 0) > 0 ? ` | Max: $${Number(config.max_deposit ?? config.maximum_deposit_amount).toLocaleString()} USD` : ''}
                   </span>
                 </div>
 
@@ -1344,8 +1364,8 @@ export function DepositPage() {
                     id="manual-amount"
                     type="number"
                     step="1"
-                    min="10"
-                    max="100000"
+                    min={Number(config?.min_deposit ?? config?.minimum_deposit_amount ?? 10)}
+                    max={Number(config?.max_deposit ?? config?.maximum_deposit_amount ?? 0) > 0 ? Number(config.max_deposit ?? config.maximum_deposit_amount) : 10000000}
                     value={manualAmount}
                     onChange={(e) => setManualAmount(e.target.value)}
                     placeholder="50"

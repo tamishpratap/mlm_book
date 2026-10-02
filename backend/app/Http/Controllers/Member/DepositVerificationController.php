@@ -34,7 +34,8 @@ class DepositVerificationController extends Controller
         $instructions = Setting::get('deposit_instructions', 'Transfer payment in USDT (BEP-20) using the configured crypto wallet address or QR code. Enter your transaction hash after completing payment.');
         $chainId = $network === 'testnet' ? 97 : 56;
         $chainIdHex = '0x' . dechex($chainId);
-        $minDeposit = 10.00;
+        $minDeposit = (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00));
+        $maxDeposit = (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00));
         $isTestMode = (bool) config('blockchain.bsc.test_mode', env('APP_ENV') === 'local');
         $isLocal = app()->environment('local', 'testing');
         $activeTestMode = $isTestMode && $isLocal;
@@ -58,7 +59,11 @@ class DepositVerificationController extends Controller
                 'deposit_fee_percent' => $feePercent,
                 'service_charge_percent' => $feePercent,
                 'min_deposit' => $minDeposit,
-                'min_deposit_label' => '$10.00 USD equivalent',
+                'min_deposit_label' => '$' . number_format($minDeposit, 2) . ' USD equivalent',
+                'max_deposit' => $maxDeposit,
+                'max_deposit_label' => $maxDeposit > 0 ? ('$' . number_format($maxDeposit, 2) . ' USD equivalent') : 'Unlimited',
+                'minimum_deposit_amount' => $minDeposit,
+                'maximum_deposit_amount' => $maxDeposit,
                 'is_test_mode' => $activeTestMode,
                 'member_id' => $member ? $member->id : null,
                 'member_user_id' => $member ? $member->user_id : null,
@@ -90,12 +95,17 @@ class DepositVerificationController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         }
 
+        $minDeposit = (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00));
+        $maxDeposit = (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00));
+        $maxRule = ($maxDeposit > 0 && $maxDeposit >= $minDeposit) ? ('max:' . $maxDeposit) : 'max:10000000';
+
         $request->validate([
-            'amount' => ['required', 'numeric', 'min:10', 'max:10000000'],
+            'amount' => ['required', 'numeric', 'min:' . $minDeposit, $maxRule],
             'transaction_hash' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{64}$/'],
             'wallet_address' => ['nullable', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
         ], [
-            'amount.min' => 'Minimum deposit amount is $10 USD equivalent.',
+            'amount.min' => "Minimum deposit amount is \${$minDeposit} USD equivalent.",
+            'amount.max' => "Maximum deposit amount is \${$maxDeposit} USD equivalent.",
             'transaction_hash.regex' => 'Invalid transaction hash format. Must be a 66-character hexadecimal hash starting with 0x.',
         ]);
 
@@ -157,7 +167,7 @@ class DepositVerificationController extends Controller
             $txHash,
             $amount,
             $recipientWallet,
-            10.00,
+            $minDeposit,
             true, // require exact amount match
             $walletAddress
         );
@@ -171,12 +181,12 @@ class DepositVerificationController extends Controller
             ];
 
             foreach ($possibleTotals as $altAmount) {
-                if ($altAmount >= 10.00 && abs($altAmount - $amount) > 0.01) {
+                if ($altAmount >= $minDeposit && abs($altAmount - $amount) > 0.01) {
                     $altVerification = $verifier->verifyTransaction(
                         $txHash,
                         $altAmount,
                         $recipientWallet,
-                        10.00,
+                        $minDeposit,
                         true,
                         $walletAddress
                     );
@@ -252,13 +262,18 @@ class DepositVerificationController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         }
 
+        $minDeposit = (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00));
+        $maxDeposit = (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00));
+        $maxRule = ($maxDeposit > 0 && $maxDeposit >= $minDeposit) ? ('max:' . $maxDeposit) : 'max:10000000';
+
         $request->validate([
-            'amount' => ['required', 'numeric', 'min:10', 'max:10000000'],
+            'amount' => ['required', 'numeric', 'min:' . $minDeposit, $maxRule],
             'transaction_hash' => ['nullable', 'string', 'max:255'],
             'transaction_reference' => ['nullable', 'string', 'max:255'],
             'wallet_address' => ['nullable', 'string', 'max:255'],
         ], [
-            'amount.min' => 'Minimum deposit amount is $10 USD equivalent.',
+            'amount.min' => "Minimum deposit amount is \${$minDeposit} USD equivalent.",
+            'amount.max' => "Maximum deposit amount is \${$maxDeposit} USD equivalent.",
         ]);
 
         $baseAmount = round((float) $request->input('amount'), 2);
@@ -379,12 +394,17 @@ class DepositVerificationController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         }
 
+        $minDeposit = (float) Setting::get('minimum_deposit_amount', Setting::get('deposit_min_amount', 10.00));
+        $maxDeposit = (float) Setting::get('maximum_deposit_amount', Setting::get('deposit_max_amount', 10000.00));
+        $maxRule = ($maxDeposit > 0 && $maxDeposit >= $minDeposit) ? ('max:' . $maxDeposit) : 'max:10000000';
+
         $request->validate([
-            'amount' => ['required', 'numeric', 'min:10', 'max:10000000'],
+            'amount' => ['required', 'numeric', 'min:' . $minDeposit, $maxRule],
             'transaction_hash' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{64}$/'],
             'wallet_address' => ['nullable', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
         ], [
-            'amount.min' => 'Minimum deposit amount is $10 USD equivalent.',
+            'amount.min' => "Minimum deposit amount is \${$minDeposit} USD equivalent.",
+            'amount.max' => "Maximum deposit amount is \${$maxDeposit} USD equivalent.",
             'transaction_hash.regex' => 'Invalid transaction hash format.',
         ]);
 
@@ -402,7 +422,7 @@ class DepositVerificationController extends Controller
             $txHash,
             $amount,
             $recipientWallet,
-            10.00,
+            $minDeposit,
             true,
             $walletAddress
         );
