@@ -227,7 +227,7 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             onClick={onCloseMobile}
           >
             <MessageSquareText size={18} />
-            <span>Direct Message</span>
+            <span>Business Directory</span>
           </NavLink>
           {/* Events - Temporarily disabled/hidden */}
           {/*
