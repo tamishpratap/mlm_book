@@ -1254,3 +1254,159 @@
         gap: 4px !important;
     }
 }
+
+/* ==========================================================================
+   DESKTOP CONNECTION REQUESTS TABS & BUTTON STABILITY
+   Fix visual button size/scale jump on click/select/hover/focus on desktop.
+   ========================================================================== */
+@media (min-width: 769px) {
+    .friend-requests-tabs {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 6px !important;
+        margin-bottom: 12px !important;
+        width: 100% !important;
+    }
+
+    .friend-requests-tabs .member-button {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 0 0 auto !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        font-weight: 600 !important;
+        border-radius: 20px !important;
+        box-sizing: border-box !important;
+        border-width: 1px !important;
+        border-style: solid !important;
+        margin: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        transform: none !important;
+        scale: 1 !important;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+    }
+
+    .friend-requests-tabs .member-button:hover {
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        transform: none !important;
+        scale: 1 !important;
+    }
+
+    .friend-requests-tabs .member-button:focus,
+    .friend-requests-tabs .member-button:focus-visible {
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        transform: none !important;
+        scale: 1 !important;
+        outline: 2px solid rgba(23, 107, 255, 0.45) !important;
+        outline-offset: 1px !important;
+    }
+
+    .friend-requests-tabs .member-button:active {
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        transform: none !important;
+        scale: 1 !important;
+    }
+
+    .friend-requests-tabs .member-button--primary,
+    .friend-requests-tabs .member-button--primary:hover,
+    .friend-requests-tabs .member-button--primary:focus,
+    .friend-requests-tabs .member-button--primary:active {
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        border-radius: 20px !important;
+        border-color: transparent !important;
+        transform: none !important;
+        scale: 1 !important;
+        box-shadow: 0 2px 6px rgba(23, 107, 255, 0.28) !important;
+    }
+
+    .friend-requests-tabs .member-button--secondary,
+    .friend-requests-tabs .member-button--secondary:hover,
+    .friend-requests-tabs .member-button--secondary:focus,
+    .friend-requests-tabs .member-button--secondary:active {
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        border-radius: 20px !important;
+        border-color: #e2e8f0 !important;
+        transform: none !important;
+        scale: 1 !important;
+        box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05)) !important;
+    }
+
+    .connection-request-row .connection-request-btn {
+        min-height: 38px !important;
+        height: 38px !important;
+        max-height: 38px !important;
+        padding: 0 16px !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        box-sizing: border-box !important;
+        transform: none !important;
+        scale: 1 !important;
+    }
+
+    .connection-request-row .connection-request-btn:hover {
+        transform: none !important;
+        scale: 1 !important;
+    }
+
+    .connection-request-row .connection-request-btn:focus,
+    .connection-request-row .connection-request-btn:focus-visible {
+        transform: none !important;
+        scale: 1 !important;
+    }
+
+    .connection-request-row .connection-request-btn:active {
+        transform: none !important;
+        scale: 1 !important;
+    }
+
+    .connection-request-row .connection-request-btn--accept {
+        box-shadow: 0 2px 6px rgba(95, 72, 220, 0.3) !important;
+    }
+
+    .friend-page-heading__actions .member-button {
+        transform: none !important;
+        scale: 1 !important;
+    }
+
+    .friend-page-heading__actions .member-button:hover,
+    .friend-page-heading__actions .member-button:focus,
+    .friend-page-heading__actions .member-button:active {
+        transform: none !important;
+        scale: 1 !important;
+    }
+}
+
