@@ -66,7 +66,7 @@ export function MemberLayout() {
     '/member/connections',
     '/member/friends',
     '/member/friend-requests',
-    '/member/people',
+    '/member/people/suggestions',
     '/member/blocked-users',
     '/member/notifications',
     '/member/search',

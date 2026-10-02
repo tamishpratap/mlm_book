@@ -7,6 +7,7 @@ import {
   Users,
   Compass,
   Calendar,
+  MessageSquare,
 } from 'lucide-react';
 
 const SHORTCUT_ICONS = {
@@ -16,6 +17,7 @@ const SHORTCUT_ICONS = {
   'monitor-play': MonitorPlay,
   users: Users,
   compass: Compass,
+  'message-square': MessageSquare,
   calendar: Calendar,
 };
 
@@ -25,7 +27,7 @@ const DEFAULT_SHORTCUTS = [
   { name: 'New Connections', path: '/member/people/suggestions', icon: 'sparkles' },
   { name: 'Watch Videos', path: '/member/watch', icon: 'monitor-play' },
   { name: 'Community Groups', path: '/member/community', icon: 'users' },
-  { name: 'Business Directory', path: '/member/business-directory', icon: 'compass' },
+  { name: 'Direct Message', path: '/member/business-directory', icon: 'message-square' },
   // { name: 'Upcoming Events', path: '/member/events', icon: 'calendar' }, // Temporarily disabled
 ];
 

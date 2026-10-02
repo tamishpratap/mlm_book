@@ -10,6 +10,7 @@ import {
   Users,
   Building2,
   Compass,
+  MessageSquare,
   CalendarDays,
   Gift,
 } from 'lucide-react';
@@ -256,8 +257,8 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
             <span>Business Pages</span>
           </NavLink>
           <NavLink to="/member/business-directory" className={getNavClass('/member/business-directory')}>
-            <Compass size={18} />
-            <span>Business Directory</span>
+            <MessageSquare size={18} />
+            <span>Direct Message</span>
           </NavLink>
           {/* Events Navigation - Temporarily Disabled */}
           {/*

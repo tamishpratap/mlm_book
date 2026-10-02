@@ -11,22 +11,26 @@ use Illuminate\Support\Str;
 
 class DirectMessageController extends Controller
 {
-    public function index(Request $request, ?Member $member = null)
+    public function index(Request $request, $member = null)
     {
         $currentMember = auth('member')->user();
 
-        // Get list of all conversation partners (people messaged or accepted friends)
-        $messagedMemberIds = DirectMessage::query()
-            ->where('sender_id', $currentMember->id)
-            ->orWhere('receiver_id', $currentMember->id)
-            ->get()
-            ->map(function ($msg) use ($currentMember) {
-                return $msg->sender_id === $currentMember->id ? $msg->receiver_id : $msg->sender_id;
-            })
-            ->unique();
+        $activeMember = $member instanceof Member ? $member : ($member ? Member::find((int) $member) : null);
 
-        $friendIds = $currentMember->acceptedFriendIds();
-        $allPartnerIds = $messagedMemberIds->merge($friendIds)->unique()->filter(fn ($id) => $id !== $currentMember->id);
+        // Get list of all conversation partners (people messaged or accepted friends) as plain integer arrays
+        $sentIds = DirectMessage::where('sender_id', $currentMember->id)->pluck('receiver_id')->all();
+        $receivedIds = DirectMessage::where('receiver_id', $currentMember->id)->pluck('sender_id')->all();
+        $friendIds = (array) $currentMember->acceptedFriendIds();
+
+        $allPartnerIds = collect(array_merge($sentIds, $receivedIds, $friendIds));
+        if ($activeMember && $activeMember->id) {
+            $allPartnerIds->push($activeMember->id);
+        }
+
+        $allPartnerIds = $allPartnerIds
+            ->unique()
+            ->filter(fn ($id) => (int) $id !== (int) $currentMember->id)
+            ->values();
 
         $conversations = Member::query()
             ->whereIn('id', $allPartnerIds)
@@ -52,7 +56,6 @@ class DirectMessageController extends Controller
             ->sortByDesc('lastActiveAt')
             ->values();
 
-        $activeMember = $member;
         if (! $activeMember && $conversations->isNotEmpty()) {
             $activeMember = $conversations->first()->member;
         }
@@ -108,23 +111,24 @@ class DirectMessageController extends Controller
         ));
     }
 
-    public function chat(Member $member)
+    public function chat($member)
     {
         return $this->index(request(), $member);
     }
 
-    public function fetchMessages(Member $member)
+    public function fetchMessages($member)
     {
         $currentMember = auth('member')->user();
+        $targetMember = $member instanceof Member ? $member : Member::findOrFail((int) $member);
 
-        $messages = DirectMessage::between($currentMember->id, $member->id)
+        $messages = DirectMessage::between($currentMember->id, $targetMember->id)
             ->with(['sender', 'receiver'])
             ->orderBy('created_at', 'asc')
             ->get();
 
         // Mark unread messages as read
         DirectMessage::query()
-            ->where('sender_id', $member->id)
+            ->where('sender_id', $targetMember->id)
             ->where('receiver_id', $currentMember->id)
             ->where('is_read', false)
             ->update([
@@ -135,7 +139,7 @@ class DirectMessageController extends Controller
         return response()->json([
             'success' => true,
             'messages' => $messages->map(function ($msg) use ($currentMember) {
-                $isMine = $msg->sender_id === $currentMember->id;
+                $isMine = (int) $msg->sender_id === (int) $currentMember->id;
 
                 return [
                     'id' => $msg->id,
@@ -146,6 +150,7 @@ class DirectMessageController extends Controller
                     'is_mine' => $isMine,
                     'time' => $msg->created_at->format('h:i A'),
                     'date' => $msg->created_at->format('M d, Y'),
+                    'created_at' => $msg->created_at,
                 ];
             }),
             'html' => view('member.messages.partials.messages_list', [
@@ -155,11 +160,12 @@ class DirectMessageController extends Controller
         ]);
     }
 
-    public function sendMessage(Request $request, Member $member)
+    public function sendMessage(Request $request, $member)
     {
         $currentMember = auth('member')->user();
+        $targetMember = $member instanceof Member ? $member : Member::findOrFail((int) $member);
 
-        if ($currentMember->is($member)) {
+        if ((int) $currentMember->id === (int) $targetMember->id) {
             return response()->json(['success' => false, 'message' => 'Cannot message yourself.'], 422);
         }
 
@@ -188,7 +194,7 @@ class DirectMessageController extends Controller
 
         $directMessage = DirectMessage::create([
             'sender_id' => $currentMember->id,
-            'receiver_id' => $member->id,
+            'receiver_id' => $targetMember->id,
             'message' => $request->message,
             'attachment' => $attachmentPath,
             'is_read' => false,
@@ -201,10 +207,13 @@ class DirectMessageController extends Controller
                 'data' => [
                     'id' => $directMessage->id,
                     'sender_id' => $directMessage->sender_id,
+                    'receiver_id' => $directMessage->receiver_id,
                     'message' => $directMessage->message,
                     'attachment' => $directMessage->attachment ? asset($directMessage->attachment) : null,
                     'is_mine' => true,
                     'time' => $directMessage->created_at->format('h:i A'),
+                    'date' => $directMessage->created_at->format('M d, Y'),
+                    'created_at' => $directMessage->created_at,
                 ],
             ]);
         }

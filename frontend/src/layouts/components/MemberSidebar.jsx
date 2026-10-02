@@ -226,8 +226,8 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             className={getSideNavClass('/member/business-directory')}
             onClick={onCloseMobile}
           >
-            <Compass size={18} />
-            <span>Business Directory</span>
+            <MessageSquareText size={18} />
+            <span>Direct Message</span>
           </NavLink>
           {/* Events - Temporarily disabled/hidden */}
           {/*

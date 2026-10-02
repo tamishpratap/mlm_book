@@ -9,6 +9,9 @@ import {
   RotateCw,
   User,
   Sparkles,
+  List,
+  LayoutGrid,
+  Calendar,
 } from 'lucide-react';
 import businessApi from '../../api/businessApi';
 import VerifiedBadge from '../../components/common/VerifiedBadge';
@@ -25,6 +28,24 @@ export function BusinessDirectoryPage() {
   const [qInput, setQInput] = useState(qQuery);
   const [countryInput, setCountryInput] = useState(countryQuery);
   const [sort, setSort] = useState(sortQuery);
+
+  // View Mode: 'strip' (default) | 'card'
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      return localStorage.getItem('business_directory_view_mode') || 'strip';
+    } catch {
+      return 'strip';
+    }
+  });
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('business_directory_view_mode', mode);
+    } catch {
+      // ignore
+    }
+  };
 
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -145,8 +166,8 @@ export function BusinessDirectoryPage() {
               marginBottom: '14px',
             }}
           >
-            <Users size={15} />
-            <span>Business & Member Directory</span>
+            <MessageSquare size={15} />
+            <span>Direct Message & Member Directory</span>
           </span>
 
           <h1 style={{ fontSize: '28px', fontWeight: 800, margin: '0 0 10px 0', letterSpacing: '-0.02em', color: '#ffffff' }}>
@@ -267,36 +288,146 @@ export function BusinessDirectoryPage() {
         </div>
       ) : (
         <>
-          {/* Header & Refresh */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          {/* Header & Controls */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              marginBottom: '20px',
+            }}
+          >
             <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Users size={20} color="#2563eb" />
               <span>Member Profiles ({data?.members?.total || members.length})</span>
             </h2>
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 14px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: '#ffffff',
-                color: '#475569',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              <RotateCw size={14} className={isRefreshing ? 'fa-spin' : ''} />
-              <span>Refresh</span>
-            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {/* View Toggle (Strip vs Card) */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: '#f1f5f9',
+                  padding: '3px',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('strip')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 14px',
+                    borderRadius: '7px',
+                    border: 'none',
+                    backgroundColor: viewMode === 'strip' ? '#ffffff' : 'transparent',
+                    color: viewMode === 'strip' ? '#2563eb' : '#64748b',
+                    boxShadow: viewMode === 'strip' ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
+                    fontWeight: viewMode === 'strip' ? 700 : 500,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Strip View"
+                >
+                  <List size={15} />
+                  <span>Strip View</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('card')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 14px',
+                    borderRadius: '7px',
+                    border: 'none',
+                    backgroundColor: viewMode === 'card' ? '#ffffff' : 'transparent',
+                    color: viewMode === 'card' ? '#2563eb' : '#64748b',
+                    boxShadow: viewMode === 'card' ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
+                    fontWeight: viewMode === 'card' ? 700 : 500,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Card View"
+                >
+                  <LayoutGrid size={15} />
+                  <span>Card View</span>
+                </button>
+              </div>
+
+              {/* Refresh Button */}
+              <button
+                type="button"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#ffffff',
+                  color: '#475569',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: isRefreshing ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <RotateCw size={14} className={isRefreshing ? 'spin-icon' : ''} />
+                <span>Refresh</span>
+              </button>
+            </div>
           </div>
 
-          {/* Members Grid */}
+          {/* Scoped CSS for hover & responsive layouts */}
+          <style>{`
+            .directory-strip-card {
+              transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .directory-strip-card:hover {
+              border-color: #cbd5e1 !important;
+              box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
+              transform: translateY(-1px);
+            }
+            .directory-card-item {
+              transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .directory-card-item:hover {
+              border-color: #cbd5e1 !important;
+              box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08) !important;
+              transform: translateY(-2px);
+            }
+            @media (max-width: 680px) {
+              .directory-strip-card {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 14px !important;
+              }
+              .directory-strip-card .strip-actions-wrap {
+                width: 100% !important;
+                margin-top: 4px !important;
+              }
+              .directory-strip-card .strip-actions-wrap > * {
+                flex: 1 !important;
+                text-align: center !important;
+              }
+            }
+          `}</style>
+
+          {/* Members Listing */}
           {members.length === 0 ? (
             <div style={{ padding: '48px 20px', textAlign: 'center', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
               <User size={44} color="#94a3b8" style={{ margin: '0 auto 12px' }} />
@@ -305,11 +436,227 @@ export function BusinessDirectoryPage() {
                 Try adjusting your search query or selecting a different country filter.
               </p>
             </div>
+          ) : viewMode === 'strip' ? (
+            /* ============================================================== */
+            /* STRIP VIEW (Default)                                           */
+            /* ============================================================== */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {members.map((m) => {
+                const avatar = m.profile_photo ? getAvatarUrl(m.profile_photo) : null;
+                const initials = getInitials(m.name);
+
+                return (
+                  <div
+                    key={m.id}
+                    className="directory-strip-card"
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '14px',
+                      border: '1px solid #e2e8f0',
+                      padding: '16px 20px',
+                      boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '16px',
+                    }}
+                  >
+                    {/* Left & Center: Avatar + Info */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0, flex: 1 }}>
+                      {/* Avatar */}
+                      <Link to={`/member/profile/${m.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                        <div
+                          style={{
+                            width: '54px',
+                            height: '54px',
+                            borderRadius: '50%',
+                            backgroundColor: '#2563eb',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#ffffff',
+                            fontWeight: 'bold',
+                            fontSize: '18px',
+                            overflow: 'hidden',
+                            border: '2px solid #e2e8f0',
+                            boxShadow: '0 2px 6px rgba(37, 99, 235, 0.15)',
+                          }}
+                        >
+                          {avatar ? (
+                            <img src={avatar} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            initials
+                          )}
+                        </div>
+                      </Link>
+
+                      {/* Info details */}
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        {/* Name + Verified + Username */}
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
+                          <Link
+                            to={`/member/profile/${m.id}`}
+                            style={{
+                              textDecoration: 'none',
+                              color: '#0f172a',
+                              fontWeight: 700,
+                              fontSize: '16px',
+                              letterSpacing: '-0.01em',
+                            }}
+                          >
+                            {m.name}
+                          </Link>
+                          {m.is_verified && <VerifiedBadge member={m} size={15} />}
+                          <span
+                            style={{
+                              fontSize: '12px',
+                              color: '#2563eb',
+                              fontWeight: 600,
+                              backgroundColor: '#eff6ff',
+                              border: '1px solid #dbeafe',
+                              padding: '1px 8px',
+                              borderRadius: '6px',
+                            }}
+                          >
+                            @{m.user_id}
+                          </span>
+                        </div>
+
+                        {/* Location, Email, Joined */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '14px',
+                            fontSize: '13px',
+                            color: '#475569',
+                          }}
+                        >
+                          {/* Location */}
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 500, color: '#334155' }}>
+                            <MapPin size={14} color="#64748b" />
+                            <span>{m.country || 'Global'}{m.city ? `, ${m.city}` : ''}</span>
+                          </div>
+
+                          {/* Email */}
+                          {m.email && (
+                            <div
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                color: '#64748b',
+                                maxWidth: '240px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                              title={m.email}
+                            >
+                              <Mail size={14} color="#64748b" />
+                              <span>{m.email}</span>
+                            </div>
+                          )}
+
+                          {/* Joined */}
+                          {m.created_at && (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#94a3b8', fontSize: '12px' }}>
+                              <Calendar size={13} color="#94a3b8" />
+                              <span>Joined {m.created_at}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Bio preview if available */}
+                        {m.bio && (
+                          <p
+                            style={{
+                              margin: '5px 0 0 0',
+                              fontSize: '12.5px',
+                              color: '#64748b',
+                              lineHeight: 1.4,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: '650px',
+                            }}
+                          >
+                            {m.bio}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: Action Buttons */}
+                    <div
+                      className="strip-actions-wrap"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Link
+                        to={`/member/messages/${m.id}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '9px 18px',
+                          borderRadius: '10px',
+                          backgroundColor: '#2563eb',
+                          color: '#ffffff',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          textDecoration: 'none',
+                          boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
+                          transition: 'all 0.15s ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <MessageSquare size={15} />
+                        <span>Send Message</span>
+                      </Link>
+
+                      <Link
+                        to={`/member/profile/${m.id}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '9px 14px',
+                          borderRadius: '10px',
+                          backgroundColor: '#f8fafc',
+                          color: '#334155',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          textDecoration: 'none',
+                          border: '1px solid #e2e8f0',
+                          transition: 'all 0.15s ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title="View Full Profile"
+                      >
+                        <User size={15} />
+                        <span>Profile</span>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ) : (
+            /* ============================================================== */
+            /* CARD VIEW (Grid)                                               */
+            /* ============================================================== */
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(285px, 1fr))',
                 gap: '20px',
               }}
             >
@@ -320,6 +667,7 @@ export function BusinessDirectoryPage() {
                 return (
                   <div
                     key={m.id}
+                    className="directory-card-item"
                     style={{
                       backgroundColor: '#ffffff',
                       borderRadius: '16px',
@@ -329,13 +677,12 @@ export function BusinessDirectoryPage() {
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
-                      transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                     }}
                   >
                     <div>
                       {/* Top Header: Avatar & Info */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-                        <Link to={`/member/profile/${m.id}`} style={{ textDecoration: 'none' }}>
+                        <Link to={`/member/profile/${m.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
                           <div
                             style={{
                               width: '56px',
@@ -350,6 +697,7 @@ export function BusinessDirectoryPage() {
                               fontSize: '18px',
                               overflow: 'hidden',
                               border: '2px solid #e2e8f0',
+                              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.12)',
                             }}
                           >
                             {avatar ? (
@@ -361,7 +709,7 @@ export function BusinessDirectoryPage() {
                         </Link>
 
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <Link
                               to={`/member/profile/${m.id}`}
                               style={{
@@ -389,7 +737,7 @@ export function BusinessDirectoryPage() {
                         style={{
                           backgroundColor: '#f8fafc',
                           borderRadius: '10px',
-                          padding: '8px 12px',
+                          padding: '9px 12px',
                           marginBottom: '14px',
                           display: 'flex',
                           alignItems: 'center',
@@ -407,18 +755,46 @@ export function BusinessDirectoryPage() {
 
                         {/* Email */}
                         {m.email && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#64748b', minWidth: 0, borderLeft: '1px solid #cbd5e1', paddingLeft: '10px' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              color: '#64748b',
+                              minWidth: 0,
+                              borderLeft: '1px solid #cbd5e1',
+                              paddingLeft: '10px',
+                            }}
+                          >
                             <Mail size={13} color="#64748b" />
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.email}>
                               {m.email}
                             </span>
                           </div>
                         )}
                       </div>
+
+                      {/* Bio snippet if present */}
+                      {m.bio && (
+                        <p
+                          style={{
+                            margin: '0 0 16px 0',
+                            fontSize: '12.5px',
+                            color: '#64748b',
+                            lineHeight: 1.4,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {m.bio}
+                        </p>
+                      )}
                     </div>
 
-                    {/* Action Button: Send Direct Message */}
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    {/* Action Button: Send Direct Message + Profile */}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: m.bio ? '0' : '8px' }}>
                       <Link
                         to={`/member/messages/${m.id}`}
                         style={{
@@ -434,6 +810,8 @@ export function BusinessDirectoryPage() {
                           fontWeight: 700,
                           fontSize: '13px',
                           textDecoration: 'none',
+                          boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
+                          transition: 'background-color 0.15s ease',
                         }}
                       >
                         <MessageSquare size={15} />
@@ -453,6 +831,8 @@ export function BusinessDirectoryPage() {
                           fontWeight: 600,
                           fontSize: '13px',
                           textDecoration: 'none',
+                          border: '1px solid #e2e8f0',
+                          transition: 'all 0.15s ease',
                         }}
                         title="View Profile"
                       >

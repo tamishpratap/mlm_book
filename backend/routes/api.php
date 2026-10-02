@@ -812,7 +812,7 @@ Route::prefix('member')->name('api.member.')->group(function () {
         Route::prefix('messages')->group(function () {
             Route::get('/', [DirectMessageController::class, 'index']);
             Route::get('/chat/{member}', [DirectMessageController::class, 'chat']);
-            Route::get('/{conversation}/fetch', [DirectMessageController::class, 'fetchMessages']);
+            Route::get('/{member}/fetch', [DirectMessageController::class, 'fetchMessages']);
             Route::post('/{member}', [DirectMessageController::class, 'sendMessage']);
         });
 

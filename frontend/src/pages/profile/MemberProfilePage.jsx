@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   MapPin,
   CalendarDays,
@@ -12,6 +12,7 @@ import {
   PlayCircle,
   Activity,
   ArrowLeft,
+  MessageSquare,
 } from 'lucide-react';
 import { getAvatarUrl, getCoverUrl, getMediaUrl, getInitials, DEFAULT_AVATAR } from '../../utils/assetHelper';
 import useAuth from '../../hooks/useAuth';
@@ -21,7 +22,6 @@ import CompactMemberRow from '../../components/friends/CompactMemberRow';
 import PostCard from '../../components/posts/PostCard';
 import StoryCard from '../../components/stories/StoryCard';
 import DeleteConfirmModal from '../../components/posts/modals/DeleteConfirmModal';
-import FeedRightSidebar from '../../components/posts/FeedRightSidebar';
 import VerifiedBadge from '../../components/common/VerifiedBadge';
 import MemberAvatar from '../../components/common/MemberAvatar';
 
@@ -50,6 +50,7 @@ function getSanitizedErrorMessage(err) {
 
 export function MemberProfilePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
   const [profileData, setProfileData] = useState(null);
@@ -69,6 +70,7 @@ export function MemberProfilePage() {
   const tabsNavRef = useRef(null);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     setCoverLoadError(false);
     setAvatarLoadError(false);
     setProfileData(null);
@@ -230,85 +232,89 @@ export function MemberProfilePage() {
 
   if (isLoading && !profileData) {
     return (
-      <>
-        <main className="member-main feed">
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-            Loading member profile...
-          </div>
-        </main>
-        <FeedRightSidebar />
-      </>
+      <main className="member-main" id="member-profile-main">
+        <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+          Loading member profile...
+        </div>
+      </main>
     );
   }
 
   if (error || !member) {
     return (
-      <>
-        <main className="member-main feed">
-          <div style={{ marginBottom: '16px' }}>
-            <Link
-              to="/member/friends"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: 'var(--color-text-secondary)',
-                fontSize: '0.875rem',
-                textDecoration: 'none',
+      <main className="member-main" id="member-profile-main">
+        <div style={{ marginBottom: '16px' }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'var(--color-text-secondary)',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
+          >
+            <ArrowLeft size={16} />
+            <span>Back to Directory</span>
+          </button>
+        </div>
+        <section className="member-card friend-empty" role="alert">
+          <h2>Profile Unavailable</h2>
+          <p>{error || 'Member not found.'}</p>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '16px' }}>
+            <button
+              type="button"
+              className="member-button member-button--primary"
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                setRetryKey((k) => k + 1);
               }}
             >
-              <ArrowLeft size={16} />
-              <span>Back to Connections</span>
+              Try Again
+            </button>
+            <Link className="member-button member-button--secondary" to="/member/business-directory">
+              Back to Directory
             </Link>
           </div>
-          <section className="member-card friend-empty" role="alert">
-            <h2>Profile Unavailable</h2>
-            <p>{error || 'Member not found.'}</p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '16px' }}>
-              <button
-                type="button"
-                className="member-button member-button--primary"
-                onClick={() => {
-                  setError(null);
-                  setIsLoading(true);
-                  setRetryKey((k) => k + 1);
-                }}
-              >
-                Try Again
-              </button>
-              <Link className="member-button member-button--secondary" to="/member/friends">
-                My Connections
-              </Link>
-            </div>
-          </section>
-        </main>
-        <FeedRightSidebar />
-      </>
+        </section>
+      </main>
     );
   }
 
   return (
-    <>
-      <main className="member-main feed" id="member-profile-main">
-        <div className="profile-page public-member-profile">
-          {/* Back button */}
-          <div style={{ marginBottom: '12px' }}>
-            <Link
-              to="/member/friends"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: 'var(--color-text-secondary)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                textDecoration: 'none',
-              }}
-            >
-              <ArrowLeft size={16} />
-              <span>Back to Connections</span>
-            </Link>
-          </div>
+    <main className="member-main" id="member-profile-main">
+      <div className="profile-page public-member-profile">
+        {/* Back button */}
+        <div style={{ marginBottom: '16px' }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: '#334155',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '8px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </button>
+        </div>
 
           {/* Profile Hero */}
           <section className="profile-hero" aria-labelledby="profile-name">
@@ -383,18 +389,39 @@ export function MemberProfilePage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="profile-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="profile-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                 {friendshipState === 'self' || profileData?.is_self ? (
                   <Link
                     to="/member/profile"
                     className="member-button member-button--primary"
-                    style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '10px' }}
                   >
                     <User size={15} aria-hidden="true" />
                     <span>Edit Profile</span>
                   </Link>
                 ) : (
                   <>
+                    <Link
+                      to={`/member/messages/${member.id}`}
+                      className="member-button member-button--primary"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        backgroundColor: '#2563eb',
+                        color: '#ffffff',
+                        padding: '10px 20px',
+                        borderRadius: '12px',
+                        fontWeight: 700,
+                        fontSize: '13.5px',
+                        textDecoration: 'none',
+                        boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
+                      }}
+                    >
+                      <MessageSquare size={16} />
+                      <span>Send Message</span>
+                    </Link>
+
                     <FriendActions
                       key={friendshipState}
                       targetMember={member}
@@ -417,7 +444,7 @@ export function MemberProfilePage() {
                           setDisconnectError(null);
                           setShowDisconnectModal(true);
                         }}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '12px' }}
                       >
                         <UserMinus size={15} aria-hidden="true" />
                         <span>Disconnect</span>
@@ -740,32 +767,29 @@ export function MemberProfilePage() {
               </div>
             )}
           </div>
+
+          {/* Disconnect Confirmation Modal */}
+          {showDisconnectModal && (
+            <DeleteConfirmModal
+              isOpen={showDisconnectModal}
+              onClose={() => {
+                if (!isDisconnecting) {
+                  setShowDisconnectModal(false);
+                  setDisconnectError(null);
+                }
+              }}
+              onConfirm={handleDisconnectConfirm}
+              title={`Disconnect from ${member?.name || 'this member'}?`}
+              message="Are you sure you want to disconnect from this member?"
+              confirmLabel="Disconnect"
+              loadingLabel="Disconnecting..."
+              icon={<UserMinus size={18} />}
+              errorMessage={disconnectError}
+              isDeleting={isDisconnecting}
+            />
+          )}
         </div>
-
-        {/* Disconnect Confirmation Modal */}
-        {showDisconnectModal && (
-          <DeleteConfirmModal
-            isOpen={showDisconnectModal}
-            onClose={() => {
-              if (!isDisconnecting) {
-                setShowDisconnectModal(false);
-                setDisconnectError(null);
-              }
-            }}
-            onConfirm={handleDisconnectConfirm}
-            title={`Disconnect from ${member?.name || 'this member'}?`}
-            message="Are you sure you want to disconnect from this member?"
-            confirmLabel="Disconnect"
-            loadingLabel="Disconnecting..."
-            icon={<UserMinus size={18} />}
-            errorMessage={disconnectError}
-            isDeleting={isDisconnecting}
-          />
-        )}
       </main>
-
-      <FeedRightSidebar />
-    </>
   );
 }
 

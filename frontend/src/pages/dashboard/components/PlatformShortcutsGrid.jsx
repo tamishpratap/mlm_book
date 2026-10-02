@@ -8,6 +8,7 @@ import {
   Bookmark,
   Sparkles,
   Settings,
+  MessageSquare,
 } from 'lucide-react';
 
 const SHORTCUTS = [
@@ -28,10 +29,10 @@ const SHORTCUTS = [
     bgColor: '#fef2f2',
   },
   {
-    name: 'Business Directory',
-    description: 'Discover brands & enterprises',
+    name: 'Direct Message',
+    description: 'Discover members & chat directly',
     path: '/member/business-directory',
-    icon: Compass,
+    icon: MessageSquare,
     color: '#8b5cf6',
     bgColor: '#f5f3ff',
   },

@@ -101,7 +101,7 @@ export function DirectMessagesPage() {
         // Update unread count for this partner in conversations list
         setConversations((prev) =>
           prev.map((c) =>
-            c.member.id === partner.id ? { ...c, unreadCount: 0 } : c
+            Number(c.member?.id) === Number(partner.id) ? { ...c, unreadCount: 0 } : c
           )
         );
       }
@@ -128,8 +128,6 @@ export function DirectMessagesPage() {
     setIsSending(true);
     setSendError(null);
 
-
-
     const formData = new FormData();
     if (messageText.trim()) formData.append('message', messageText.trim());
     if (attachmentFile) formData.append('attachment', attachmentFile);
@@ -144,10 +142,10 @@ export function DirectMessagesPage() {
 
         // Update latest message in conversations list
         setConversations((prev) => {
-          const exists = prev.find((c) => c.member.id === activeMember.id);
+          const exists = prev.find((c) => Number(c.member?.id) === Number(activeMember.id));
           if (exists) {
             return prev.map((c) =>
-              c.member.id === activeMember.id
+              Number(c.member?.id) === Number(activeMember.id)
                 ? {
                     ...c,
                     latestMessage: res.data,
@@ -296,7 +294,7 @@ export function DirectMessagesPage() {
           ) : (
             filteredConversations.map((conv) => {
               const partner = conv.member || {};
-              const isSelected = activeMember?.id === partner.id;
+              const isSelected = Number(activeMember?.id) === Number(partner.id);
               const unread = conv.unreadCount ?? 0;
               const lastMsg = conv.latestMessage;
 
