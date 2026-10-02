@@ -69,8 +69,8 @@ export function AdCampaignPeopleEngagedPage() {
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Filters & State
-  const [actionFilter, setActionFilter] = useState(searchParams.get('action') || 'interested');
+  // Filters & State (Strictly Interested only)
+  const actionFilter = 'interested';
   const [verificationFilter, setVerificationFilter] = useState(searchParams.get('verification') || 'all');
   const [datePreset, setDatePreset] = useState(searchParams.get('date_preset') || 'all');
   const [startDate, setStartDate] = useState(searchParams.get('start_date') || '');
@@ -97,9 +97,6 @@ export function AdCampaignPeopleEngagedPage() {
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [showAddFundModal, setShowAddFundModal] = useState(false);
 
-  // Analytics Collapsible Section State
-  const [showAnalyticsSection, setShowAnalyticsSection] = useState(true);
-
   // Debounce search query (300ms)
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -111,7 +108,7 @@ export function AdCampaignPeopleEngagedPage() {
   // Sync URL search params
   useEffect(() => {
     const params = new URLSearchParams();
-    if (actionFilter !== 'interested') params.set('action', actionFilter);
+    params.set('action', 'interested');
     if (verificationFilter !== 'all') params.set('verification', verificationFilter);
     if (datePreset !== 'all') params.set('date_preset', datePreset);
     if (startDate) params.set('start_date', startDate);
@@ -122,7 +119,6 @@ export function AdCampaignPeopleEngagedPage() {
 
     setSearchParams(params, { replace: true });
   }, [
-    actionFilter,
     verificationFilter,
     datePreset,
     startDate,
@@ -143,7 +139,7 @@ export function AdCampaignPeopleEngagedPage() {
 
       try {
         const params = {
-          action: actionFilter !== 'all' ? actionFilter : undefined,
+          action: 'interested',
           verification: verificationFilter !== 'all' ? verificationFilter : undefined,
           date_preset: datePreset !== 'all' ? datePreset : undefined,
           start_date: startDate || undefined,
@@ -173,7 +169,7 @@ export function AdCampaignPeopleEngagedPage() {
         setIsRefreshing(false);
       }
     },
-    [slug, campaignId, actionFilter, verificationFilter, datePreset, startDate, endDate, sortOrder, debouncedSearch, currentPage]
+    [slug, campaignId, verificationFilter, datePreset, startDate, endDate, sortOrder, debouncedSearch, currentPage]
   );
 
   useEffect(() => {
@@ -266,7 +262,7 @@ export function AdCampaignPeopleEngagedPage() {
   const handleExportCSV = async (mode = 'audience', onlySelected = false) => {
     try {
       const params = {
-        action: actionFilter !== 'all' ? actionFilter : undefined,
+        action: 'interested',
         verification: verificationFilter !== 'all' ? verificationFilter : undefined,
         date_preset: datePreset !== 'all' ? datePreset : undefined,
         start_date: startDate || undefined,
@@ -359,67 +355,26 @@ export function AdCampaignPeopleEngagedPage() {
 
   // Helper for rendering action event pill with appropriate colors and icons
   const getActionPill = (actionStr, actionLabel) => {
-    const act = (actionStr || '').toLowerCase();
-    const lbl = actionLabel || '';
-
-    if (act.includes('interested') || lbl.toLowerCase().includes('interested')) {
-      return {
-        bg: '#fffbeb',
-        color: '#b45309',
-        border: '#fde68a',
-        icon: <Star size={13} color="#d97706" />,
-        label: lbl || 'Interested',
-      };
-    }
-    if (act.includes('reward') || lbl.toLowerCase().includes('reward')) {
-      return {
-        bg: '#ecfdf5',
-        color: '#065f46',
-        border: '#a7f3d0',
-        icon: <CheckCircle2 size={13} color="#059669" />,
-        label: lbl || 'Rewarded Visit',
-      };
-    }
-    if (act.includes('visit') || act.includes('landing') || lbl.toLowerCase().includes('landing')) {
-      return {
-        bg: '#faf5ff',
-        color: '#7e22ce',
-        border: '#e9d5ff',
-        icon: <ExternalLink size={13} color="#9333ea" />,
-        label: lbl || 'Landing Visit',
-      };
-    }
-    if (act.includes('click') || lbl.toLowerCase().includes('click')) {
-      return {
-        bg: '#eef2ff',
-        color: '#4338ca',
-        border: '#c7d2fe',
-        icon: <MousePointerClick size={13} color="#4f46e5" />,
-        label: lbl || 'Ad Click',
-      };
-    }
     return {
-      bg: '#f8fafc',
-      color: '#334155',
-      border: '#e2e8f0',
-      icon: <CheckCircle2 size={13} color="#64748b" />,
-      label: lbl || act || 'Activity',
+      bg: '#fffbeb',
+      color: '#b45309',
+      border: '#fde68a',
+      icon: <Star size={13} color="#d97706" />,
+      label: 'Interested',
     };
   };
 
   const hasActiveFilters = useMemo(() => {
     return (
-      actionFilter !== 'interested' ||
       verificationFilter !== 'all' ||
       datePreset !== 'all' ||
       startDate !== '' ||
       endDate !== '' ||
       debouncedSearch !== ''
     );
-  }, [actionFilter, verificationFilter, datePreset, startDate, endDate, debouncedSearch]);
+  }, [verificationFilter, datePreset, startDate, endDate, debouncedSearch]);
 
   const handleResetFilters = () => {
-    setActionFilter('interested');
     setVerificationFilter('all');
     setDatePreset('all');
     setStartDate('');
@@ -796,270 +751,56 @@ export function AdCampaignPeopleEngagedPage() {
         </div>
       </header>
 
-      {/* 7 Lifetime KPI Summary Cards (Event-style structural composition) */}
+      {/* Interested KPI Summary Cards */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: '14px',
           marginBottom: '24px',
         }}
       >
-        <div className="card" style={{ padding: '16px 18px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Users size={20} />
+        <div className="card" style={{ padding: '16px 20px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Star size={22} />
             </div>
             <div>
-              <strong style={{ fontSize: '20px', fontWeight: 800, color: '#1e293b', display: 'block', lineHeight: 1.1 }}>
-                {summary.total_engaged_members}
+              <strong style={{ fontSize: '22px', fontWeight: 800, color: '#92400e', display: 'block', lineHeight: 1.1 }}>
+                {summary.interested_count ?? engagementsPaginated.total ?? 0}
               </strong>
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Unique Members</span>
+              <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>Interested Leads</span>
             </div>
           </div>
         </div>
 
-        <div className="card" style={{ padding: '16px 18px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#f8fafc', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Eye size={20} />
+        <div className="card" style={{ padding: '16px 20px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Users size={22} />
             </div>
             <div>
-              <strong style={{ fontSize: '20px', fontWeight: 800, color: '#334155', display: 'block', lineHeight: 1.1 }}>
-                {summary.total_engagements}
+              <strong style={{ fontSize: '22px', fontWeight: 800, color: '#1e293b', display: 'block', lineHeight: 1.1 }}>
+                {engagementsPaginated.filtered_unique_members || summary.interested_count || 0}
               </strong>
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Total Engagements</span>
+              <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>Interested Members</span>
             </div>
           </div>
         </div>
 
-        <div className="card" style={{ padding: '16px 18px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Star size={20} />
+        <div className="card" style={{ padding: '16px 20px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldCheck size={22} />
             </div>
             <div>
-              <strong style={{ fontSize: '20px', fontWeight: 800, color: '#92400e', display: 'block', lineHeight: 1.1 }}>
-                {summary.interested_count}
+              <strong style={{ fontSize: '22px', fontWeight: 800, color: '#15803d', display: 'block', lineHeight: 1.1 }}>
+                {summary.verified_members_count || 0}
               </strong>
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Interested Leads</span>
+              <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>Verified Leads</span>
             </div>
           </div>
         </div>
-
-        <div className="card" style={{ padding: '16px 18px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#eef2ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <MousePointerClick size={20} />
-            </div>
-            <div>
-              <strong style={{ fontSize: '20px', fontWeight: 800, color: '#4338ca', display: 'block', lineHeight: 1.1 }}>
-                {summary.click_count}
-              </strong>
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
-                Clicks ({summary.rates?.ctr_percentage || '0.00'}%)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '16px 18px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#faf5ff', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ExternalLink size={20} />
-            </div>
-            <div>
-              <strong style={{ fontSize: '20px', fontWeight: 800, color: '#7e22ce', display: 'block', lineHeight: 1.1 }}>
-                {summary.landing_count}
-              </strong>
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Landing Visits</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '16px 18px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CheckCircle2 size={20} />
-            </div>
-            <div>
-              <strong style={{ fontSize: '20px', fontWeight: 800, color: '#065f46', display: 'block', lineHeight: 1.1 }}>
-                {summary.rewarded_count}
-              </strong>
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Rewarded Members</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '16px 18px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <DollarSign size={20} />
-            </div>
-            <div>
-              <strong style={{ fontSize: '20px', fontWeight: 800, color: '#15803d', display: 'block', lineHeight: 1.1 }}>
-                {formatMoney(summary.total_rewards_paid ?? spentAmount ?? 0)}
-              </strong>
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Total Rewards Paid</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Collapsible Advanced Analytics & Dynamic Tier Breakdown */}
-      <div className="card" style={{ borderRadius: '20px', background: '#ffffff', border: '1px solid #e2e8f0', marginBottom: '24px', overflow: 'hidden' }}>
-        <div
-          style={{
-            padding: '16px 24px',
-            borderBottom: showAnalyticsSection ? '1px solid #f1f5f9' : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            cursor: 'pointer',
-            background: '#fafafa',
-          }}
-          onClick={() => setShowAnalyticsSection(!showAnalyticsSection)}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <BarChart2 size={18} color="#2563eb" />
-            <span style={{ fontSize: '14.5px', fontWeight: 700, color: '#1e293b' }}>
-              Advanced Conversion Analytics &amp; Campaign Overview
-            </span>
-          </div>
-          <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>
-            {showAnalyticsSection ? 'Hide Details' : 'Show Details'}
-          </span>
-        </div>
-
-        {showAnalyticsSection && (
-          <div style={{ padding: '24px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-              {/* Left: Conversion Rates */}
-              <div>
-                <h4 style={{ fontSize: '13.5px', fontWeight: 700, color: '#334155', margin: '0 0 14px 0' }}>
-                  Funnel Conversion Velocity
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
-                      <span style={{ color: '#64748b' }}>Click-Through Rate (CTR)</span>
-                      <strong style={{ color: '#1e293b' }}>{summary.rates?.ctr_percentage || '0.00'}%</strong>
-                    </div>
-                    <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          width: `${Math.min(100, parseFloat(summary.rates?.ctr_percentage || 0))}%`,
-                          height: '100%',
-                          background: '#4f46e5',
-                          borderRadius: '4px',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
-                      <span style={{ color: '#64748b' }}>Landing Visit Conversion (Clicks → Visits)</span>
-                      <strong style={{ color: '#1e293b' }}>{summary.rates?.landing_conversion_rate || '0.00'}%</strong>
-                    </div>
-                    <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          width: `${Math.min(100, parseFloat(summary.rates?.landing_conversion_rate || 0))}%`,
-                          height: '100%',
-                          background: '#9333ea',
-                          borderRadius: '4px',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
-                      <span style={{ color: '#64748b' }}>Reward Qualification Rate (Visits → Rewarded)</span>
-                      <strong style={{ color: '#1e293b' }}>{summary.rates?.reward_conversion_rate || '0.00'}%</strong>
-                    </div>
-                    <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          width: `${Math.min(100, parseFloat(summary.rates?.reward_conversion_rate || 0))}%`,
-                          height: '100%',
-                          background: '#10b981',
-                          borderRadius: '4px',
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Qualified Rewards & Payout Summary */}
-              <div>
-                <h4 style={{ fontSize: '13.5px', fontWeight: 700, color: '#334155', margin: '0 0 14px 0' }}>
-                  Qualified Rewards &amp; Payout Summary
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div
-                    style={{
-                      padding: '12px 16px',
-                      background: '#f8fafc',
-                      borderRadius: '10px',
-                      border: '1px solid #e2e8f0',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>
-                      Unique Qualified Rewarded Users
-                    </span>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#16a34a' }}>
-                      {summary.total_rewards_count || 0} members
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      padding: '12px 16px',
-                      background: '#f8fafc',
-                      borderRadius: '10px',
-                      border: '1px solid #e2e8f0',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>
-                      Total Dynamic Rewards Credited
-                    </span>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#2563eb' }}>
-                      {formatMoney(summary.total_rewards_paid ?? spentAmount ?? 0)}
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      padding: '12px 16px',
-                      background: '#f8fafc',
-                      borderRadius: '10px',
-                      border: '1px solid #e2e8f0',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>
-                      Remaining Campaign Budget
-                    </span>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                      {formatMoney(remainingAmount)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main Audience Table / Grid Section (Event-style Directory) */}
@@ -1098,37 +839,12 @@ export function AdCampaignPeopleEngagedPage() {
                 borderRadius: '12px',
                 fontSize: '12px',
                 fontWeight: 700,
-                backgroundColor:
-                  actionFilter === 'interested'
-                    ? '#fffbeb'
-                    : actionFilter === 'rewarded'
-                    ? '#ecfdf5'
-                    : actionFilter === 'clicked'
-                    ? '#eef2ff'
-                    : actionFilter === 'visited_landing_page'
-                    ? '#faf5ff'
-                    : '#f1f5f9',
-                color:
-                  actionFilter === 'interested'
-                    ? '#b45309'
-                    : actionFilter === 'rewarded'
-                    ? '#059669'
-                    : actionFilter === 'clicked'
-                    ? '#4338ca'
-                    : actionFilter === 'visited_landing_page'
-                    ? '#7e22ce'
-                    : '#475569',
+                backgroundColor: '#fffbeb',
+                color: '#b45309',
+                border: '1px solid #fde68a',
               }}
             >
-              {actionFilter === 'interested'
-                ? `Interested (${engagementsPaginated.total})`
-                : actionFilter === 'rewarded'
-                ? `Rewarded Visit (${engagementsPaginated.total})`
-                : actionFilter === 'clicked'
-                ? `Ad Click (${engagementsPaginated.total})`
-                : actionFilter === 'visited_landing_page'
-                ? `Landing Visits (${engagementsPaginated.total})`
-                : `All Activity (${engagementsPaginated.total})`}
+              Interested ({engagementsPaginated.total})
             </span>
           </div>
 
@@ -1196,7 +912,7 @@ export function AdCampaignPeopleEngagedPage() {
           </div>
         </div>
 
-        {/* Activity Type Filter Segment Tabs */}
+        {/* Activity Type Filter Segment Tabs - Interested Only */}
         <div
           style={{
             display: 'flex',
@@ -1208,55 +924,38 @@ export function AdCampaignPeopleEngagedPage() {
             borderBottom: '1px solid #f1f5f9',
           }}
         >
-          {[
-            { id: 'interested', label: 'Interested', count: summary.interested_count || 0 },
-            { id: 'rewarded', label: 'Rewarded Visit', count: summary.rewarded_count ?? summary.total_rewards_count ?? 0 },
-            { id: 'clicked', label: 'Ad Click', count: summary.click_count || 0 },
-            { id: 'visited_landing_page', label: 'Landing Visits', count: summary.landing_count || 0 },
-            { id: 'all', label: 'All Activity', count: summary.total_engagements || 0 },
-          ].map((tab) => {
-            const isSelected = actionFilter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setActionFilter(tab.id);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '10px',
-                  fontSize: '12.5px',
-                  fontWeight: 700,
-                  border: '1px solid',
-                  borderColor: isSelected ? '#2563eb' : '#e2e8f0',
-                  backgroundColor: isSelected ? '#2563eb' : '#ffffff',
-                  color: isSelected ? '#ffffff' : '#64748b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>{tab.label}</span>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    padding: '1px 6px',
-                    borderRadius: '8px',
-                    backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.25)' : '#f1f5f9',
-                    color: isSelected ? '#ffffff' : '#64748b',
-                    fontWeight: 800,
-                  }}
-                >
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
+          <button
+            type="button"
+            style={{
+              padding: '8px 16px',
+              borderRadius: '10px',
+              fontSize: '12.5px',
+              fontWeight: 700,
+              border: '1px solid #2563eb',
+              backgroundColor: '#2563eb',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'default',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Star size={14} color="#fde047" />
+            <span>Interested</span>
+            <span
+              style={{
+                fontSize: '11px',
+                padding: '1px 6px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                color: '#ffffff',
+                fontWeight: 800,
+              }}
+            >
+              {summary.interested_count ?? engagementsPaginated.total ?? 0}
+            </span>
+          </button>
         </div>
 
         {/* Secondary Filter Controls Bar (Verification, Date Preset, Sorting) */}
@@ -1341,33 +1040,6 @@ export function AdCampaignPeopleEngagedPage() {
               <option value="name_asc">Name A-Z</option>
             </select>
 
-            {actionFilter !== 'interested' && (
-              <span
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '11.5px',
-                  fontWeight: 600,
-                  color: '#1e293b',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                Action: {actionFilter.replace(/_/g, ' ')}
-                <X
-                  size={12}
-                  style={{ cursor: 'pointer', color: '#94a3b8' }}
-                  onClick={() => {
-                    setActionFilter('interested');
-                    setCurrentPage(1);
-                  }}
-                />
-              </span>
-            )}
-
             {hasActiveFilters && (
               <button
                 type="button"
@@ -1382,7 +1054,7 @@ export function AdCampaignPeopleEngagedPage() {
           </div>
 
           <div style={{ fontSize: '13px', color: '#64748b' }}>
-            Campaign Audience: <strong>{summary.total_engaged_members} members</strong> &bull; Showing <strong>{engagementsPaginated.filtered_unique_members || (engagementItems.length > 0 ? Array.from(new Set(engagementItems.map((e) => e.user?.id).filter(Boolean))).length : 0)} members</strong> ({engagementsPaginated.total} activity records)
+            Interested Audience: <strong>{summary.interested_count ?? summary.total_engaged_members ?? 0} members</strong> &bull; Showing <strong>{engagementsPaginated.filtered_unique_members || (engagementItems.length > 0 ? Array.from(new Set(engagementItems.map((e) => e.user?.id).filter(Boolean))).length : 0)} members</strong> ({engagementsPaginated.total} interested records)
           </div>
         </div>
 
@@ -1568,31 +1240,23 @@ export function AdCampaignPeopleEngagedPage() {
 
                       {/* Activity Type */}
                       <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
-                        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
-                          <span
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: '8px',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              backgroundColor: pill.bg,
-                              color: pill.color,
-                              border: `1px solid ${pill.border}`,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '5px',
-                            }}
-                          >
-                            {pill.icon}
-                            <span>{pill.label}</span>
-                          </span>
-                          {(item.reward_formatted || item.reward_amount_usd > 0 || item.action === 'rewarded') && (
-                            <span style={{ fontSize: '11px', color: '#059669', fontWeight: 700, paddingLeft: '4px' }}>
-                              {item.reward_formatted || `+$${Number(item.reward_amount_usd || 0.025).toFixed(4)} USD`}
-                              {item.tier_label ? ` (${item.tier_label})` : ''}
-                            </span>
-                          )}
-                        </div>
+                        <span
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            backgroundColor: '#fffbeb',
+                            color: '#b45309',
+                            border: '1px solid #fde68a',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                          }}
+                        >
+                          <Star size={13} color="#d97706" />
+                          <span>Interested</span>
+                        </span>
                       </td>
 
                       {/* Contact Options (Mobile/WhatsApp Number + Action Buttons) */}
@@ -1848,24 +1512,18 @@ export function AdCampaignPeopleEngagedPage() {
                           borderRadius: '6px',
                           fontSize: '11px',
                           fontWeight: 700,
-                          backgroundColor: pill.bg,
-                          color: pill.color,
-                          border: `1px solid ${pill.border}`,
+                          backgroundColor: '#fffbeb',
+                          color: '#b45309',
+                          border: '1px solid #fde68a',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {pill.icon}
-                        <span>{pill.label}</span>
+                        <Star size={12} color="#d97706" />
+                        <span>Interested</span>
                       </span>
-                      {(item.reward_formatted || item.reward_amount_usd > 0 || item.action === 'rewarded') && (
-                        <div style={{ fontSize: '11px', color: '#059669', fontWeight: 700, marginTop: '2px' }}>
-                          {item.reward_formatted || `+$${Number(item.reward_amount_usd || 0.025).toFixed(4)} USD`}
-                          {item.tier_label ? ` (${item.tier_label})` : ''}
-                        </div>
-                      )}
                     </div>
                   </div>
 
