@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/api_client.dart';
 import '../models/campaign_model.dart';
 import '../models/wallet_model.dart';
+import '../models/withdrawal_model.dart';
 
 class WalletProvider extends ChangeNotifier {
   bool _isLoading = false;
@@ -9,10 +10,21 @@ class WalletProvider extends ChangeNotifier {
   Map<String, dynamic>? _depositConfig;
   List<DepositModel> _deposits = [];
 
+  // Withdrawals State
+  Map<String, dynamic>? _withdrawalConfig;
+  Map<String, dynamic>? _withdrawalStats;
+  List<WithdrawalModel> _withdrawals = [];
+  bool _isWithdrawalLoading = false;
+
   bool get isLoading => _isLoading;
   WalletModel? get wallet => _wallet;
   Map<String, dynamic>? get depositConfig => _depositConfig;
   List<DepositModel> get deposits => _deposits;
+
+  Map<String, dynamic>? get withdrawalConfig => _withdrawalConfig;
+  Map<String, dynamic>? get withdrawalStats => _withdrawalStats;
+  List<WithdrawalModel> get withdrawals => _withdrawals;
+  bool get isWithdrawalLoading => _isWithdrawalLoading;
 
   // Fetch Wallet Overview
   Future<void> fetchWallet() async {
@@ -92,4 +104,74 @@ class WalletProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Fetch Member Withdrawals, Limits & History
+  Future<void> fetchWithdrawals() async {
+    _isWithdrawalLoading = true;
+    notifyListeners();
+
+    final res = await ApiClient.get('/withdrawals');
+    _isWithdrawalLoading = false;
+
+    if (res.success && res.data is Map) {
+      if (res.data['config'] != null) {
+        _withdrawalConfig = res.data['config'] as Map<String, dynamic>;
+      }
+      if (res.data['stats'] != null) {
+        _withdrawalStats = res.data['stats'] as Map<String, dynamic>;
+      }
+      if (res.data['withdrawals'] is List) {
+        final list = res.data['withdrawals'] as List;
+        _withdrawals = list.map((e) => WithdrawalModel.fromJson(e as Map<String, dynamic>)).toList();
+      }
+    }
+    notifyListeners();
+  }
+
+  // Submit Earning Wallet Withdrawal Request
+  Future<Map<String, dynamic>> submitWithdrawal({
+    required double amount,
+    String? walletAddress,
+    String? remarks,
+  }) async {
+    final res = await ApiClient.post('/withdrawals', {
+      'gross_amount': amount,
+      if (walletAddress != null && walletAddress.isNotEmpty) 'wallet_address': walletAddress.trim(),
+      if (remarks != null && remarks.isNotEmpty) 'remarks': remarks.trim(),
+    });
+
+    if (res.success) {
+      await fetchWallet();
+      await fetchWithdrawals();
+      return {
+        'success': true,
+        'message': res.message ?? 'Withdrawal request submitted successfully.',
+      };
+    } else {
+      return {
+        'success': false,
+        'message': res.message ?? 'Failed to submit withdrawal request.',
+      };
+    }
+  }
+
+  // Submit Zero-Fee Fund Wallet Withdrawal Request
+  Future<Map<String, dynamic>> submitFundWalletWithdrawal() async {
+    final res = await ApiClient.post('/withdrawals/fund-wallet', {});
+
+    if (res.success) {
+      await fetchWallet();
+      await fetchWithdrawals();
+      return {
+        'success': true,
+        'message': res.message ?? 'Fund wallet withdrawal request submitted successfully.',
+      };
+    } else {
+      return {
+        'success': false,
+        'message': res.message ?? 'Failed to submit fund wallet withdrawal request.',
+      };
+    }
+  }
 }
+

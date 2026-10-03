@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_bottom_sheet.dart';
 import '../../core/app_toast.dart';
+import '../../models/withdrawal_model.dart';
 import '../../providers/wallet_provider.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -12,28 +13,39 @@ class WalletScreen extends StatefulWidget {
   State<WalletScreen> createState() => _WalletScreenState();
 }
 
-class _WalletScreenState extends State<WalletScreen> {
+class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderStateMixin {
   final _walletAddressController = TextEditingController();
   final _otpController = TextEditingController();
   final _depositAmountController = TextEditingController();
   final _depositTxHashController = TextEditingController();
 
+  final _withdrawalAmountController = TextEditingController();
+  final _withdrawalRemarksController = TextEditingController();
+
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WalletProvider>().fetchWallet();
-      context.read<WalletProvider>().fetchDepositConfig();
-      context.read<WalletProvider>().fetchDepositHistory();
+      final wp = context.read<WalletProvider>();
+      wp.fetchWallet();
+      wp.fetchDepositConfig();
+      wp.fetchDepositHistory();
+      wp.fetchWithdrawals();
     });
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     _walletAddressController.dispose();
     _otpController.dispose();
     _depositAmountController.dispose();
     _depositTxHashController.dispose();
+    _withdrawalAmountController.dispose();
+    _withdrawalRemarksController.dispose();
     super.dispose();
   }
 
@@ -273,6 +285,270 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  void _showWithdrawalDialog() {
+    final wp = context.read<WalletProvider>();
+    final wallet = wp.wallet;
+    final config = wp.withdrawalConfig ?? {};
+
+    final minAmount = (config['minimum_amount'] as num?)?.toDouble() ?? 5.0;
+    final maxAmount = (config['maximum_amount'] as num?)?.toDouble() ?? 10000.0;
+    final feePercent = (config['service_charge_percent'] as num?)?.toDouble() ?? 0.0;
+    final linkedAddress = wallet?.walletAddress ?? '';
+
+    _withdrawalAmountController.clear();
+    _withdrawalRemarksController.clear();
+
+    double feeAmount = 0.0;
+    double netPayout = 0.0;
+
+    AppBottomSheet.show(
+      context,
+      title: 'Withdraw Earnings',
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          void updateCalculations(String val) {
+            final parsed = double.tryParse(val.trim()) ?? 0.0;
+            setModalState(() {
+              feeAmount = (parsed * feePercent) / 100.0;
+              netPayout = parsed - feeAmount;
+              if (netPayout < 0) netPayout = 0;
+            });
+          }
+
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Available Balance Box
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Available Earning Balance:', style: TextStyle(color: Color(0xFF64748B), fontSize: 12.5, fontWeight: FontWeight.w500)),
+                        Text(
+                          wallet?.rewardBalanceFormatted ?? '\$0.00 USD',
+                          style: const TextStyle(color: Color(0xFF0F172A), fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Destination Wallet Address Box
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: linkedAddress.isNotEmpty ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: linkedAddress.isNotEmpty ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Payout Destination (BEP-20):', style: TextStyle(color: Color(0xFF475569), fontSize: 11, fontWeight: FontWeight.bold)),
+                            Text(
+                              linkedAddress.isNotEmpty ? 'Verified' : 'Not Linked',
+                              style: TextStyle(
+                                color: linkedAddress.isNotEmpty ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          linkedAddress.isNotEmpty ? linkedAddress : 'Please link your BEP-20 wallet address first before submitting withdrawal.',
+                          style: TextStyle(
+                            color: linkedAddress.isNotEmpty ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+                            fontSize: 12,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Amount Input
+                  TextField(
+                    controller: _withdrawalAmountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: updateCalculations,
+                    style: const TextStyle(color: Color(0xFF0F172A), fontSize: 16, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      labelText: 'Withdrawal Amount (USD)',
+                      labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                      helperText: 'Min: \$${minAmount.toStringAsFixed(2)} | Max: \$${maxAmount.toStringAsFixed(2)}',
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      prefixText: '\$ ',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Fee & Net Calculation Breakdown
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Service Fee (${feePercent.toStringAsFixed(2)}%):', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
+                            Text('\$${feeAmount.toStringAsFixed(4)} USD', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                        const Divider(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Net Payout Amount:', style: TextStyle(color: Color(0xFF0F172A), fontSize: 13, fontWeight: FontWeight.bold)),
+                            Text(
+                              '\$${netPayout.toStringAsFixed(4)} USDT',
+                              style: const TextStyle(color: Color(0xFF16A34A), fontSize: 15, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Remarks Input
+                  TextField(
+                    controller: _withdrawalRemarksController,
+                    style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: 'Remarks / Notes (Optional)',
+                      labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (linkedAddress.isEmpty) {
+                        AppToast.error(context, 'Please link your BEP-20 wallet address first.');
+                        return;
+                      }
+
+                      final amount = double.tryParse(_withdrawalAmountController.text.trim());
+                      if (amount == null || amount < minAmount) {
+                        AppToast.error(context, 'Minimum withdrawal amount is \$${minAmount.toStringAsFixed(2)}');
+                        return;
+                      }
+
+                      if (amount > (wallet?.rewardBalance ?? 0.0)) {
+                        AppToast.error(context, 'Insufficient balance for this withdrawal request.');
+                        return;
+                      }
+
+                      final res = await context.read<WalletProvider>().submitWithdrawal(
+                            amount: amount,
+                            walletAddress: linkedAddress,
+                            remarks: _withdrawalRemarksController.text.trim(),
+                          );
+
+                      if (mounted) {
+                        Navigator.pop(context);
+                        if (res['success'] == true) {
+                          AppToast.success(context, res['message']?.toString() ?? 'Withdrawal request submitted!');
+                        } else {
+                          AppToast.error(context, res['message']?.toString() ?? 'Failed to submit withdrawal request.');
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Submit Withdrawal Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5)),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Fund Wallet Zero Fee Transfer Option
+                  if ((wallet?.adBalance ?? 0.0) > 0)
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Withdraw Fund Wallet (0% Fee)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            content: Text(
+                              'Are you sure you want to withdraw your entire Fund Wallet balance (${wallet?.adBalanceFormatted})? Zero service fee will be charged.',
+                            ),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB), foregroundColor: Colors.white),
+                                child: const Text('Confirm'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true && mounted) {
+                          final res = await context.read<WalletProvider>().submitFundWalletWithdrawal();
+                          if (mounted) {
+                            Navigator.pop(context);
+                            if (res['success'] == true) {
+                              AppToast.success(context, res['message']?.toString() ?? 'Fund wallet withdrawal submitted!');
+                            } else {
+                              AppToast.error(context, res['message']?.toString() ?? 'Failed to submit request.');
+                            }
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.flash_on, size: 16, color: Color(0xFF2563EB)),
+                      label: Text('Withdraw Fund Wallet (${wallet?.adBalanceFormatted}) - 0% Fee', style: const TextStyle(color: Color(0xFF2563EB), fontSize: 12.5, fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFBFDBFE)),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final wp = context.watch<WalletProvider>();
@@ -298,12 +574,13 @@ class _WalletScreenState extends State<WalletScreen> {
           await wp.fetchWallet();
           await wp.fetchDepositConfig();
           await wp.fetchDepositHistory();
+          await wp.fetchWithdrawals();
         },
         color: const Color(0xFF2563EB),
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // 1. Apple Wallet / Revolut Style Card (Gradient)
+            // 1. Main Wallet Card (Gradient)
             Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
@@ -373,7 +650,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text('Ad Balance (USDT)', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                          const Text('Fund / Ad Balance', style: TextStyle(color: Colors.white60, fontSize: 11)),
                           const SizedBox(height: 2),
                           Text(
                             wallet?.adBalanceFormatted ?? '\$0.00 USDT',
@@ -389,14 +666,14 @@ class _WalletScreenState extends State<WalletScreen> {
 
             const SizedBox(height: 16),
 
-            // 2. Action Buttons Row (Deposit Funds & Link Web3 Wallet)
+            // 2. Action Buttons Row (Deposit USDT, Withdraw, Link Wallet)
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _showDepositDialog,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Deposit USDT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Deposit', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
@@ -406,14 +683,29 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _showWithdrawalDialog,
+                    icon: const Icon(Icons.arrow_upward, size: 16),
+                    label: const Text('Withdraw', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _showLinkWalletDialog,
-                    icon: const Icon(Icons.link, size: 18),
+                    icon: const Icon(Icons.link, size: 16),
                     label: Text(
-                      wallet?.walletAddress != null ? 'Change Wallet' : 'Link Wallet',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                      wallet?.walletAddress != null ? 'Wallet' : 'Link',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF0F172A),
@@ -477,33 +769,190 @@ class _WalletScreenState extends State<WalletScreen> {
 
             const SizedBox(height: 20),
 
-            // 4. Deposit History Header
-            const Text(
-              'Deposit History',
-              style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-
-            if (wp.deposits.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
+            // 4. TabBar for Deposit History vs Withdrawal History
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                child: const Center(
-                  child: Text(
-                    'No deposit transactions yet.',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                  ),
-                ),
-              )
-            else
-              ...wp.deposits.map((d) => _buildDepositItem(d)),
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: const Color(0xFF0F172A),
+                unselectedLabelColor: const Color(0xFF64748B),
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                tabs: const [
+                  Tab(text: 'Withdrawal History'),
+                  Tab(text: 'Deposit History'),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // TabBarView content inside ListView container
+            SizedBox(
+              height: 350,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Tab 1: Withdrawal History
+                  _buildWithdrawalHistoryList(wp),
+
+                  // Tab 2: Deposit History
+                  _buildDepositHistoryList(wp),
+                ],
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildWithdrawalHistoryList(WalletProvider wp) {
+    if (wp.isWithdrawalLoading) {
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)));
+    }
+
+    if (wp.withdrawals.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: const Center(
+          child: Text(
+            'No withdrawal history yet.',
+            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      itemCount: wp.withdrawals.length,
+      itemBuilder: (context, index) {
+        final w = wp.withdrawals[index];
+        return _buildWithdrawalItem(w);
+      },
+    );
+  }
+
+  Widget _buildWithdrawalItem(WithdrawalModel w) {
+    Color badgeBg;
+    Color badgeText;
+    IconData statusIcon;
+
+    if (w.isApproved) {
+      badgeBg = const Color(0xFFDCFCE7);
+      badgeText = const Color(0xFF16A34A);
+      statusIcon = Icons.check_circle;
+    } else if (w.isRejected) {
+      badgeBg = const Color(0xFFFEE2E2);
+      badgeText = const Color(0xFFDC2626);
+      statusIcon = Icons.cancel;
+    } else {
+      badgeBg = const Color(0xFFFEF3C7);
+      badgeText = const Color(0xFFD97706);
+      statusIcon = Icons.hourglass_top;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: badgeBg,
+                    radius: 16,
+                    child: Icon(statusIcon, color: badgeText, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '-\$${w.grossAmount.toStringAsFixed(2)} USD',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF0F172A)),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Net: \$${w.netAmount.toStringAsFixed(2)} USDT (Fee: \$${w.serviceCharge.toStringAsFixed(2)})',
+                        style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  w.status.toUpperCase(),
+                  style: TextStyle(color: badgeText, fontSize: 10.5, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          if (w.createdAt != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Date: ${w.createdAt.toString().split('.').first}',
+              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDepositHistoryList(WalletProvider wp) {
+    if (wp.deposits.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: const Center(
+          child: Text(
+            'No deposit transactions yet.',
+            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      itemCount: wp.deposits.length,
+      itemBuilder: (context, index) {
+        final d = wp.deposits[index];
+        return _buildDepositItem(d);
+      },
     );
   }
 
