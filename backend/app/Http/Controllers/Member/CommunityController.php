@@ -322,7 +322,22 @@ class CommunityController extends Controller
         if ($request->filled('role')) {
             $membersQuery->where('role', $request->query('role'));
         }
-        $acceptedMembers = $membersQuery->latest('joined_at')->paginate(12)->withQueryString();
+
+        $isApi = $request->expectsJson() || $request->ajax() || $request->is('api/*');
+
+        if ($isApi) {
+            if ($request->filled('per_page')) {
+                $acceptedMembers = $membersQuery->latest('joined_at')->paginate((int) $request->query('per_page'))->withQueryString();
+            } else {
+                $acceptedMembersList = $membersQuery->latest('joined_at')->get();
+                $acceptedMembers = [
+                    'data' => $acceptedMembersList,
+                    'total' => $acceptedMembersList->count(),
+                ];
+            }
+        } else {
+            $acceptedMembers = $membersQuery->latest('joined_at')->paginate(12)->withQueryString();
+        }
 
         // Pending Requests Query (Only loaded for Admin/Owner)
         $pendingRequests = collect();

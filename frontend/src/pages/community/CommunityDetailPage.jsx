@@ -275,7 +275,9 @@ export function CommunityDetailPage() {
   const isAdmin = Boolean(detailData.is_admin);
   const role = detailData.member_role || 'member';
 
-  const acceptedMembers = detailData.accepted_members?.data || [];
+  const acceptedMembers = Array.isArray(detailData.accepted_members)
+    ? detailData.accepted_members
+    : (detailData.accepted_members?.data || []);
   const feedPosts = detailData.feed_posts?.data || [];
   const pinnedPost = detailData.pinned_post;
   const announcements = detailData.announcements || [];
@@ -662,7 +664,7 @@ export function CommunityDetailPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="card" style={{ padding: '24px', borderRadius: '16px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 16px 0' }}>
-              Community Members ({community.member_count ?? detailData.accepted_members?.total ?? acceptedMembers.length})
+              Community Members ({community.member_count ?? (Array.isArray(detailData.accepted_members) ? detailData.accepted_members.length : detailData.accepted_members?.total) ?? acceptedMembers.length})
             </h2>
 
             {acceptedMembers.length === 0 ? (
