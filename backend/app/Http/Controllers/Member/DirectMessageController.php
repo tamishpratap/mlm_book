@@ -17,12 +17,11 @@ class DirectMessageController extends Controller
 
         $activeMember = $member instanceof Member ? $member : ($member ? Member::find((int) $member) : null);
 
-        // Get list of all conversation partners (people messaged or accepted friends) as plain integer arrays
+        // Get list of all conversation partners (people messaged or who messaged them)
         $sentIds = DirectMessage::where('sender_id', $currentMember->id)->pluck('receiver_id')->all();
         $receivedIds = DirectMessage::where('receiver_id', $currentMember->id)->pluck('sender_id')->all();
-        $friendIds = (array) $currentMember->acceptedFriendIds();
 
-        $allPartnerIds = collect(array_merge($sentIds, $receivedIds, $friendIds));
+        $allPartnerIds = collect(array_merge($sentIds, $receivedIds));
         if ($activeMember && $activeMember->id) {
             $allPartnerIds->push($activeMember->id);
         }
@@ -199,6 +198,8 @@ class DirectMessageController extends Controller
             'attachment' => $attachmentPath,
             'is_read' => false,
         ]);
+
+        $targetMember->notify(new \App\Notifications\DirectMessageNotification($currentMember, $directMessage));
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([

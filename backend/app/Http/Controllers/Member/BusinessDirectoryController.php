@@ -24,7 +24,15 @@ class BusinessDirectoryController extends Controller
 
         $query = Member::query()
             ->where('id', '!=', $member->id)
-            ->whereNull('blocked_at');
+            ->whereNull('blocked_at')
+            ->withCount(['sentDirectMessages as unread_messages_count' => function ($q) use ($member) {
+                $q->where('receiver_id', $member->id)
+                  ->where('is_read', false);
+            }])
+            ->withMax(['sentDirectMessages as latest_unread_message_at' => function ($q) use ($member) {
+                $q->where('receiver_id', $member->id)
+                  ->where('is_read', false);
+            }], 'created_at');
 
         if (!empty($search)) {
             $like = '%' . $search . '%';
@@ -41,12 +49,15 @@ class BusinessDirectoryController extends Controller
             $query->where('country', $country);
         }
 
+        $query->orderByRaw('latest_unread_message_at IS NULL ASC');
+        $query->orderBy('latest_unread_message_at', 'desc');
+
         if ($sort === 'name') {
             $query->orderBy('name', 'asc');
         } elseif ($sort === 'oldest') {
             $query->orderBy('id', 'asc');
         } else {
-            $query->latest('id');
+            $query->orderBy('id', 'desc');
         }
 
         $members = $query->paginate(16)->through(function (Member $m) {
@@ -62,6 +73,7 @@ class BusinessDirectoryController extends Controller
                 'bio' => $m->bio,
                 'is_verified' => (bool) $m->mobile_verified_at,
                 'created_at' => $m->created_at?->format('M d, Y'),
+                'unread_messages_count' => $m->unread_messages_count ?? 0,
             ];
         });
 

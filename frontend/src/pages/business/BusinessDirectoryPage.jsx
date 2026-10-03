@@ -616,10 +616,16 @@ export function BusinessDirectoryPage() {
                           boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
                           transition: 'all 0.15s ease',
                           whiteSpace: 'nowrap',
+                          position: 'relative',
                         }}
                       >
                         <MessageSquare size={15} />
                         <span>Send Message</span>
+                        {m.unread_messages_count > 0 && (
+                          <span className="notification-badge" style={{ position: 'absolute', top: '-6px', right: '-6px' }}>
+                            {m.unread_messages_count > 99 ? '99+' : m.unread_messages_count}
+                          </span>
+                        )}
                       </Link>
 
                       <Link
@@ -815,10 +821,16 @@ export function BusinessDirectoryPage() {
                           textDecoration: 'none',
                           boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
                           transition: 'background-color 0.15s ease',
+                          position: 'relative',
                         }}
                       >
                         <MessageSquare size={15} />
                         <span>Send Message</span>
+                        {m.unread_messages_count > 0 && (
+                          <span className="notification-badge" style={{ position: 'absolute', top: '-6px', right: '-6px' }}>
+                            {m.unread_messages_count > 99 ? '99+' : m.unread_messages_count}
+                          </span>
+                        )}
                       </Link>
 
                       <Link

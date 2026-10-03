@@ -472,11 +472,13 @@ Route::prefix('member')->name('api.member.')->group(function () {
                 $member->current_rank = $rankInfo['rank'] ?? 'No Rank';
                 $member->rank_info = $rankInfo;
             }
+            $unreadMessagesCount = $member ? \App\Models\DirectMessage::where('receiver_id', $member->id)->where('is_read', false)->distinct('sender_id')->count('sender_id') : 0;
             return response()->json([
                 'member' => $member,
                 'current_rank' => $rankInfo['rank'] ?? 'No Rank',
                 'rank_info' => $rankInfo,
                 'unread_notifications_count' => $member ? $member->unreadNotifications()->count() : 0,
+                'unread_messages_count' => $unreadMessagesCount,
             ]);
         });
         Route::post('/logout', [MemberAuthController::class, 'logout']);

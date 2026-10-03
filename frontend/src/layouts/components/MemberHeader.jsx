@@ -20,9 +20,11 @@ import AccountVerificationModal from '../../components/verification/AccountVerif
 import RewardWalletModal from '../../components/common/RewardWalletModal';
 import { BRAND_LOGO } from '../../utils/assetHelper';
 import { useBranding } from '../../hooks/useBranding';
+import useAuth from '../../hooks/useAuth';
 
 export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
   const { logoUrl, siteName } = useBranding();
+  const { unreadMessagesCount } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null); // 'profile' | 'notification' | null
@@ -251,8 +253,13 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
             <Building2 size={18} />
             <span>Business Pages</span>
           </NavLink>
-          <NavLink to="/member/business-directory" className={getNavClass('/member/business-directory')}>
+          <NavLink to="/member/business-directory" className={getNavClass('/member/business-directory')} style={{ position: 'relative' }}>
             <MessageSquare size={18} />
+            {unreadMessagesCount > 0 && (
+              <span className="notification-badge" style={{ position: 'absolute', top: '0px', right: '5px' }}>
+                {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+              </span>
+            )}
             <span>Business Directory</span>
           </NavLink>
           {/* Events Navigation - Temporarily Disabled */}
