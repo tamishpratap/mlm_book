@@ -23,6 +23,7 @@ const OFFICIAL_INSTAGRAM_URL = 'https://www.instagram.com/mlmbookai/';
 const OFFICIAL_SUPPORT_EMAIL = 'support@mlmbookai.com';
 const OFFICIAL_HELP_DESK = '+44 7472962940';
 const OFFICIAL_HELP_DESK_TEL = '+447472962940';
+const OFFICIAL_TELEGRAM_LINK = 'https://t.me/+447473962940';
 
 export function PublicFooter() {
   const { logoUrl, siteName, siteDescription } = useContext(BrandingContext) || {};
@@ -43,6 +44,7 @@ export function PublicFooter() {
         setContactData((prev) => ({
           ...prev,
           ...res.contact,
+          company_name: 'MLM Book AI',
           support_email: OFFICIAL_SUPPORT_EMAIL,
           phone: OFFICIAL_HELP_DESK,
           social_facebook: OFFICIAL_FACEBOOK_URL,
@@ -81,11 +83,9 @@ export function PublicFooter() {
             </p>
 
             <div className="pub-social-row">
-              {contactData.social_telegram && (
-                <a href={contactData.social_telegram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram" title="Telegram">
-                  <TelegramIcon className="w-4 h-4" />
-                </a>
-              )}
+              <a href={OFFICIAL_TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram" title="Telegram">
+                <TelegramIcon className="w-4 h-4" />
+              </a>
               {contactData.social_facebook && (
                 <a href={contactData.social_facebook} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Facebook" title="Facebook">
                   <FacebookIcon className="w-4 h-4" />
@@ -204,7 +204,7 @@ export function PublicFooter() {
         {/* Footer Bottom Strip */}
         <div className="pub-footer-bottom">
           <div className="pub-footer-bottom-copy">
-            © {new Date().getFullYear()} {contactData.company_name || siteName || 'MLM Book AI'}. All rights reserved.
+            © {new Date().getFullYear()} MLM Book AI
           </div>
           
           <div className="pub-footer-bottom-legal">

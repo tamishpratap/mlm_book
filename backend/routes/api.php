@@ -443,6 +443,8 @@ Route::prefix('member')->name('api.member.')->group(function () {
     // ---------------------------------------------------------------------
     Route::post('/login', [MemberAuthController::class, 'login']);
     Route::post('/register', [MemberAuthController::class, 'register']);
+    Route::get('/countries', [MemberAuthController::class, 'countries']);
+    Route::get('/register/countries', [MemberAuthController::class, 'countries']);
     Route::get('/register/check-phone', [MemberAuthController::class, 'checkPhone'])->middleware('throttle:30,1');
     Route::get('/register/check-user-id', [MemberAuthController::class, 'checkUserId']);
     Route::get('/register/check-introducer', [MemberAuthController::class, 'checkIntroducer']);

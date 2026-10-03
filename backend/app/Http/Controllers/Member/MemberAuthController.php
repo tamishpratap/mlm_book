@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Mail\MemberRegistrationOtpMail;
+use App\Models\Country;
 use App\Models\Member;
 use App\Models\MobileAccessToken;
 use App\Models\PendingMemberRegistration;
@@ -852,6 +853,36 @@ class MemberAuthController extends Controller
             'available' => true,
             'normalized_phone' => $cleanPhone,
             'message' => 'Phone number is available.',
+        ]);
+    }
+
+    /**
+     * Get active country codes for member registration from database countries table.
+     */
+    public function countries()
+    {
+        $countries = Cache::remember('registration_countries_list', 86400, function () {
+            return Country::query()
+                ->where('phonecode', '>', 0)
+                ->whereNotNull('phonecode')
+                ->orderBy('nicename', 'asc')
+                ->get(['id', 'iso', 'name', 'nicename', 'phonecode'])
+                ->map(function ($country) {
+                    return [
+                        'id' => $country->id,
+                        'iso' => $country->iso,
+                        'name' => $country->name,
+                        'nicename' => $country->nicename,
+                        'phonecode' => (int) $country->phonecode,
+                        'code' => '+'.$country->phonecode,
+                        'label' => $country->nicename.' (+'.$country->phonecode.')',
+                    ];
+                });
+        });
+
+        return response()->json([
+            'success' => true,
+            'countries' => $countries,
         ]);
     }
 

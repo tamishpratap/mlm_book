@@ -51,6 +51,14 @@ export const authApi = {
   },
 
   /**
+   * Fetch active countries & phone codes from database for registration
+   */
+  async getCountries() {
+    const response = await apiClient.get('/countries');
+    return response.data;
+  },
+
+  /**
    * Fetch active pending registration session status
    */
   async getVerifyStatus() {

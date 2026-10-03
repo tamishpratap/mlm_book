@@ -29,12 +29,12 @@ export function ContactPage() {
   // Dynamic Contact State (Fetched from Backend Settings configured by Admin)
   const [contactData, setContactData] = useState({
     company_name: 'MLM Book Enterprise',
-    support_email: 'support@mlmbook.com',
-    phone: '+1 (800) 123-4567',
+    support_email: 'support@mlmbookai.com',
+    phone: '+44 7473962940',
     website: 'https://mlmbook.com',
     address: '',
     business_hours: 'Monday - Friday: 9:00 AM - 6:00 PM (UTC)',
-    social_telegram: 'https://t.me/mlmbook',
+    social_telegram: 'https://t.me/+447473962940',
     social_facebook: 'https://facebook.com/mlmbook',
     social_linkedin: 'https://linkedin.com/company/mlmbook',
     social_youtube: 'https://youtube.com/mlmbook',
@@ -73,6 +73,8 @@ export function ContactPage() {
           setContactData((prev) => ({
             ...prev,
             ...res.contact,
+            support_email: 'support@mlmbookai.com',
+            phone: '+44 7473962940',
           }));
         }
       })
@@ -385,11 +387,9 @@ export function ContactPage() {
                 Official Social Channels
               </div>
               <div className="pub-social-row">
-                {contactData.social_telegram && (
-                  <a href={contactData.social_telegram} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram">
-                    <TelegramIcon className="w-4 h-4" />
-                  </a>
-                )}
+                <a href="https://t.me/+447473962940" target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Telegram">
+                  <TelegramIcon className="w-4 h-4" />
+                </a>
                 {contactData.social_facebook && (
                   <a href={contactData.social_facebook} target="_blank" rel="noopener noreferrer" className="pub-social-btn" aria-label="Facebook">
                     <FacebookIcon className="w-4 h-4" />

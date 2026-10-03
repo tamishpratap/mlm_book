@@ -25,28 +25,7 @@ import useBranding from '../../hooks/useBranding';
 import { BRAND_LOGO } from '../../utils/assetHelper';
 import { Loader2 } from 'lucide-react';
 
-const COUNTRY_CODES = [
-  { code: '+91', label: 'India (+91)' },
-  { code: '+1', label: 'USA / Canada (+1)' },
-  { code: '+44', label: 'UK (+44)' },
-  { code: '+971', label: 'UAE (+971)' },
-  { code: '+966', label: 'Saudi Arabia (+966)' },
-  { code: '+65', label: 'Singapore (+65)' },
-  { code: '+60', label: 'Malaysia (+60)' },
-  { code: '+61', label: 'Australia (+61)' },
-  { code: '+49', label: 'Germany (+49)' },
-  { code: '+33', label: 'France (+33)' },
-  { code: '+81', label: 'Japan (+81)' },
-  { code: '+880', label: 'Bangladesh (+880)' },
-  { code: '+977', label: 'Nepal (+977)' },
-  { code: '+94', label: 'Sri Lanka (+94)' },
-  { code: '+92', label: 'Pakistan (+92)' },
-  { code: '+234', label: 'Nigeria (+234)' },
-  { code: '+27', label: 'South Africa (+27)' },
-  { code: '+55', label: 'Brazil (+55)' },
-  { code: '+7', label: 'Russia (+7)' },
-  { code: '+86', label: 'China (+86)' },
-];
+
 
 export function RegisterPage() {
   const { logoUrl, siteName } = useBranding();
@@ -70,6 +49,9 @@ export function RegisterPage() {
   });
 
   const googleRedirectUrl = authApi.getGoogleAuthUrl(formData.introducer_id || initialRef, 'register');
+
+  // Country codes loaded from database countries table
+  const [countryCodes, setCountryCodes] = useState([]);
 
   // Phone validation & availability states
   const [phoneStatus, setPhoneStatus] = useState('idle'); // 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
@@ -139,6 +121,35 @@ export function RegisterPage() {
       setIsEditingIntroducer(false);
     }
   }, [searchParams, resolveIntroducer]);
+
+  // Load country codes from database countries table
+  useEffect(() => {
+    let isMounted = true;
+    authApi
+      .getCountries()
+      .then((res) => {
+        if (isMounted && Array.isArray(res?.countries) && res.countries.length > 0) {
+          setCountryCodes(res.countries);
+          // Preserve selected country if present, or ensure default +91 from database
+          setFormData((prev) => {
+            const hasSelected = res.countries.some((c) => c.code === prev.country_code);
+            if (!hasSelected) {
+              const defaultCountry =
+                res.countries.find((c) => c.code === '+91' || c.phonecode === 91) || res.countries[0];
+              return { ...prev, country_code: defaultCountry.code };
+            }
+            return prev;
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load countries from database:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -748,12 +759,15 @@ export function RegisterPage() {
                       cursor: 'pointer',
                       borderRight: '1px solid #e2e8f0',
                       marginRight: '8px',
-                      height: '100%',
+                      maxWidth: '135px',
                     }}
                   >
-                    {COUNTRY_CODES.map((item) => (
-                      <option key={item.code} value={item.code}>
-                        {item.code}
+                    {countryCodes.length === 0 && (
+                      <option value={formData.country_code}>{formData.country_code}</option>
+                    )}
+                    {countryCodes.map((item) => (
+                      <option key={item.id || `${item.code}-${item.nicename}`} value={item.code}>
+                        {item.label || (item.nicename ? `${item.nicename} (${item.code})` : item.code)}
                       </option>
                     ))}
                   </select>
