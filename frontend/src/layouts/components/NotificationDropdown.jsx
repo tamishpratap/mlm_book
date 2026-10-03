@@ -9,7 +9,7 @@ import AnnouncementModal from '../../components/notifications/AnnouncementModal'
 import { processNewNotifications, markNotificationsAsKnown } from '../../utils/notificationSound';
 
 export function NotificationDropdown({ isOpen: propIsOpen, onToggle, onClose }) {
-  const { user, unreadCount, setUnreadCount } = useAuth();
+  const { user, unreadCount, setUnreadCount, setUnreadMessagesCount } = useAuth();
   const [internalIsOpen, setInternalIsOpen] = useState(false);
 
   const isControlled = propIsOpen !== undefined;
@@ -52,6 +52,9 @@ export function NotificationDropdown({ isOpen: propIsOpen, onToggle, onClose }) 
         if (data.unread_count !== undefined) {
           setUnreadCount(data.unread_count);
         }
+        if (data.unread_messages_count !== undefined) {
+          setUnreadMessagesCount(data.unread_messages_count);
+        }
         if (Array.isArray(data.notifications)) {
           setNotifications(data.notifications);
           processNewNotifications(data.notifications, userIdRef.current);
@@ -60,7 +63,7 @@ export function NotificationDropdown({ isOpen: propIsOpen, onToggle, onClose }) 
     } catch {
       // Silent background poll error handling
     }
-  }, [setUnreadCount]);
+  }, [setUnreadCount, setUnreadMessagesCount]);
 
   useEffect(() => {
     // Initial fetch of notifications snapshot on mount
@@ -89,6 +92,9 @@ export function NotificationDropdown({ isOpen: propIsOpen, onToggle, onClose }) 
         if (data.unread_count !== undefined) {
           setUnreadCount(data.unread_count);
         }
+        if (data.unread_messages_count !== undefined) {
+          setUnreadMessagesCount(data.unread_messages_count);
+        }
         if (Array.isArray(data.notifications)) {
           setNotifications(data.notifications);
           markNotificationsAsKnown(data.notifications);
@@ -99,7 +105,7 @@ export function NotificationDropdown({ isOpen: propIsOpen, onToggle, onClose }) 
     } finally {
       setIsLoading(false);
     }
-  }, [setUnreadCount]);
+  }, [setUnreadCount, setUnreadMessagesCount]);
 
   const handleToggle = () => {
     if (onToggle) {

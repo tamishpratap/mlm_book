@@ -84,6 +84,7 @@ class NotificationController extends Controller
             'success' => true,
             'notifications' => $notifications,
             'unread_count' => $member->unreadNotifications()->count(),
+            'unread_messages_count' => \App\Models\DirectMessage::where('receiver_id', $member->id)->where('is_read', false)->distinct('sender_id')->count('sender_id'),
             'html' => view('member.notifications.partials.dropdown', ['notifications' => $rawNotifications])->render(),
         ]);
     }
@@ -100,6 +101,7 @@ class NotificationController extends Controller
         return response()->json([
             'success' => true,
             'unread_count' => $currentUnreadCount,
+            'unread_messages_count' => \App\Models\DirectMessage::where('receiver_id', $member->id)->where('is_read', false)->distinct('sender_id')->count('sender_id'),
             'has_new' => $currentUnreadCount > $clientUnreadCount,
             'notifications' => $notifications,
             'html' => view('member.notifications.partials.dropdown', ['notifications' => $rawNotifications])->render(),

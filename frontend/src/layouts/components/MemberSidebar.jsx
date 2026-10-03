@@ -24,7 +24,7 @@ import useAuth from '../../hooks/useAuth';
 import { getAvatarUrl, DEFAULT_AVATAR } from '../../utils/assetHelper';
 
 export function MemberSidebar({ isOpen, onCloseMobile }) {
-  const { user } = useAuth();
+  const { user, unreadMessagesCount } = useAuth();
   const location = useLocation();
   const [avatarImgError, setAvatarImgError] = useState(false);
 
@@ -225,8 +225,14 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
             to="/member/business-directory"
             className={getSideNavClass('/member/business-directory')}
             onClick={onCloseMobile}
+            style={{ position: 'relative' }}
           >
             <MessageSquareText size={18} />
+            {unreadMessagesCount > 0 && (
+              <span className="notification-badge" style={{ position: 'absolute', top: '10px', right: '15px' }}>
+                {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+              </span>
+            )}
             <span>Business Directory</span>
           </NavLink>
           {/* Events - Temporarily disabled/hidden */}

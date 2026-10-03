@@ -1,6 +1,6 @@
 .member-register-page {
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow-x: clip;
+    overflow-y: visible;
 }
 
 .member-register-page .member-auth-shell {

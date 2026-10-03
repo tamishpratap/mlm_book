@@ -544,7 +544,7 @@ export default function AdRewardPreviewModal({
                     }}
                   />
                   <span>
-                    I agree that my profile content may be shared with the owner if I show interest.
+                    I understand that my profile and contact details will be shared with the business owner, and any future communication or business engagement will be at my own discretion and responsibility.
                   </span>
                 </label>
               </div>

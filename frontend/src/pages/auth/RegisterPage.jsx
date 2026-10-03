@@ -391,7 +391,8 @@ export function RegisterPage() {
 
   return (
     <main className="member-auth-page member-register-page">
-      <section className="member-auth-shell" aria-labelledby="member-register-title">
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center' }}>
+        <section className="member-auth-shell" aria-labelledby="member-register-title">
         {/* Visual Showcase Panel */}
         <div className="member-auth-visual">
           <span className="member-auth-decoration member-auth-decoration--top-left" aria-hidden="true" />
@@ -999,6 +1000,35 @@ export function RegisterPage() {
           </div>
         </div>
       </section>
+
+      {/* Global Disclaimer */}
+      <div 
+        style={{
+          marginTop: '24px',
+          maxWidth: '1160px',
+          width: '100%',
+          margin: '24px auto 0',
+          padding: '16px 20px',
+          backgroundColor: '#fffbeb',
+          border: '1px solid #fde68a',
+          borderRadius: '12px',
+          color: '#b45309',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+          position: 'relative',
+          zIndex: 10
+        }}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '22px', height: '22px', flexShrink: 0, marginTop: '1px', color: '#d97706' }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <p style={{ margin: 0, fontSize: '13.5px', lineHeight: '1.5', fontWeight: 500 }}>
+          <strong style={{ color: '#92400e' }}>Disclaimer:</strong> MLMBook AI is a networking platform only. We do not provide investment advice or accept investments. All business and investment decisions are made at the user's own risk.
+        </p>
+      </div>
+      </div>
     </main>
   );
 }

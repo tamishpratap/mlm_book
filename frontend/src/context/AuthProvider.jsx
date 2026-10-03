@@ -6,6 +6,7 @@ import { resetNotificationSoundState } from '../utils/notificationSound';
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   // Refresh user state from API (/api/member/me)
@@ -19,13 +20,16 @@ export function AuthProvider({ children }) {
           rank_info: data.rank_info || data.member.rank_info || null,
         });
         setUnreadCount(data.unread_notifications_count || 0);
+        setUnreadMessagesCount(data.unread_messages_count || 0);
       } else {
         setUser(null);
         setUnreadCount(0);
+        setUnreadMessagesCount(0);
       }
     } catch {
       setUser(null);
       setUnreadCount(0);
+      setUnreadMessagesCount(0);
     }
   }, []);
 
@@ -41,15 +45,18 @@ export function AuthProvider({ children }) {
             rank_info: data.rank_info || data.member.rank_info || null,
           });
           setUnreadCount(data.unread_notifications_count || 0);
+          setUnreadMessagesCount(data.unread_messages_count || 0);
         } else if (isMounted) {
           setUser(null);
           setUnreadCount(0);
+          setUnreadMessagesCount(0);
         }
       })
       .catch(() => {
         if (isMounted) {
           setUser(null);
           setUnreadCount(0);
+          setUnreadMessagesCount(0);
         }
       })
       .finally(() => {
@@ -62,6 +69,7 @@ export function AuthProvider({ children }) {
     const handleUnauthenticated = () => {
       setUser(null);
       setUnreadCount(0);
+      setUnreadMessagesCount(0);
       resetNotificationSoundState(null);
     };
 
@@ -91,6 +99,7 @@ export function AuthProvider({ children }) {
     } finally {
       setUser(null);
       setUnreadCount(0);
+      setUnreadMessagesCount(0);
       resetNotificationSoundState(null);
     }
   }, []);
@@ -102,10 +111,12 @@ export function AuthProvider({ children }) {
     isLoading,
     unreadCount,
     setUnreadCount,
+    unreadMessagesCount,
+    setUnreadMessagesCount,
     login,
     logout,
     refreshUser,
-  }), [user, isLoading, unreadCount, login, logout, refreshUser]);
+  }), [user, isLoading, unreadCount, unreadMessagesCount, login, logout, refreshUser]);
 
   return (
     <AuthContext.Provider value={value}>

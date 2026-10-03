@@ -92,7 +92,7 @@ img {
     min-height: 100vh;
     min-height: 100dvh;
     padding: 40px;
-    overflow: hidden;
+    overflow: clip;
     background:
         radial-gradient(circle at 12% 12%, rgba(128, 163, 255, .13), transparent 29rem),
         radial-gradient(circle at 88% 86%, rgba(151, 122, 243, .09), transparent 31rem),
