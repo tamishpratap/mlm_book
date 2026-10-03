@@ -3,7 +3,6 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ArrowDownToLine } from "lucide-react";
 import {
   ChevronRight,
-  House,
   LayoutDashboard,
   Sparkles,
   UserRound,
@@ -118,14 +117,6 @@ export function MemberSidebar({ isOpen, onCloseMobile }) {
         </Link>
 
         <nav className="side-nav" aria-label="Sidebar navigation">
-          <NavLink
-            to="/member/home"
-            className={getSideNavClass('/member/home', true)}
-            onClick={onCloseMobile}
-          >
-            <House size={18} />
-            <span>Home</span>
-          </NavLink>
           {/*
           <NavLink
             to="/member/dashboard"

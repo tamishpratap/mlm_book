@@ -169,7 +169,7 @@ export function LoginPage() {
 
     try {
       await login(formData);
-      const destination = '/member/home';
+      const destination = '/member/socials';
       navigate(destination, { replace: true });
     } catch (err) {
       let errorMessage = 'An error occurred while logging in. Please try again.';
