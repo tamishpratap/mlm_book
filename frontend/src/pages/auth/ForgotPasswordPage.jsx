@@ -49,7 +49,7 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <main className="member-auth-page">
+    <main className="member-auth-page member-forgot-page">
       <section className="member-auth-shell" aria-labelledby="member-forgot-title">
         {/* Visual Showcase Panel */}
         <div className="member-auth-visual">
@@ -125,7 +125,7 @@ export function ForgotPasswordPage() {
         </div>
 
         {/* Form Panel */}
-        <div className="member-auth-form-panel">
+        <div className="member-auth-form-panel member-forgot-form-panel">
           <span className="member-auth-ring member-auth-ring--form-top" aria-hidden="true" />
           <span className="member-auth-ring member-auth-ring--form-bottom" aria-hidden="true" />
           <span className="member-auth-dot member-auth-dot--four" aria-hidden="true" />
