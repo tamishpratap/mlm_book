@@ -155,3 +155,216 @@
         font-size: 13px;
     }
 }
+
+/* ==========================================================================
+   MLM Book — Forgot Password Page Specific Styles
+   Fix text and image overlapping using Signup page as visual reference
+   ========================================================================== */
+
+.member-forgot-page {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.member-forgot-page .member-auth-shell {
+    min-height: 940px;
+}
+
+.member-forgot-page .member-auth-visual-content {
+    display: flex;
+    flex-direction: column;
+    padding: 48px 54px;
+}
+
+.member-forgot-page .member-auth-logo {
+    width: 116px;
+    min-height: 116px;
+}
+
+.member-forgot-page .member-auth-message {
+    margin-top: 32px;
+    position: relative;
+    z-index: 10;
+}
+
+.member-forgot-page .member-auth-badge {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 13px;
+}
+
+.member-forgot-page .member-auth-heading {
+    max-width: 500px;
+    margin: 22px 0 10px;
+    font-size: clamp(38px, 3.2vw, 48px);
+    line-height: 1.12;
+    letter-spacing: -1.4px;
+}
+
+.member-forgot-page .member-auth-description {
+    max-width: 440px;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.member-forgot-page .member-auth-media {
+    position: absolute;
+    right: 28px;
+    bottom: 46px;
+    left: 48px;
+    height: 296px;
+    z-index: 2;
+}
+
+.member-forgot-form-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 68px;
+}
+
+.member-forgot-form-panel .member-auth-form-wrap {
+    width: 100%;
+    max-width: 440px;
+}
+
+/* Responsive adjustments for Forgot Password */
+@media (max-width: 1250px) {
+    .member-forgot-page .member-auth-shell {
+        min-height: 860px;
+    }
+
+    .member-forgot-page .member-auth-visual-content {
+        padding: 38px 40px;
+    }
+
+    .member-forgot-page .member-auth-logo {
+        width: 102px;
+        min-height: 102px;
+    }
+
+    .member-forgot-page .member-auth-message {
+        margin-top: 22px;
+    }
+
+    .member-forgot-page .member-auth-heading {
+        font-size: clamp(32px, 3.2vw, 42px);
+        margin: 18px 0 8px;
+    }
+
+    .member-forgot-page .member-auth-description {
+        font-size: 14px;
+        line-height: 1.55;
+    }
+
+    .member-forgot-page .member-auth-media {
+        right: 18px;
+        bottom: 34px;
+        left: 32px;
+        transform: scale(0.84);
+        transform-origin: bottom left;
+    }
+
+    .member-forgot-form-panel {
+        padding: 48px 50px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .member-forgot-page .member-auth-shell {
+        min-height: 800px;
+    }
+
+    .member-forgot-page .member-auth-visual-content {
+        padding: 30px 28px;
+    }
+
+    .member-forgot-page .member-auth-logo {
+        width: 90px;
+        min-height: 90px;
+    }
+
+    .member-forgot-page .member-auth-message {
+        margin-top: 16px;
+    }
+
+    .member-forgot-page .member-auth-badge {
+        min-height: 35px;
+        font-size: 11px;
+    }
+
+    .member-forgot-page .member-auth-heading {
+        font-size: 30px;
+        margin: 14px 0 6px;
+    }
+
+    .member-forgot-page .member-auth-description {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .member-forgot-page .member-auth-media {
+        bottom: 22px;
+        left: 18px;
+        transform: scale(0.70);
+        transform-origin: bottom left;
+    }
+
+    .member-forgot-form-panel {
+        padding: 38px 36px;
+    }
+}
+
+@media (max-width: 800px) {
+    .member-forgot-page .member-auth-shell {
+        min-height: 0;
+    }
+
+    .member-forgot-page .member-auth-visual,
+    .member-forgot-page .member-auth-visual-content {
+        min-height: 190px;
+    }
+
+    .member-forgot-page .member-auth-visual-content {
+        padding: 24px 28px;
+    }
+
+    .member-forgot-page .member-auth-logo {
+        width: 84px;
+        min-height: 84px;
+    }
+
+    .member-forgot-page .member-auth-message {
+        margin-top: 14px;
+    }
+
+    .member-forgot-page .member-auth-heading {
+        margin: 0;
+        font-size: 26px;
+    }
+
+    .member-forgot-form-panel {
+        padding: 36px 32px 30px;
+    }
+}
+
+@media (max-width: 576px) {
+    .member-forgot-page .member-auth-visual,
+    .member-forgot-page .member-auth-visual-content {
+        min-height: 120px;
+    }
+
+    .member-forgot-page .member-auth-visual-content {
+        padding: 20px;
+    }
+
+    .member-forgot-page .member-auth-logo {
+        width: 76px;
+        min-height: 76px;
+    }
+
+    .member-forgot-form-panel {
+        padding: 28px 20px 24px;
+    }
+}
+

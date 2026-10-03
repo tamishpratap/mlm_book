@@ -1699,6 +1699,42 @@
   box-shadow: 0 6px 16px rgba(79, 125, 243, 0.25);
 }
 
+/* Footer Disclaimer Notice */
+.pub-footer-disclaimer {
+  margin-bottom: 30px;
+  padding: 16px 20px;
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  border-left: 4px solid #ef4444;
+  border-radius: 10px;
+}
+
+.pub-footer-disclaimer-text {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  color: #dc2626;
+  text-align: left;
+}
+
+.pub-footer-disclaimer-text strong {
+  font-weight: 700;
+  color: #b91c1c;
+  margin-right: 2px;
+}
+
+@media (max-width: 640px) {
+  .pub-footer-disclaimer {
+    margin-bottom: 24px;
+    padding: 14px 16px;
+  }
+
+  .pub-footer-disclaimer-text {
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+}
+
 /* Footer Bottom Strip */
 .pub-footer-bottom {
   display: flex;
