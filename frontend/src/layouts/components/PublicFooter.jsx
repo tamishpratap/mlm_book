@@ -15,17 +15,25 @@ import {
   YoutubeIcon,
   InstagramIcon
 } from '../../components/common/SocialIcons';
+import { OFFICIAL_SOCIAL_LINKS } from '../../constants/socialLinks';
+
+const OFFICIAL_FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=61593794263511';
+const OFFICIAL_YOUTUBE_URL = 'https://www.youtube.com/@MLMBookAIOfficail';
+const OFFICIAL_INSTAGRAM_URL = 'https://www.instagram.com/mlmbookai/';
+const OFFICIAL_SUPPORT_EMAIL = 'support@mlmbookai.com';
+const OFFICIAL_HELP_DESK = '+44 7472962940';
+const OFFICIAL_HELP_DESK_TEL = '+447472962940';
 
 export function PublicFooter() {
   const { logoUrl, siteName, siteDescription } = useContext(BrandingContext) || {};
   const [contactData, setContactData] = useState({
     company_name: 'MLM Book AI',
-    support_email: 'support@mlmbook.com',
-    phone: '+1 (800) 123-4567',
-    social_telegram: 'https://t.me/mlmbook',
-    social_facebook: 'https://facebook.com/mlmbook',
-    social_youtube: 'https://youtube.com/mlmbook',
-    social_instagram: 'https://instagram.com/mlmbook',
+    support_email: OFFICIAL_SUPPORT_EMAIL,
+    phone: OFFICIAL_HELP_DESK,
+    social_telegram: OFFICIAL_SOCIAL_LINKS.telegram || 'https://t.me/mlmbook',
+    social_facebook: OFFICIAL_FACEBOOK_URL,
+    social_youtube: OFFICIAL_YOUTUBE_URL,
+    social_instagram: OFFICIAL_INSTAGRAM_URL,
   });
 
   useEffect(() => {
@@ -35,6 +43,11 @@ export function PublicFooter() {
         setContactData((prev) => ({
           ...prev,
           ...res.contact,
+          support_email: OFFICIAL_SUPPORT_EMAIL,
+          phone: OFFICIAL_HELP_DESK,
+          social_facebook: OFFICIAL_FACEBOOK_URL,
+          social_youtube: OFFICIAL_YOUTUBE_URL,
+          social_instagram: OFFICIAL_INSTAGRAM_URL,
         }));
       }
     }).catch(() => {});
@@ -145,7 +158,7 @@ export function PublicFooter() {
                 </a>
               )}
               {contactData.phone && (
-                <a href={`tel:${contactData.phone}`} className="pub-footer-contact-card">
+                <a href={`tel:${OFFICIAL_HELP_DESK_TEL}`} className="pub-footer-contact-card">
                   <div className="pub-footer-contact-icon pub-footer-contact-icon--phone">
                     <Phone className="w-4 h-4" />
                   </div>
