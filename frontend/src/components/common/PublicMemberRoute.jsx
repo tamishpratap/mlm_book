@@ -10,7 +10,7 @@ export function PublicMemberRoute({ children }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/member/home" replace />;
+    return <Navigate to="/member/socials" replace />;
   }
 
   return children ? children : <Outlet />;

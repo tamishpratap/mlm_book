@@ -4,7 +4,6 @@ import {
   Menu,
   Search,
   X,
-  House,
   Sparkles,
   MonitorPlay,
   Users,
@@ -155,7 +154,7 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
             <Menu size={20} />
           </button>
 
-          <Link className="brand" to="/member/home" aria-label={`${siteName || 'MLM Book'} Member Home`}>
+          <Link className="brand" to="/member/socials" aria-label={`${siteName || 'MLM Book'} Member Socials`}>
             <img
               className="mlm-book-logo mlm-book-header-logo"
               src={logoUrl || BRAND_LOGO}
@@ -226,10 +225,6 @@ export function MemberHeader({ onToggleSidebar, isSidebarOpen = false }) {
         </div>
 
         <nav className="top-nav" aria-label="Primary navigation">
-          <NavLink to="/member/home" className={getNavClass('/member/home', true)} end>
-            <House size={18} />
-            <span>Home</span>
-          </NavLink>
           <NavLink to="/member/socials" className={getNavClass('/member/socials')}>
             <Sparkles size={18} />
             <span>Socials</span>
