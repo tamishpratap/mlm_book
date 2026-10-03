@@ -194,6 +194,13 @@ export function PublicFooter() {
           </div>
         </div>
 
+        {/* Footer Disclaimer Notice */}
+        <div className="pub-footer-disclaimer">
+          <p className="pub-footer-disclaimer-text">
+            <strong>Disclaimer:</strong> MLMBook AI is a networking and business connectivity platform only. We do not provide investment, financial, legal, or business advice, nor do we accept or manage investments. Any interaction, business opportunity, investment, or transaction undertaken through the platform is solely at the user&apos;s own discretion and risk. MLMBook AI shall not be responsible for any loss, damage, or dispute arising from such activities.
+          </p>
+        </div>
+
         {/* Footer Bottom Strip */}
         <div className="pub-footer-bottom">
           <div className="pub-footer-bottom-copy">
