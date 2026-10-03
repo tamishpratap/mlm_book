@@ -1,6 +1,11 @@
 .member-register-page {
+    min-height: auto;
     overflow-x: clip;
-    overflow-y: visible;
+    overflow-y: clip;
+}
+
+.member-register-page::after {
+    display: none;
 }
 
 .member-register-page .member-auth-shell {
