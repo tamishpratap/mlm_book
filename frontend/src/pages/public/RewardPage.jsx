@@ -1,5 +1,5 @@
 import { useState, useMemo, useContext, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { BrandingContext } from '../../context/brandingContextDef';
 import { publicApi } from '../../api/publicApi';
 import {
@@ -196,11 +196,25 @@ const DEFAULT_RANK_LIST = [
 ];
 
 export function RewardPage() {
+  const location = useLocation();
   const { siteName } = useContext(BrandingContext) || {};
   const platformName = siteName || 'MLM Book';
 
   // Active selected rank for the deep-dive showcase
   const [activeRankKey, setActiveRankKey] = useState('advertiser');
+
+  // Handle hash scrolling for anchor links (e.g. #calculator)
+  useEffect(() => {
+    if (location.hash) {
+      const hashId = location.hash.replace('#', '');
+      const el = document.getElementById(hashId);
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }, 120);
+      }
+    }
+  }, [location.hash]);
 
   // Dynamic rank rules fetched from reward_rank_rules database table
   const [dbRules, setDbRules] = useState([]);
@@ -849,7 +863,7 @@ export function RewardPage() {
         {/* ====================================================================
             6. SECTION 5: INTERACTIVE EARNINGS SIMULATOR (Live Resolver Calculation)
             ==================================================================== */}
-        <section style={{ marginBottom: '80px' }}>
+        <section id="calculator" style={{ marginBottom: '80px' }}>
           <div className="pub-calc-box">
             <div style={{ textAlign: 'center', maxWidth: '620px', margin: '0 auto 36px' }}>
               <div className="pub-badge pub-badge-indigo">

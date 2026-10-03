@@ -109,16 +109,16 @@ export function PublicFooter() {
             <h4 className="pub-footer-title">Platform</h4>
             <ul className="pub-footer-links">
               <li>
-                <Link to="/" className="pub-footer-link">Home Overview</Link>
+                <Link to="/" className="pub-footer-link" onClick={() => window.scrollTo(0, 0)}>Home Overview</Link>
               </li>
               <li>
-                <Link to="/ecosystem" className="pub-footer-link">Ecosystem Architecture</Link>
+                <Link to="/ecosystem" className="pub-footer-link" onClick={() => window.scrollTo(0, 0)}>Ecosystem Architecture</Link>
               </li>
               <li>
-                <Link to="/rewards" className="pub-footer-link">Reward Mechanics</Link>
+                <Link to="/rewards" className="pub-footer-link" onClick={() => window.scrollTo(0, 0)}>Reward Mechanics</Link>
               </li>
               <li>
-                <Link to="/contact" className="pub-footer-link">Contact Support</Link>
+                <Link to="/contact" className="pub-footer-link" onClick={() => window.scrollTo(0, 0)}>Contact Support</Link>
               </li>
             </ul>
           </div>
@@ -128,16 +128,27 @@ export function PublicFooter() {
             <h4 className="pub-footer-title">Members</h4>
             <ul className="pub-footer-links">
               <li>
-                <Link to="/member/login" className="pub-footer-link">Member Sign In</Link>
+                <Link to="/member/login" className="pub-footer-link" onClick={() => window.scrollTo(0, 0)}>Member Sign In</Link>
               </li>
               <li>
-                <Link to="/member/register" className="pub-footer-link">Create Account</Link>
+                <Link to="/member/register" className="pub-footer-link" onClick={() => window.scrollTo(0, 0)}>Create Account</Link>
               </li>
               <li>
-                <Link to="/member/forgot-password" className="pub-footer-link">Forgot Password</Link>
+                <Link to="/member/forgot-password" className="pub-footer-link" onClick={() => window.scrollTo(0, 0)}>Forgot Password</Link>
               </li>
               <li>
-                <Link to="/rewards" className="pub-footer-link">Reward Calculator</Link>
+                <Link 
+                  to="/rewards#calculator" 
+                  className="pub-footer-link"
+                  onClick={() => {
+                    if (window.location.pathname === '/rewards') {
+                      const el = document.getElementById('calculator');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                >
+                  Reward Calculator
+                </Link>
               </li>
             </ul>
           </div>
